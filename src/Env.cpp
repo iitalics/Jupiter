@@ -7,13 +7,31 @@
 
 
 
+GlobEnv::OpPrecedence GlobEnv::getPrecedence (const std::string& operName) const
+{
+	for (auto& op : operators)
+		if (std::get<0>(op) == operName)
+			return op;
+
+	return OpPrecedence(std::string(operName), 0, Assoc::Left);
+}
+
+GlobFuncPtr GlobEnv::getFunc (const std::string& name)
+{
+	for (auto& f : functions)
+		if (f->name == name)
+			return f;
+
+	auto f = std::make_shared<GlobFunc>(name);
+	functions.push_back(f);
+	return f;
+}
 
 
 
 
 
-
-// ------------------------------------ LocEnv --------------------------------------//
+// ------------------------------------- LocEnv -------------------------------------//
 
 LocEnvPtr LocEnv::make ()
 {

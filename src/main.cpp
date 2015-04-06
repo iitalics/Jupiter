@@ -25,6 +25,15 @@ static int Main (std::vector<std::string>&& args)
 		return 0;
 	}
 
+	auto env = std::make_shared<GlobEnv>();
+	using Op = GlobEnv::OpPrecedence;
+
+	env->operators.push_back(Op("+", 7, Assoc::Left));
+	env->operators.push_back(Op("-", 7, Assoc::Left));
+	env->operators.push_back(Op("*", 6, Assoc::Left));
+	env->operators.push_back(Op("/", 6, Assoc::Left));
+	env->operators.push_back(Op("^", 5, Assoc::Right));
+	env->operators.push_back(Op("::", 4, Assoc::Right));
 
 	try
 	{
@@ -36,10 +45,10 @@ static int Main (std::vector<std::string>&& args)
 
 		std::cout << e->string(true) << std::endl;
 
-		Desugar des(nullptr);
+		Desugar des(env);
 		auto ed = des.desugar(e, LocEnv::make());
 
-		std::cout << ed->string(true) << std::endl;
+		std::cout << ed->string() << std::endl;
 
 		return 0;
 	}

@@ -29,24 +29,29 @@ struct FuncInstance
 class GlobFunc
 {
 public:
+	explicit inline GlobFunc(const std::string& _name)
+		: name(_name) {}
+
 	std::string name;
 	std::vector<FuncOverload> overloads;
 	std::vector<FuncInstance> instances;
 };
 
 
+enum class Assoc { Left, Right };
+
 class GlobEnv
 {
 public:
-	using OpPrecedence = std::tuple<std::string, int>;
+	using OpPrecedence = std::tuple<std::string, int, Assoc>;
 
-	std::vector<OpPrecedence> precedence;
+	std::vector<OpPrecedence> operators;
 	std::vector<GlobFuncPtr> functions;
 	// type declarations
 	// modules
 	// utility functions
 
-	int getPrecedence ();
+	OpPrecedence getPrecedence (const std::string& oper) const;
 	GlobFuncPtr getFunc (const std::string& name);
 };
 

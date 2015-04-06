@@ -77,7 +77,7 @@ ExpPtr Desugar::desugarBlock (ExpPtr e, LocEnvPtr lenv)
 {
 	auto newenv = LocEnv::make(lenv);
 
-	return e->mapSubexps([&] (ExpPtr e2)
+	return e->mapSubexps([=] (ExpPtr e2)
 	{
 		ExpPtr res;
 
@@ -103,7 +103,72 @@ ExpPtr Desugar::desugarLet (ExpPtr e, LocEnvPtr lenv)
 	lenv->newVar(e->getString());
 	return res;
 }
+
+struct SYard
+{
+	SYard (Desugar& _des)
+		: des(_des) {}
+
+	Desugar& des;
+	std::vector<ExpPtr> ops;
+	std::vector<ExpPtr> vals;
+
+	void reduce ()
+	{
+		ExpPtr a, b, op;
+
+		b = vals.back();
+		vals.pop_back();
+
+		op = ops.back();
+		ops.pop_back();
+
+		a = vals.back();
+		vals.pop_back();
+
+		vals.push_back(Exp::make(eCall, { op, a, b }, a->span + b->span));
+	}
+
+	int precOf (ExpPtr e) const
+	{
+		return std::get<1>(des.global->getPrecedence(e->getString()));
+	}
+	Assoc assocOf (ExpPtr e) const
+	{
+		return std::get<2>(des.global->getPrecedence(e->getString()));
+	}
+
+	void process (ExpPtr op, ExpPtr val)
+	{
+		auto prec = precOf(op);
+		auto assoc = assocOf(op);
+
+		while (ops.size() > 0 && (
+				assoc == Assoc::Left ?
+					precOf(ops.back()) <= prec :
+					precOf(ops.back()) < prec))
+			reduce();
+
+		vals.push_back(val);
+		ops.push_back(op);
+	}
+
+	ExpPtr result ()
+	{
+		while (ops.size() > 0)
+			reduce();
+
+		return vals[0];
+	}
+};
+
 ExpPtr Desugar::desugarInfix (ExpPtr e, LocEnvPtr lenv)
 {
-	return desugarSubexps(e, lenv);
+	SYard syard(*this);
+	syard.vals.push_back(e->subexps[0]);
+
+	for (size_t i = 1, len = e->subexps.size(); i < len; i += 2)
+		syard.process(e->subexps[i], e->subexps[i + 1]);
+
+	return syard.result();
 }

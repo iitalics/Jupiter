@@ -1,6 +1,4 @@
 {
-	let x = 4;
-	let y = 5;
-
-	x + y
+	let a = 3;
+	println(a + 1 + 2)
 }
