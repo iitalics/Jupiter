@@ -1,4 +1,4 @@
-#include "Parser.h"
+#include "Ast.h"
 
 namespace Parse
 {
@@ -110,11 +110,11 @@ ExpPtr parseCall (Lexer& lex, ExpPtr in)
 	return Exp::make(eCall, exps, in->span + args->span);
 }
 
-//    	()			OK
-//		(a)			OK
-//		(a,b)		OK
-//		(a,b,)		OK
-//		(a b)		BAD
+//		()          OK
+//		(a)         OK
+//		(a,b)       OK
+//		(a,b,)      OK
+//		(a b)       BAD
 
 ExpPtr parseTuple (Lexer& lex)
 {
@@ -255,6 +255,10 @@ TyPtr parseType (Lexer& lex)
 	case tIdent:
 		return parseTypeConcrete(lex);
 
+	case tWildcard:
+		lex.advance();
+		return Ty::makeWildcard();
+
 	default:
 		lex.expect("type");
 		return nullptr;
@@ -293,6 +297,14 @@ TyPtr parseTypeTuple (Lexer& lex)
 {
 	TyList inners;
 	parseTypeTupleRaw(lex, inners);
+
+	if (lex.current() == tArrow)
+	{
+		lex.advance();
+		inners.push_back(parseType(lex));
+
+		return Ty::makeConcrete("Fn", inners);
+	}
 
 	if (inners.size() == 1)
 		return inners[0];

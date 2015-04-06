@@ -14,7 +14,8 @@ enum TyKind
 	tyConcrete,
 	tyPoly,
 	tyPolyNamed,
-	tyOverloaded
+	tyOverloaded,
+	tyWildcard
 };
 
 class Ty
@@ -24,8 +25,12 @@ public:
 						const TyList& sub = {});
 	static TyPtr makePoly (int idx);
 	static TyPtr makePolyNamed (const std::string& name);
+	static inline TyPtr makeWildcard ()
+	{
+		return std::make_shared<Ty>(tyWildcard);
+	}
 
-	Ty (TyKind k = tyInvalid);
+	explicit Ty (TyKind k = tyInvalid);
 	~Ty ();
 
 	TyKind kind;

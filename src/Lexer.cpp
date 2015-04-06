@@ -15,6 +15,9 @@ enum
 	OPERATOR_MASK = 16,
 };
 
+static const char COMMENT = '#';
+
+
 #ifndef NO_KEY_MAPS
 #define USE_KEY_MAP
 #endif
@@ -24,7 +27,7 @@ enum
 static int key_map[128] = {
 	4,24,24,24,24,24,24,24,4,4,4,24,24,4,24,24,
 	24,24,24,24,24,24,24,24,24,24,24,24,24,24,24,24,
-	4,24,0,24,24,24,24,24,2,2,24,24,2,24,2,24,
+	4,24,0,0,24,24,24,24,2,2,24,24,2,24,2,24,
 	25,25,25,25,25,25,25,25,25,25,24,2,24,24,24,24,
 	24,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,
 	8,8,8,8,8,8,8,8,8,8,8,2,2,2,24,24,
@@ -43,12 +46,15 @@ static bool is_operator (char c) { return key_map[int(c)] & OPERATOR_MASK; }
 
 #else
 
+
 static bool is_digit (char c)
 {
+	if (c == COMMENT) return false;
 	return c >= '0' && c <= '9';
 }
 static bool is_control (char c)
 {
+	if (c == COMMENT) return false;
 	return c == tDot || c == tComma ||
 		c == tLambda || c == tSemicolon ||
 		c == tLParen || c == tRParen ||
@@ -57,24 +63,25 @@ static bool is_control (char c)
 }
 static bool is_space (char c)
 {
+	if (c == COMMENT) return false;
 	return c == ' '  || c == '\t' ||
 	       c == '\n' || c == '\r' ||
 	       c == '\b' || c == '\0';
 }
 static bool is_ident (char c)
 {
+	if (c == COMMENT) return false;
 	return c != '\"' && !is_space(c) && !is_control(c);
 }
 static bool is_operator (char c)
 {
+	if (c == COMMENT) return false;
 	return is_ident(c) &&
 	       !((c >= 'a' && c <= 'z') ||
 		     (c >= 'A' && c <= 'Z'));
 }
 
 #endif
-
-static const char COMMENT = '#';
 
 std::vector<std::pair<std::string, int>> Lexer::keywords {
 	{ "if",    tIf },

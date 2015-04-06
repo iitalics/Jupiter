@@ -71,6 +71,10 @@ void Ty::_string (std::ostringstream& ss) const
 		ss << "<overload>";
 		break;
 
+	case tyWildcard:
+		ss << "_";
+		break;
+
 	default:
 		ss << "??";
 		break;
