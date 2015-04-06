@@ -4,6 +4,7 @@
 #include <sstream>
 #include <iostream>
 #include <memory>
+#include <algorithm>
 
 class Exp;
 class Sig;
@@ -67,6 +68,21 @@ public:
 	Span span;
 
 
+	ExpPtr withSpan (const Span& newspan) const;
+	ExpPtr withSubexps (cExpList sub) const;
+	template <typename F>
+	ExpPtr mapSubexps (F operation) const
+	{
+		ExpList temp;
+		temp.resize(subexps.size());
+
+		std::transform(subexps.begin(),
+			           subexps.end(),
+			           temp.begin(),
+			           operation);
+
+		return withSubexps(temp);
+	}
 
 
 	explicit Exp (ExpKind _kind = eInvalid, cExpList sub = {},
@@ -93,6 +109,10 @@ public:
 	template <typename T>
 	T get () const { return *(T*)_primData; }
 
+	inline void setString (const std::string& s) { _strData = s; }
+	template <typename T>
+	inline void set (T t) { *(T*)_primData = t; }
+
 	inline bool is (ExpKind k) const { return kind == k; }
 
 	std::string string (bool tag = false, int ind = 2) const;
@@ -102,7 +122,7 @@ private:
 	void _string (std::ostringstream& ss, bool tag, int incr, int ind) const;
 
 	std::string _strData;
-	char _primData[32];
+	char _primData[16];
 };
 
 

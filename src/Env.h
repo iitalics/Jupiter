@@ -1,5 +1,6 @@
 #pragma once
 #include "Compiler.h"
+#include <tuple>
 
 class LocEnv;
 class FuncOverload;
@@ -13,14 +14,14 @@ using LocEnvPtr = std::shared_ptr<LocEnv>;
 class FuncOverload
 {
 public:
-	Sig signature;
+	SigPtr signature;
 	ExpPtr source;
 };
 
 struct FuncInstance
 {
 	GlobFunc* parent;
-	Sig signature;
+	SigPtr signature;
 	TyPtr returnType;
 	std::string internalName;
 };
@@ -30,17 +31,22 @@ class GlobFunc
 public:
 	std::string name;
 	std::vector<FuncOverload> overloads;
+	std::vector<FuncInstance> instances;
 };
 
 
 class GlobEnv
 {
 public:
+	using OpPrecedence = std::tuple<std::string, int>;
+
+	std::vector<OpPrecedence> precedence;
 	std::vector<GlobFuncPtr> functions;
 	// type declarations
 	// modules
 	// utility functions
 
+	int getPrecedence ();
 	GlobFuncPtr getFunc (const std::string& name);
 };
 

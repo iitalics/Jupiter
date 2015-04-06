@@ -1,9 +1,12 @@
 #include "Ast.h"
 #include <iostream>
-
+#include <cstring>
 
 Exp::Exp (ExpKind _kind, cExpList sub, const Span& sp)
-	: kind(_kind), subexps(sub), span(sp), _strData("") {}
+	: kind(_kind), subexps(sub), span(sp), _strData("")
+{
+	memset(_primData, 0, sizeof(_primData));
+}
 
 Exp::Exp (ExpKind _kind, std::string data,
 			cExpList sub, const Span& sp)
@@ -17,6 +20,20 @@ Exp::~Exp ()
 	// yuck
 	if (kind == eLambda)
 		delete get<Sig*>();
+}
+
+
+ExpPtr Exp::withSpan (const Span& newspan) const
+{
+	auto res = make(kind, _strData, subexps, newspan);
+	memcpy(res->_primData, _primData, sizeof(_primData));
+	return res;
+}
+ExpPtr Exp::withSubexps (cExpList newsub) const
+{
+	auto res = make(kind, _strData, newsub, span);
+	memcpy(res->_primData, _primData, sizeof(_primData));
+	return res;
 }
 
 
@@ -69,6 +86,8 @@ void Exp::_string (std::ostringstream& ss, bool tag, int increase, int ind) cons
 
 	case eVar:
 		ss << _strData;
+		if (get<int>() != -1)
+			ss << "{" << get<int>() << "}";
 		break;
 
 	case eTuple:

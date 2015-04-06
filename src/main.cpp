@@ -1,7 +1,8 @@
 #include <iostream>
 #include "Jupiter.h"
-#include "Parser.h"
+#include "Ast.h"
 #include "Types.h"
+#include "Desugar.h"
 
 static int Main (std::vector<std::string>&& args);
 
@@ -34,6 +35,11 @@ static int Main (std::vector<std::string>&& args)
 		lex.expect(tEOF);
 
 		std::cout << e->string(true) << std::endl;
+
+		Desugar des(nullptr);
+		auto ed = des.desugar(e, LocEnv::make());
+
+		std::cout << ed->string(true) << std::endl;
 
 		return 0;
 	}
