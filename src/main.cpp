@@ -43,7 +43,8 @@ static int Main (std::vector<std::string>&& args)
 		auto e = Parse::parseExp(lex);
 		lex.expect(tEOF);
 
-		std::cout << e->string(true) << std::endl;
+		std::cout << e->string(true) << std::endl
+		          << "==============================" << std::endl;
 
 		Desugar des(env);
 		auto ed = des.desugar(e, LocEnv::make());
