@@ -49,9 +49,9 @@ ExpPtr Desugar::desugarVar (ExpPtr e, LocEnvPtr lenv)
 	auto var = lenv->get(e->getString());
 
 	if (var == nullptr)
-		e->set<int>(-1); // TODO: look through global env?
+		e->set<int>(0); // TODO: look through global env?
 	else
-		e->set<int>(var->idx);
+		e->set<int>(var->idx + 1);
 
 	return e;
 }
@@ -115,15 +115,13 @@ struct SYard
 
 	void reduce ()
 	{
-		ExpPtr a, b, op;
-
-		b = vals.back();
+		auto b = vals.back();
 		vals.pop_back();
 
-		op = ops.back();
+		auto op = ops.back();
 		ops.pop_back();
 
-		a = vals.back();
+		auto a = vals.back();
 		vals.pop_back();
 
 		vals.push_back(Exp::make(eCall, { op, a, b }, a->span + b->span));
@@ -165,10 +163,10 @@ struct SYard
 ExpPtr Desugar::desugarInfix (ExpPtr e, LocEnvPtr lenv)
 {
 	SYard syard(*this);
-	syard.vals.push_back(e->subexps[0]);
+	syard.vals.push_back(desugar(e->subexps[0], lenv));
 
 	for (size_t i = 1, len = e->subexps.size(); i < len; i += 2)
-		syard.process(e->subexps[i], e->subexps[i + 1]);
+		syard.process(e->subexps[i], desugar(e->subexps[i + 1], lenv));
 
 	return syard.result();
 }
