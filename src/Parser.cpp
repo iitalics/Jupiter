@@ -33,9 +33,9 @@ ExpPtr parseExp (Lexer& lex)
 
 	if (vals.size() == 1)
 		return vals[0];
-	else if (vals.size() == 3)
-		return Exp::make(eCall, { vals[1], vals[0], vals[2] },
-							spStart + spEnd);
+//	else if (vals.size() == 3)
+//		return Exp::make(eCall, { vals[1], vals[0], vals[2] },
+//							spStart + spEnd);
 	else
 		return Exp::make(eInfix, vals, spStart + spEnd);
 }
@@ -164,9 +164,17 @@ ExpPtr parseCond (Lexer& lex)
 	if (lex.current() == tElse)
 	{
 		lex.advance();
-		expElse = blockRequired ?
-					parseBlock(lex) :
-					parseExp(lex);
+		if (blockRequired)
+		{
+			// if {} else {}
+			// if {} else if ...
+			
+			if (lex.current() != tIf)
+				lex.expect(tLCurl);
+			expElse = parseExp(lex);
+		}
+		else
+			expElse = parseExp(lex);
 
 		spEnd = expElse->span;
 	}
