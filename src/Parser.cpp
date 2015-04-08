@@ -290,7 +290,7 @@ TyPtr parseTypeList (Lexer& lex)
 
 	return Ty::makeConcrete("List", { inner });
 }
-static void parseTypeTupleRaw (Lexer& lex, TyList& out)
+static void parseTypeTupleRaw (Lexer& lex, std::vector<TyPtr>& out)
 {
 	lex.eat(tLParen);
 	while (lex.current() != tRParen)
@@ -306,7 +306,7 @@ static void parseTypeTupleRaw (Lexer& lex, TyList& out)
 }
 TyPtr parseTypeTuple (Lexer& lex)
 {
-	TyList inners;
+	std::vector<TyPtr> inners;
 	parseTypeTupleRaw(lex, inners);
 
 	if (lex.current() == tArrow)
@@ -324,7 +324,7 @@ TyPtr parseTypeTuple (Lexer& lex)
 }
 TyPtr parseTypeConcrete (Lexer& lex)
 {
-	TyList sub;
+	std::vector<TyPtr> sub;
 	auto kind = lex.eat(tIdent).str;
 
 	if (lex.current() == tLParen)

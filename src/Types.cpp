@@ -5,7 +5,7 @@
 
 
 Ty::Ty (TyKind k)
-	: kind(k), name(""), idx(-1) {}
+	: kind(k), subtypes(), name(""), idx(-1) {}
 
 Ty::~Ty () {}
 
@@ -43,14 +43,15 @@ void Ty::_string (std::ostringstream& ss) const
 	{
 	case tyConcrete:
 		ss << name;
-		if (subtypes.size() > 0)
+		if (!subtypes.nil())
 		{
+			size_t i = 0;
 			ss << '(';
-			for (size_t i = 0, len = subtypes.size(); i < len; i++)
+			for (auto t : subtypes)
 			{
-				if (i > 0)
+				if (i++ > 0)
 					ss << ", ";
-				subtypes[i]->_string(ss);
+				t->_string(ss);
 			}
 			ss << ')';
 		}

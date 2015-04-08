@@ -5,7 +5,7 @@
 
 class Ty;
 using TyPtr = std::shared_ptr<Ty>;
-using TyList = std::vector<TyPtr>;
+using TyList = list<TyPtr>;
 
 
 enum TyKind
