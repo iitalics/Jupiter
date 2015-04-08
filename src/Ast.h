@@ -44,6 +44,7 @@ class Exp
 public:
 	using cExpList = const ExpList&;
 
+	// make (kind, subexps, span)
 	inline static ExpPtr
 	make (ExpKind k = eInvalid,
 			cExpList l = {},
@@ -52,6 +53,7 @@ public:
 		return std::make_shared<Exp>(k, l, s);
 	}
 
+	// make (kind, data, subexps, span)
 	template <typename T>
 	inline static ExpPtr
 	make (ExpKind k, T d,
@@ -59,6 +61,27 @@ public:
 			const Span& s = Span())
 	{
 		return std::make_shared<Exp>(k, d, l, s);
+	}
+
+	// make (kind, str, data, subexps, span)
+	template <typename T>
+	inline static ExpPtr
+	make (ExpKind k, const std::string& str, T d,
+			cExpList l = {},
+			const Span& s = Span())
+	{
+		return ExpPtr(
+			(new Exp(k, d, l, s))->setString(str));
+	}
+
+	// make (kind, type, str, subexps, span)
+	inline static ExpPtr
+	make (ExpKind k, TyPtr ty, const std::string& str,
+			cExpList l = {},
+			const Span& s = Span())
+	{
+		return ExpPtr(
+			(new Exp(k, str, l, s))->setType(ty));
 	}
 
 
@@ -105,13 +128,15 @@ public:
 
 	const std::string& getString () const { return _strData; }
 	const Sig& getSig () const { return *(Sig*)_primData; }
+	TyPtr getType () const { return _type; }
 
 	template <typename T>
 	T get () const { return *(T*)_primData; }
 
-	inline void setString (const std::string& s) { _strData = s; }
+	inline Exp* setString (const std::string& s) { _strData = s; return this; }
+	inline Exp* setType (TyPtr t) { _type = t; return this; }
 	template <typename T>
-	inline void set (T t) { *(T*)_primData = t; }
+	inline Exp* set (T t) { *(T*)_primData = t; return this; }
 
 	inline bool is (ExpKind k) const { return kind == k; }
 
@@ -121,6 +146,7 @@ private:
 	static void _indent (std::ostringstream& ss, int ind);
 	void _string (std::ostringstream& ss, bool tag, int incr, int ind) const;
 
+	TyPtr _type;
 	std::string _strData;
 	char _primData[16];
 };

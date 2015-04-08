@@ -92,6 +92,8 @@ struct Span
 		: file(_file), start(_start), end(_start) {}
 
 	inline int length () const { return end - start; }
+	inline bool invalid () const
+	{ return length() <= 0 || file == nullptr; }
 
 	// combine spans 
 	Span operator+ (const Span& other) const;

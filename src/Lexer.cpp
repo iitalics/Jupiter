@@ -412,6 +412,9 @@ std::runtime_error Span::die (const std::string& msg) const
 
 Span Span::operator+ (const Span& other) const
 {
+	if (invalid()) return other;
+	if (other.invalid()) return *this;
+	
 	return Span(file, std::min(start, other.start),
 		              std::max(end, other.end));
 }

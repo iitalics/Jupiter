@@ -11,10 +11,8 @@ struct Desugar
 
 	GlobEnvPtr global;
 
-	ExpPtr desugarFunction (ExpPtr exp, SigPtr sig);
 	ExpPtr desugar (ExpPtr exp, LocEnvPtr lenv);
 	ExpPtr desugarSubexps (ExpPtr e, LocEnvPtr lenv);
-
 	ExpPtr desugarVar (ExpPtr e, LocEnvPtr lenv);
 	ExpPtr desugarTuple (ExpPtr e, LocEnvPtr lenv);
 	ExpPtr desugarCall (ExpPtr e, LocEnvPtr lenv);
@@ -22,4 +20,6 @@ struct Desugar
 	ExpPtr desugarCond (ExpPtr e, LocEnvPtr lenv);
 	ExpPtr desugarBlock (ExpPtr e, LocEnvPtr lenv);
 	ExpPtr desugarLet (ExpPtr e, LocEnvPtr lenv);
+
+	TyPtr desugar (TyPtr ty);
 };

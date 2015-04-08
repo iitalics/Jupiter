@@ -68,7 +68,7 @@ ExpPtr parseTermPrefix (Lexer& lex)
 
 	case tIdent:
 		tok = lex.advance();
-		return Exp::make(eVar, tok.str, {}, tok.span);
+		return Exp::make(eVar, tok.str, int(-1), {}, tok.span);
 
 	case tLParen:
 		return parseTuple(lex);
@@ -237,16 +237,26 @@ ExpPtr parseLet (Lexer& lex)
 	Span spStart, spEnd;
 	std::string var;
 	ExpPtr init;
+	TyPtr ty;
 
-	// 'let' <id> '=' <exp> ';'
+	// 'let' <id> [':' <ty>] '=' <exp> ';'
 
 	spStart = lex.eat(tLet).span;
 	var = lex.eat(tIdent).str;
+
+	if (lex.current() == tColon)
+	{
+		lex.advance();
+		ty = parseType(lex);
+	}
+	else
+		ty = Ty::makeWildcard();
+
 	lex.eat(tEqual);
 	init = parseExp(lex);
 	spEnd = init->span;
 
-	return Exp::make(eLet, var, { init }, spStart + spEnd);
+	return Exp::make(eLet, ty, var, { init }, spStart + spEnd);
 }
 
 

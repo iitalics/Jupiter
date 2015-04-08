@@ -38,10 +38,17 @@ ExpPtr Desugar::desugarSubexps (ExpPtr e, LocEnvPtr lenv)
 	if (e->subexps.size() == 0)
 		return e;
 	else
-		return e->mapSubexps([=] (ExpPtr e2) 
+	{
+		auto e2 = e->mapSubexps([=] (ExpPtr e2) 
 		{
 			return desugar(e2, lenv);
 		});
+
+		if (e2->getType() != nullptr)
+			e2->setType(desugar(e2->getType()));
+
+		return e2;
+	}
 }
 
 ExpPtr Desugar::desugarVar (ExpPtr e, LocEnvPtr lenv)
@@ -49,9 +56,9 @@ ExpPtr Desugar::desugarVar (ExpPtr e, LocEnvPtr lenv)
 	auto var = lenv->get(e->getString());
 
 	if (var == nullptr)
-		e->set<int>(0); // TODO: look through global env?
+		e->set<int>(-1); // TODO: look through global env?
 	else
-		e->set<int>(var->idx + 1);
+		e->set<int>(var->idx);
 
 	return e;
 }
@@ -169,4 +176,15 @@ ExpPtr Desugar::desugarInfix (ExpPtr e, LocEnvPtr lenv)
 		syard.process(e->subexps[i], desugar(e->subexps[i + 1], lenv));
 
 	return syard.result();
+}
+
+
+
+
+
+
+
+TyPtr Desugar::desugar (TyPtr ty)
+{
+	return ty;
 }

@@ -3,7 +3,7 @@
 #include <cstring>
 
 Exp::Exp (ExpKind _kind, cExpList sub, const Span& sp)
-	: kind(_kind), subexps(sub), span(sp), _strData("")
+	: kind(_kind), subexps(sub), span(sp), _type(nullptr), _strData("")
 {
 	memset(_primData, 0, sizeof(_primData));
 }
@@ -25,13 +25,13 @@ Exp::~Exp ()
 
 ExpPtr Exp::withSpan (const Span& newspan) const
 {
-	auto res = make(kind, _strData, subexps, newspan);
+	auto res = make(kind, _type, _strData, subexps, newspan);
 	memcpy(res->_primData, _primData, sizeof(_primData));
 	return res;
 }
 ExpPtr Exp::withSubexps (cExpList newsub) const
 {
-	auto res = make(kind, _strData, newsub, span);
+	auto res = make(kind, _type, _strData, newsub, span);
 	memcpy(res->_primData, _primData, sizeof(_primData));
 	return res;
 }
@@ -121,8 +121,8 @@ void Exp::_string (std::ostringstream& ss, bool tag, int increase, int ind) cons
 		subexps[2]->_string(ss, tag, increase, ind);
 		break;
 	
-	case eLet:			// 	std::string, Type?
-		ss << "let " << _strData << " = ";
+	case eLet:
+		ss << "let " << _strData << " : " << _type->string() << " = ";
 		subexps[0]->_string(ss, tag, increase, ind);
 		break;
 
