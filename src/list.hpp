@@ -48,9 +48,9 @@ public:
 			_pair = std::make_shared<pair>(*it, _pair);
 	}
 
-	~list () {}
+	inline ~list () {}
 
-	bool nil () const { return _pair == nullptr; }
+	inline bool nil () const { return _pair == nullptr; }
 	T head () const
 	{
 		if (nil())
@@ -70,14 +70,22 @@ public:
 	iterator end () const { return iterator(nullptr); }
 
 
-	size_t size () const
+	size_t length () const
 	{
 		size_t n = 0;
 		for (auto p = _pair; p != nullptr; p = p->tail)
 			n++;
 		return n;
 	}
-
+	T ref (size_t i) const
+	{
+		if (nil())
+			throw std::runtime_error("index out of bounds");
+		else if (i == 0)
+			return head();
+		else // please tail call this
+			return tail().ref(i - 1);
+	}
 	list<T> reverse () const
 	{
 		auto p = pairPtr(nullptr);
@@ -85,7 +93,6 @@ public:
 			p = std::make_shared<pair>(t, p);
 		return list(p);
 	}
-
 	template <typename U = list<T>, typename F>
 	U fold (F fn, U z) const
 	{
@@ -93,15 +100,30 @@ public:
 			z = fn(z, x);
 		return z;
 	}
-
 	template <typename U = T, typename TF>
 	list<U> map (TF transform) const
 	{
-		return fold([=] (list<U> lst, T val)
-			{
-				return list(transform(val), lst);
-			}, list<U>()).reverse();
+		std::vector<U> res;
+		res.reserve(size());
+		for (auto x : *this)
+			res.push_back(transform(x));
+		return list<U>(res);
 	}
+	template <typename PF>
+	list<T> filter (PF pred) const
+	{
+		std::vector<T> res;
+		for (auto x : *this)
+			if (pred(x))
+				res.push_back(x);
+		return list<T>(res);
+	}
+
+	// std::vector-feeling method aliases
+	inline bool empty () const { return nil(); }
+	inline size_t size () const { return length(); }
+	inline T front () const { return head(); }
+	inline T operator[] (size_t i) const { return ref(i); }
 private:
 	explicit list (const pairPtr& p)
 		: _pair(p) {}
