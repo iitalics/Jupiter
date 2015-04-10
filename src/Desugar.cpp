@@ -221,3 +221,27 @@ TyPtr Desugar::desugar (TyPtr ty)
 		return ty;
 	}
 }
+
+
+
+SigPtr Desugar::desugar (SigPtr sig)
+{
+	Sig::ArgList args;
+	args.reserve(sig->args.size());
+
+	for (size_t i = 0, len = sig->args.size(); i < len; i++)
+		args.push_back(Sig::Arg(sig->args[i].first, 
+							desugar(sig->args[i].second)));
+
+	return std::make_shared<Sig>(args, sig->span);
+}
+void Desugar::desugar (FuncDecl& func)
+{
+	func.signature = desugar(func.signature);
+
+	auto env = LocEnv::make();
+	for (auto& a : func.signature->args)
+		env->newVar(a.first, a.second);
+
+	func.body = desugar(func.body, env);
+}

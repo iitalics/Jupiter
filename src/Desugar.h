@@ -14,6 +14,9 @@ struct Desugar
 	Subs subs;
 	std::map<std::string, TyPtr> polynames;
 
+	void desugar (FuncDecl& func);
+	SigPtr desugar (SigPtr sig);
+
 	ExpPtr desugar (ExpPtr exp, LocEnvPtr lenv);
 	ExpPtr desugarSubexps (ExpPtr e, LocEnvPtr lenv);
 	ExpPtr desugarVar (ExpPtr e, LocEnvPtr lenv);

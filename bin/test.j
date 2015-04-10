@@ -1,4 +1,4 @@
-func foldl (f : (\a, \b) -> \a, z : \a, a : [\b]) {
+func foldl (f : (\u, \t) -> \u, z : \u, a : [\t]) {
 	if nil?(a) {
 		z
 	} else {

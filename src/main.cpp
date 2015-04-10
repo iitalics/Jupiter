@@ -49,6 +49,9 @@ static int Main (std::vector<std::string>&& args)
 			if (status == Parse::ParsedType)
 				continue;
 
+			Desugar des(env);
+			des.desugar(func);
+
 			std::cout
 				<< "name: " << func.name << std::endl
 				<< " sig: " << func.signature->string() << std::endl

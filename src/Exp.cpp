@@ -116,9 +116,10 @@ void Exp::_string (std::ostringstream& ss, bool tag, int increase, int ind) cons
 		break;
 
 	case eVar:
-		ss << _strData;
-	//	if (get<int>() != -1)
-	//		ss << "{" << get<int>() << "}";
+		if (get<int>() != -1)
+			ss << "#var" << get<int>();
+		else
+			ss << _strData;
 		break;
 
 	case eTuple:

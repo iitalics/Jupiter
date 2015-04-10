@@ -21,8 +21,9 @@ struct Sig
 	ArgList args;
 	Span span;
 
-	inline Sig (const ArgList& _args = {})
-		: args(_args) {}
+	inline Sig (const ArgList& _args = {},
+				const Span& sp = Span())
+		: args(_args), span(sp) {}
 
 	TyList tyList () const;
 	std::string string () const;
