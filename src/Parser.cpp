@@ -3,6 +3,113 @@
 namespace Parse
 {
 
+void parseVar (Lexer& lex, std::string& name, TyPtr& ty, Span& sp)
+{
+	name = lex.eat(tIdent).str;
+
+	if (lex.current() == tColon)
+	{
+		lex.advance();
+		ty = parseType(lex);
+	}
+	else
+		ty = Ty::makeWildcard();
+}
+void parseVar (Lexer& lex, std::string& name, TyPtr& ty)
+{
+	Span dummmy;
+	parseVar(lex, name, ty, dummmy);
+}
+static void parseVar (Lexer& lex, SigPtr sig)
+{
+	std::string name;
+	TyPtr ty;
+	Span sp;
+
+	parseVar(lex, name, ty, sp);
+
+	for (auto& a : sig->args)
+		if (a.first == name)
+		{
+			std::ostringstream ss;
+			ss << "variable '" << name << "' already declared in signature";
+			throw sp.die(ss.str());
+		}
+
+	sig->args.push_back(Sig::Arg { name, ty });
+	sig->span = sig->span + sp;
+}
+SigPtr parseSig (Lexer& lex, bool anything)
+{
+	auto res = std::make_shared<Sig>();
+	
+	// sig := (<var> (',' <var>)*)?
+
+	for (;; anything = true)
+	{
+		if (anything)
+			lex.expect(tIdent);
+		else if (lex.current() != tIdent)
+			break;
+
+		parseVar(lex, res);
+
+		if (lex.current() == tComma)
+			lex.advance();
+		else
+			break;
+	}
+
+	return res;
+}
+SigPtr parseSigParens (Lexer& lex)
+{
+	Span spStart, spEnd;
+
+	spStart = lex.eat(tLParen).span;
+	auto res = parseSig(lex, false);
+	spEnd = lex.eat(tRParen).span;
+
+	res->span = spStart + spEnd;
+	return res;
+}
+
+
+
+
+
+Parsed parseToplevel (Lexer& lex, FuncDecl& outf,
+									TypeDecl& outt)
+{
+	if (parseFuncDecl(lex, outf))
+		return ParsedFunc;
+	else if (parseTypeDecl(lex, outt))
+		return ParsedType;
+	else
+		return Nothing;
+}
+bool parseTypeDecl (Lexer& lex, TypeDecl& out)
+{
+	return false;
+}
+
+bool parseFuncDecl (Lexer& lex, FuncDecl& out)
+{
+	if (lex.current() != tFunc)
+		return false;
+
+	lex.advance();
+
+	out.name = lex.eat(tIdent).str;
+	out.signature = parseSigParens(lex);
+	out.body = parseBlock(lex);
+	return true;
+}
+
+
+
+
+
 ExpPtr parseExp (Lexer& lex)
 {
 	Span spStart, spEnd;
@@ -235,28 +342,19 @@ void parseBlockExp (Lexer& lex, ExpList& list)
 ExpPtr parseLet (Lexer& lex)
 {
 	Span spStart, spEnd;
-	std::string var;
-	ExpPtr init;
+	std::string name;
 	TyPtr ty;
+	ExpPtr init;
 
-	// 'let' <id> [':' <ty>] '=' <exp> ';'
+	// 'let' <var> '=' <exp> ';'
 
 	spStart = lex.eat(tLet).span;
-	var = lex.eat(tIdent).str;
-
-	if (lex.current() == tColon)
-	{
-		lex.advance();
-		ty = parseType(lex);
-	}
-	else
-		ty = Ty::makeWildcard();
-
+	parseVar(lex, name, ty);
 	lex.eat(tEqual);
 	init = parseExp(lex);
 	spEnd = init->span;
 
-	return Exp::make(eLet, ty, var, { init }, spStart + spEnd);
+	return Exp::make(eLet, ty, name, { init }, spStart + spEnd);
 }
 
 

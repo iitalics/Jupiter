@@ -52,7 +52,9 @@ public:
 	// utility functions
 
 	OpPrecedence getPrecedence (const std::string& oper) const;
-	GlobFuncPtr getFunc (const std::string& name);
+	GlobFuncPtr getFunc (const std::string& name) const;
+
+	GlobFuncPtr addFunc (const std::string& name);
 };
 
 

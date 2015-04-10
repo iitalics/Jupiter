@@ -62,7 +62,7 @@ void Ty::_string (std::ostringstream& ss) const
 				ss << 't' << (idx - 10);
 		}
 		else
-			ss << name;
+			ss << '\"' << name << '\"';
 		break;
 
 	case tyOverloaded:

@@ -7,16 +7,25 @@
 #include <algorithm>
 
 class Exp;
-class Sig;
+struct Sig;
 using ExpPtr = std::shared_ptr<Exp>;
 using SigPtr = std::shared_ptr<Sig>;
 using ExpList = std::vector<ExpPtr>;
 
 
-class Sig
+struct Sig
 {
-	std::vector<std::string> names;
-	TyList types;
+	using Arg = std::pair<std::string, TyPtr>;
+	using ArgList = std::vector<Arg>;
+
+	ArgList args;
+	Span span;
+
+	inline Sig (const ArgList& _args = {})
+		: args(_args) {}
+
+	TyList tyList () const;
+	std::string string () const;
 };
 
 
@@ -36,7 +45,7 @@ enum ExpKind
 	eCond,
 	eLambda,		// 	Sig*
 	eBlock,
-	eLet,			// 	std::string + Typ
+	eLet,			// 	std::string, int
 };
 
 class Exp
@@ -153,11 +162,37 @@ private:
 
 
 
+struct FuncDecl
+{
+	std::string name;
+	SigPtr signature;
+	ExpPtr body;
+};
+
+struct TypeDecl {};
 
 
 
 namespace Parse
 {
+
+enum Parsed
+{
+	Nothing,
+	ParsedFunc,
+	ParsedType,
+};
+
+bool parseFuncDecl (Lexer& lex, FuncDecl& out);
+bool parseTypeDecl (Lexer& lex, TypeDecl& out);
+Parsed parseToplevel (Lexer& lex,
+						FuncDecl& outf,
+						TypeDecl& outt);
+
+void parseVar (Lexer& lex, std::string& name, TyPtr& ty, Span&);
+void parseVar (Lexer& lex, std::string& name, TyPtr& ty);
+SigPtr parseSig (Lexer& lex, bool requireAnything = true);
+SigPtr parseSigParens (Lexer& lex);
 
 ExpPtr parseExp (Lexer& lex);
 ExpPtr parseTerm (Lexer& lex);

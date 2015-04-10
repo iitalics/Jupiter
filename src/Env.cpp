@@ -6,6 +6,7 @@
 
 
 
+// ------------------------------------- GlobEnv -------------------------------------//
 
 GlobEnv::OpPrecedence GlobEnv::getPrecedence (const std::string& operName) const
 {
@@ -16,17 +17,26 @@ GlobEnv::OpPrecedence GlobEnv::getPrecedence (const std::string& operName) const
 	return OpPrecedence(std::string(operName), 0, Assoc::Left);
 }
 
-GlobFuncPtr GlobEnv::getFunc (const std::string& name)
+GlobFuncPtr GlobEnv::getFunc (const std::string& name) const
 {
 	for (auto& f : functions)
 		if (f->name == name)
 			return f;
 
-	auto f = std::make_shared<GlobFunc>(name);
-	functions.push_back(f);
-	return f;
+	return nullptr;
 }
 
+GlobFuncPtr GlobEnv::addFunc (const std::string& name)
+{
+	auto f = getFunc(name);
+	if (f == nullptr)
+	{
+		f = std::make_shared<GlobFunc>(name);
+		functions.push_back(f);
+	}
+
+	return f;
+}
 
 
 

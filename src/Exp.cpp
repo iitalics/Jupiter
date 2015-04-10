@@ -2,6 +2,37 @@
 #include <iostream>
 #include <cstring>
 
+
+TyList Sig::tyList () const
+{
+	auto res = TyList();
+	for (auto it = args.rbegin(); it != args.rend(); it++)
+		res = TyList(it->second, res);
+	return res;
+}
+std::string Sig::string () const
+{
+	std::ostringstream ss;
+
+	ss << "(";
+	bool first = true;
+	for (auto& a : args)
+	{
+		if (first)
+			first = false;
+		else
+			ss << ", ";
+
+		ss << a.first << " : " << a.second->string();
+	}
+	ss << ")";
+
+	return ss.str();
+}
+
+
+
+
 Exp::Exp (ExpKind _kind, cExpList sub, const Span& sp)
 	: kind(_kind), subexps(sub), span(sp), _type(nullptr), _strData("")
 {

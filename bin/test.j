@@ -1,5 +1,7 @@
-{
-	let foo : (\x, \x) -> _ = +;
-
-	foo(1, 2)
+func foldl (f : (\a, \b) -> \a, z : \a, a : [\b]) {
+	if nil?(a) {
+		z
+	} else {
+		foldl(f, f(z, hd(a)), tl(a))
+	}
 }

@@ -39,17 +39,23 @@ static int Main (std::vector<std::string>&& args)
 	{
 		Lexer lex;
 		lex.openFile("test.j");
+		Parse::Parsed status;
+		FuncDecl func;
+		TypeDecl type;
 
-		auto e = Parse::parseExp(lex);
+		while ((status = Parse::parseToplevel(lex, func, type))
+					!= Parse::Nothing)
+		{
+			if (status == Parse::ParsedType)
+				continue;
+
+			std::cout
+				<< "name: " << func.name << std::endl
+				<< " sig: " << func.signature->string() << std::endl
+				<< "body: " << std::endl << func.body->string() << std::endl;
+		}
+
 		lex.expect(tEOF);
-
-		std::cout << e->string(true) << std::endl
-		          << "==============================" << std::endl;
-
-		Desugar des(env);
-		auto ed = des.desugar(e, LocEnv::make());
-
-		std::cout << ed->string() << std::endl;
 
 		return 0;
 	}
