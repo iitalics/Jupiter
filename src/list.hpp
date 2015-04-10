@@ -68,8 +68,42 @@ public:
 
 	iterator begin () const { return iterator(_pair); }
 	iterator end () const { return iterator(nullptr); }
+
+
+	size_t size () const
+	{
+		size_t n = 0;
+		for (auto p = _pair; p != nullptr; p = p->tail)
+			n++;
+		return n;
+	}
+
+	list<T> reverse () const
+	{
+		auto p = pairPtr(nullptr);
+		for (auto t : *this)
+			p = std::make_shared<pair>(t, p);
+		return list(p);
+	}
+
+	template <typename U = list<T>, typename F>
+	U fold (F fn, U z) const
+	{
+		for (auto x : *this)
+			z = fn(z, x);
+		return z;
+	}
+
+	template <typename U = T, typename TF>
+	list<U> map (TF transform) const
+	{
+		return fold([=] (list<U> lst, T val)
+			{
+				return list(transform(val), lst);
+			}, list<U>()).reverse();
+	}
 private:
-	list (const pairPtr& p)
+	explicit list (const pairPtr& p)
 		: _pair(p) {}
 
 	pairPtr _pair;
