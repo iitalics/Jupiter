@@ -16,15 +16,10 @@ TyPtr Ty::makeConcrete (const std::string& t, const TyList& sub)
 	ty->name = t;
 	return ty;
 }
-TyPtr Ty::makePoly (int idx)
+TyPtr Ty::makePoly (int idx, const std::string& name)
 {
 	auto ty = std::make_shared<Ty>(tyPoly);
 	ty->idx = idx;
-	return ty;
-}
-TyPtr Ty::makePolyNamed (const std::string& name)
-{
-	auto ty = std::make_shared<Ty>(tyPolyNamed);
 	ty->name = name;
 	return ty;
 }
@@ -59,13 +54,15 @@ void Ty::_string (std::ostringstream& ss) const
 
 	case tyPoly:
 		ss << '\\';
-		if (idx < 10)
-			ss << char('a' + idx);
+		if (name.empty())
+		{
+			if (idx < 10)
+				ss << char('a' + idx);
+			else
+				ss << 't' << (idx - 10);
+		}
 		else
-			ss << 't' << (idx - 10);
-		break;
-	case tyPolyNamed:
-		ss << '\\' << name;
+			ss << name;
 		break;
 
 	case tyOverloaded:

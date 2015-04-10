@@ -56,10 +56,16 @@ ExpPtr Desugar::desugarVar (ExpPtr e, LocEnvPtr lenv)
 	auto var = lenv->get(e->getString());
 
 	if (var == nullptr)
-		e->set<int>(-1); // TODO: look through global env?
+		return desugarGlobal(e);
 	else
+	{
 		e->set<int>(var->idx);
-
+		return e;
+	}
+}
+ExpPtr Desugar::desugarGlobal (ExpPtr e)
+{
+	e->set<int>(-1);
 	return e;
 }
 
@@ -173,7 +179,8 @@ ExpPtr Desugar::desugarInfix (ExpPtr e, LocEnvPtr lenv)
 	syard.vals.push_back(desugar(e->subexps[0], lenv));
 
 	for (size_t i = 1, len = e->subexps.size(); i < len; i += 2)
-		syard.process(e->subexps[i], desugar(e->subexps[i + 1], lenv));
+		syard.process(desugarGlobal(e->subexps[i]),
+			          desugar(e->subexps[i + 1], lenv));
 
 	return syard.result();
 }
@@ -186,5 +193,31 @@ ExpPtr Desugar::desugarInfix (ExpPtr e, LocEnvPtr lenv)
 
 TyPtr Desugar::desugar (TyPtr ty)
 {
-	return ty;
+	switch (ty->kind)
+	{
+	case tyWildcard:
+		return subs.newType();
+
+	case tyConcrete:
+		if (!ty->subtypes.nil())
+			return Ty::makeConcrete(ty->name,
+					ty->subtypes.map([&] (TyPtr t2) { return desugar(t2); }));
+		else
+			return ty;
+
+	case tyPoly:
+		if (!ty->name.empty())
+		{
+			auto it = polynames.find(ty->name);
+			if (it == polynames.end())
+			{
+				auto t2 = subs.newType();
+				return (polynames[ty->name] = t2);
+			}
+			else
+				return it->second;
+		}
+	default:
+		return ty;
+	}
 }

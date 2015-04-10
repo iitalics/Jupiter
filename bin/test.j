@@ -1,4 +1,5 @@
 {
-	let a = 3;
-	println(a + 1 + 2)
+	let foo : (\x, \x) -> _ = +;
+
+	foo(1, 2)
 }

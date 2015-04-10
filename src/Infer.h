@@ -12,6 +12,9 @@ struct Subs
 	std::vector<TyPtr> aliases;
 
 	TyPtr newType ();
-	TyPtr add (int poly, TyPtr alias);
+	void set (int poly, TyPtr alias);
 	TyPtr apply (TyPtr ty) const;
+
+private:
+	TyPtr applyRule (int poly, TyPtr alias, TyPtr ty) const;
 };

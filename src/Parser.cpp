@@ -19,7 +19,7 @@ ExpPtr parseExp (Lexer& lex)
 		{
 			// <op>
 			tok = lex.advance();
-			e = Exp::make(eVar, tok.str, {}, tok.span);
+			e = Exp::make(eVar, tok.str, int(-1), {}, tok.span);
 			vals.push_back(e);
 
 			// <term>
@@ -290,7 +290,7 @@ TyPtr parseTypePoly (Lexer& lex)
 	lex.eat(tLambda);
 	auto name = lex.eat(tIdent).str;
 
-	return Ty::makePolyNamed(name);
+	return Ty::makePoly(-1, name);
 }
 TyPtr parseTypeList (Lexer& lex)
 {
