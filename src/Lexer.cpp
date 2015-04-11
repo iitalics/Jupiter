@@ -393,7 +393,7 @@ Token Lexer::eat (int tok1, int tok2)
 
 
 
-
+// corin is not bae
 
 
 
@@ -428,7 +428,7 @@ bool Token::isOperator () const
 bool Token::operator== (int otherTok) const
 {
 	if (otherTok == tNumber)
-		return tok == tNumberReal || // blaze it
+		return tok == tNumberReal ||
 	           tok == tNumberInt;
 	else
 		return tok == otherTok;
