@@ -168,27 +168,25 @@ struct FuncDecl
 	std::string name;
 	SigPtr signature;
 	ExpPtr body;
+	Span span;
 };
 
 struct TypeDecl {};
 
+struct GlobProto
+{
+	std::vector<FuncDecl> funcs;
+};
 
 
 namespace Parse
 {
 
-enum Parsed
-{
-	Nothing,
-	ParsedFunc,
-	ParsedType,
-};
 
-bool parseFuncDecl (Lexer& lex, FuncDecl& out);
-bool parseTypeDecl (Lexer& lex, TypeDecl& out);
-Parsed parseToplevel (Lexer& lex,
-						FuncDecl& outf,
-						TypeDecl& outt);
+FuncDecl parseFuncDecl (Lexer& lex);
+TypeDecl parseTypeDecl (Lexer& lex);
+bool parseToplevel (Lexer& lex, GlobProto& proto);
+GlobProto parseToplevel (Lexer& lex);
 
 void parseVar (Lexer& lex, std::string& name, TyPtr& ty, Span&);
 void parseVar (Lexer& lex, std::string& name, TyPtr& ty);

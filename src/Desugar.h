@@ -5,16 +5,16 @@
 
 struct Desugar
 {
-	explicit inline Desugar (GlobEnvPtr _glob)
-		: global(_glob) {}
+	explicit inline Desugar (GlobEnv& _glob)
+		: global(_glob) {} 
 
 	~Desugar ();
 
-	GlobEnvPtr global;
+	GlobEnv& global;
 	Subs subs;
 	std::map<std::string, TyPtr> polynames;
 
-	void desugar (FuncDecl& func);
+	FuncDecl desugar (const FuncDecl& func);
 	SigPtr desugar (SigPtr sig);
 
 	ExpPtr desugar (ExpPtr exp, LocEnvPtr lenv);

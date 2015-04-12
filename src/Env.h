@@ -7,6 +7,7 @@ class FuncOverload;
 struct FuncInstance;
 class GlobFunc;
 class LocEnv;
+class GlobEnv;
 using GlobFuncPtr = std::shared_ptr<GlobFunc>;
 using LocEnvPtr = std::shared_ptr<LocEnv>;
 
@@ -14,8 +15,9 @@ using LocEnvPtr = std::shared_ptr<LocEnv>;
 class FuncOverload
 {
 public:
+	GlobEnv& env;
 	SigPtr signature;
-	ExpPtr source;
+	ExpPtr body;
 };
 
 struct FuncInstance
@@ -31,6 +33,8 @@ class GlobFunc
 public:
 	explicit inline GlobFunc(const std::string& _name)
 		: name(_name) {}
+
+	
 
 	std::string name;
 	std::vector<FuncOverload> overloads;

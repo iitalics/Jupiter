@@ -1,4 +1,5 @@
-#include "Ast.h"
+#include "Desugar.h"
+
 
 struct SYard
 {
@@ -67,3 +68,5 @@ ExpPtr Desugar::desugarInfix (ExpPtr e, LocEnvPtr lenv)
 
 	return syard.result();
 }
+
+

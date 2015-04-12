@@ -25,37 +25,42 @@ static int Main (std::vector<std::string>&& args)
 		return 0;
 	}
 
-	auto env = std::make_shared<GlobEnv>();
+	GlobEnv env;
 	using Op = GlobEnv::OpPrecedence;
 
-	env->operators.push_back(Op("+", 7, Assoc::Left));
-	env->operators.push_back(Op("-", 7, Assoc::Left));
-	env->operators.push_back(Op("*", 6, Assoc::Left));
-	env->operators.push_back(Op("/", 6, Assoc::Left));
-	env->operators.push_back(Op("^", 5, Assoc::Right));
-	env->operators.push_back(Op("::", 4, Assoc::Right));
+	env.operators.push_back(Op("+", 7, Assoc::Left));
+	env.operators.push_back(Op("-", 7, Assoc::Left));
+	env.operators.push_back(Op("*", 6, Assoc::Left));
+	env.operators.push_back(Op("/", 6, Assoc::Left));
+	env.operators.push_back(Op("^", 5, Assoc::Right));
+	env.operators.push_back(Op("::", 4, Assoc::Right));
 
 	try
 	{
 		Lexer lex;
 		lex.openFile("test.j");
-		Parse::Parsed status;
-		FuncDecl func;
-		TypeDecl type;
+		
+		auto proto = Parse::parseToplevel(lex);
 
-		while ((status = Parse::parseToplevel(lex, func, type))
-					!= Parse::Nothing)
+		for (auto& fn : proto.funcs)
+			env.addFunc(fn.name);
+
+		for (auto& fn : proto.funcs)
 		{
-			if (status == Parse::ParsedType)
-				continue;
-
 			Desugar des(env);
-			des.desugar(func);
+			fn = des.desugar(fn);
 
-			std::cout
-				<< "name: " << func.name << std::endl
-				<< " sig: " << func.signature->string() << std::endl
-				<< "body: " << std::endl << func.body->string() << std::endl;
+			env.getFunc(fn.name)->overloads.push_back({
+					env,
+					fn.signature, 
+					fn.body
+				});
+		}
+
+		for (auto& fn : proto.funcs)
+		{
+			std::cout << "func " << fn.name << " " << fn.signature->string() << std::endl
+			          << fn.body->string() << std::endl;
 		}
 
 		lex.expect(tEOF);

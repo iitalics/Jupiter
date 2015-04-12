@@ -78,32 +78,43 @@ SigPtr parseSigParens (Lexer& lex)
 
 
 
-Parsed parseToplevel (Lexer& lex, FuncDecl& outf,
-									TypeDecl& outt)
+FuncDecl parseFuncDecl (Lexer& lex)
 {
-	if (parseFuncDecl(lex, outf))
-		return ParsedFunc;
-	else if (parseTypeDecl(lex, outt))
-		return ParsedType;
-	else
-		return Nothing;
-}
-bool parseTypeDecl (Lexer& lex, TypeDecl& out)
-{
-	return false;
+	Span spStart, spEnd;
+
+	spStart = lex.eat(tFunc).span;
+	auto name = lex.eat(tIdent).str;
+	auto sig = parseSigParens(lex);
+	auto body = parseBlock(lex);
+	spEnd = sig->span;
+
+	return FuncDecl
+		{
+			.name = name,
+			.signature = sig,
+			.body = body,
+			.span = spStart + spEnd
+		};
 }
 
-bool parseFuncDecl (Lexer& lex, FuncDecl& out)
+bool parseToplevel (Lexer& lex, GlobProto& proto)
 {
-	if (lex.current() != tFunc)
+	switch (lex.current().tok)
+	{
+	case tFunc:
+		proto.funcs.push_back(parseFuncDecl(lex));
+		return true;
+
+	default:
 		return false;
+	}
+}
 
-	lex.advance();
-
-	out.name = lex.eat(tIdent).str;
-	out.signature = parseSigParens(lex);
-	out.body = parseBlock(lex);
-	return true;
+GlobProto parseToplevel (Lexer& lex)
+{
+	GlobProto res;
+	while (parseToplevel(lex, res)) ;
+	return res;
 }
 
 
