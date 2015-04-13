@@ -120,7 +120,8 @@ ExpPtr Desugar::desugarLet (ExpPtr e, LocEnvPtr lenv)
 	auto res = desugarSubexps(e, lenv);
 	
 	// letrec?
-	lenv->newVar(e->getString());
+	auto newvar = lenv->newVar(e->getString());
+	res->set<int>(newvar->idx);
 	return res;
 }
 

@@ -154,7 +154,13 @@ void Exp::_string (std::ostringstream& ss, bool tag, int increase, int ind) cons
 		break;
 	
 	case eLet:
-		ss << "let " << _strData << " : " << _type->string() << " = ";
+		ss << "let ";
+		if (get<int>() == -1)
+			ss << _strData;
+		else
+			ss << "#s" << get<int>();
+		
+		ss << " : " << _type->string() << " = ";
 		subexps[0]->_string(ss, tag, increase, ind);
 		break;
 
