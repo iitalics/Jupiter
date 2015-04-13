@@ -136,7 +136,7 @@ TyPtr Desugar::desugar (TyPtr ty)
 	switch (ty->kind)
 	{
 	case tyWildcard:
-		return subs.newType();
+		return Ty::makePoly();
 
 	case tyConcrete:
 		if (!ty->subtypes.nil())
@@ -151,7 +151,7 @@ TyPtr Desugar::desugar (TyPtr ty)
 			auto it = polynames.find(ty->name);
 			if (it == polynames.end())
 			{
-				auto t2 = subs.newType();
+				auto t2 = Ty::makePoly();
 				return (polynames[ty->name] = t2);
 			}
 			else

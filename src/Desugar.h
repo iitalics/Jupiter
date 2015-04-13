@@ -11,7 +11,6 @@ struct Desugar
 	~Desugar ();
 
 	GlobEnv& global;
-	Subs subs;
 	std::map<std::string, TyPtr> polynames;
 
 	FuncDecl desugar (const FuncDecl& func);
