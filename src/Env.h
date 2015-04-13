@@ -22,7 +22,6 @@ public:
 
 struct FuncInstance
 {
-	GlobFunc* parent;
 	SigPtr signature;
 	TyPtr returnType;
 	std::string internalName;
@@ -35,7 +34,6 @@ public:
 		: name(_name) {}
 
 	
-
 	std::string name;
 	std::vector<FuncOverload> overloads;
 	std::vector<FuncInstance> instances;

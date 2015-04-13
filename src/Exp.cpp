@@ -117,7 +117,7 @@ void Exp::_string (std::ostringstream& ss, bool tag, int increase, int ind) cons
 
 	case eVar:
 		if (get<int>() != -1)
-			ss << "#var" << get<int>();
+			ss << "#s" << get<int>();
 		else
 			ss << _strData;
 		break;

@@ -399,7 +399,7 @@ TyPtr parseTypePoly (Lexer& lex)
 	lex.eat(tLambda);
 	auto name = lex.eat(tIdent).str;
 
-	return Ty::makePoly(-1, name);
+	return Ty::makePoly(name);
 }
 TyPtr parseTypeList (Lexer& lex)
 {

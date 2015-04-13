@@ -5,7 +5,7 @@
 
 
 Ty::Ty (TyKind k)
-	: kind(k), subtypes(), name(""), idx(-1) {}
+	: kind(k), subtypes(), name("") {}
 
 Ty::~Ty () {}
 
@@ -16,11 +16,26 @@ TyPtr Ty::makeConcrete (const std::string& t, const TyList& sub)
 	ty->name = t;
 	return ty;
 }
-TyPtr Ty::makePoly (int idx, const std::string& name)
+TyPtr Ty::makePoly (const std::string& name)
 {
 	auto ty = std::make_shared<Ty>(tyPoly);
-	ty->idx = idx;
-	ty->name = name;
+
+	if (name.empty())
+	{
+		static int idx = 0;
+		std::ostringstream ss;
+		
+		if (idx <= 10)
+			ss << char('a' + idx);
+		else
+			ss << "t" << (idx - 10);
+		idx++;
+
+		ty->name = ss.str();
+	}
+	else
+		ty->name = name;
+
 	return ty;
 }
 
@@ -53,16 +68,7 @@ void Ty::_string (std::ostringstream& ss) const
 		break;
 
 	case tyPoly:
-		ss << '\\';
-		if (name.empty())
-		{
-			if (idx < 10)
-				ss << char('a' + idx);
-			else
-				ss << 't' << (idx - 10);
-		}
-		else
-			ss << '\"' << name << '\"';
+		ss << '\\' << name;
 		break;
 
 	case tyOverloaded:

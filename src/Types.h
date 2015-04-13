@@ -14,6 +14,7 @@ enum TyKind
 	tyConcrete,
 	tyPoly,
 	tyOverloaded,
+
 	tyWildcard
 };
 
@@ -22,8 +23,7 @@ class Ty
 public:
 	static TyPtr makeConcrete (const std::string& t,
 						const TyList& sub = {});
-	static TyPtr makePoly (int idx,
-					const std::string& name = std::string());
+	static TyPtr makePoly (const std::string& name = std::string());
 	static inline TyPtr makeWildcard ()
 	{
 		return std::make_shared<Ty>(tyWildcard);
@@ -35,7 +35,6 @@ public:
 	TyKind kind;
 	TyList subtypes;
 	std::string name;
-	int idx;
 
 	inline bool operator== (TyKind k) const
 	{ return kind == k; }

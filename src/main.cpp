@@ -35,6 +35,23 @@ static int Main (std::vector<std::string>&& args)
 	env.operators.push_back(Op("^", 5, Assoc::Right));
 	env.operators.push_back(Op("::", 4, Assoc::Right));
 
+	auto Int = Ty::makeConcrete("Int");
+
+	env.addFunc("+")->instances.push_back(FuncInstance {
+		SigPtr(new Sig({ { "x", Int }, { "y", Int } })), Int,
+		"std_add_Int"
+	});
+
+	env.addFunc("<")->instances.push_back(FuncInstance {
+		SigPtr(new Sig({ { "x", Int }, { "y", Int } })), Int,
+		"std_less_Int"
+	});
+
+	env.addFunc("==")->instances.push_back(FuncInstance {
+		SigPtr(new Sig({ { "x", Int }, { "y", Int } })), Int,
+		"std_eql_Int"
+	});
+
 	try
 	{
 		Lexer lex;
@@ -50,7 +67,9 @@ static int Main (std::vector<std::string>&& args)
 			Desugar des(env);
 			fn = des.desugar(fn);
 
-			env.getFunc(fn.name)->overloads.push_back({
+			auto globfn = env.getFunc(fn.name);
+
+			globfn->overloads.push_back({
 					env,
 					fn.signature, 
 					fn.body
@@ -58,10 +77,8 @@ static int Main (std::vector<std::string>&& args)
 		}
 
 		for (auto& fn : proto.funcs)
-		{
 			std::cout << "func " << fn.name << " " << fn.signature->string() << std::endl
 			          << fn.body->string() << std::endl;
-		}
 
 		lex.expect(tEOF);
 
