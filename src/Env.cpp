@@ -1,4 +1,5 @@
 #include "Infer.h"
+#include "Desugar.h"
 #include <sstream>
 
 
@@ -38,6 +39,26 @@ GlobFuncPtr GlobEnv::addFunc (const std::string& name)
 	return f;
 }
 
+void GlobEnv::loadToplevel (const GlobProto& proto)
+{
+	for (const auto& fn : proto.funcs)
+		addFunc(fn.name);
+
+	for (const auto& fn : proto.funcs)
+	{
+		auto globfn = getFunc(fn.name);
+
+		Desugar des(*this);
+		auto fnd = des.desugar(fn);
+
+		globfn->overloads.push_back({
+				globfn,
+				fnd.signature, 
+				fnd.body
+			});
+	}
+}
+
 std::string FuncOverload::name () const { return parent->name; }
 FuncInstance FuncOverload::inst (SigPtr sig) const
 {
@@ -50,7 +71,6 @@ FuncInstance FuncOverload::inst (SigPtr sig) const
 	parent->instances.push_back(inst);
 	return inst;
 }
-
 
 
 

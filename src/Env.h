@@ -59,6 +59,8 @@ public:
 	OpPrecedence getPrecedence (const std::string& oper) const;
 	GlobFuncPtr getFunc (const std::string& name) const;
 	GlobFuncPtr addFunc (const std::string& name);
+
+	void loadToplevel (const GlobProto& proto);
 };
 
 

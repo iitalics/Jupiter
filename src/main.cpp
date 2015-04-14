@@ -53,34 +53,13 @@ static int Main (std::vector<std::string>&& args)
 		SigPtr(new Sig({ { "x", Int }, { "y", Int } })), Bool
 	});
 
+
 	try
 	{
 		Lexer lex;
 		lex.openFile("test.j");
 		
-		auto proto = Parse::parseToplevel(lex);
-
-		for (auto& fn : proto.funcs)
-			env.addFunc(fn.name);
-
-		for (auto& fn : proto.funcs)
-		{
-			Desugar des(env);
-			fn = des.desugar(fn);
-
-			auto globfn = env.getFunc(fn.name);
-
-			globfn->overloads.push_back({
-					globfn,
-					fn.signature, 
-					fn.body
-				});
-		}
-
-		for (auto& fn : proto.funcs)
-			std::cout << "func " << fn.name << " " << fn.signature->string() << std::endl
-			          << fn.body->string() << std::endl;
-
+		env.loadToplevel(Parse::parseToplevel(lex));
 		lex.expect(tEOF);
 
 		return 0;
