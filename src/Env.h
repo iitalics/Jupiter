@@ -8,32 +8,35 @@ struct FuncInstance;
 class GlobFunc;
 class LocEnv;
 class GlobEnv;
-using GlobFuncPtr = std::shared_ptr<GlobFunc>;
+using GlobFuncPtr = GlobFunc*;
 using LocEnvPtr = std::shared_ptr<LocEnv>;
 
 
 class FuncOverload
 {
 public:
-	GlobEnv& env;
+	GlobFuncPtr parent;
 	SigPtr signature;
 	ExpPtr body;
+
+	std::string name () const;
+	FuncInstance inst (SigPtr sig) const;
 };
 
 struct FuncInstance
 {
+	std::string name;
 	SigPtr signature;
 	TyPtr returnType;
-	std::string internalName;
 };
 
 class GlobFunc
 {
 public:
-	explicit inline GlobFunc(const std::string& _name)
-		: name(_name) {}
+	explicit inline GlobFunc(GlobEnv& _env, const std::string& _name)
+		: env(_env), name(_name) {}
 
-	
+	GlobEnv& env;
 	std::string name;
 	std::vector<FuncOverload> overloads;
 	std::vector<FuncInstance> instances;
@@ -55,7 +58,6 @@ public:
 
 	OpPrecedence getPrecedence (const std::string& oper) const;
 	GlobFuncPtr getFunc (const std::string& name) const;
-
 	GlobFuncPtr addFunc (const std::string& name);
 };
 

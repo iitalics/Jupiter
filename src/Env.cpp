@@ -1,4 +1,4 @@
-#include "Env.h"
+#include "Infer.h"
 #include <sstream>
 
 
@@ -31,11 +31,24 @@ GlobFuncPtr GlobEnv::addFunc (const std::string& name)
 	auto f = getFunc(name);
 	if (f == nullptr)
 	{
-		f = std::make_shared<GlobFunc>(name);
+		f = new GlobFunc(*this, name);
 		functions.push_back(f);
 	}
 
 	return f;
+}
+
+std::string FuncOverload::name () const { return parent->name; }
+FuncInstance FuncOverload::inst (SigPtr sig) const
+{
+	for (auto& inst : parent->instances)
+		if (inst.signature->aEquiv(sig))
+			return inst;
+
+	Infer inf(*this, sig);
+	auto& inst = inf.fn;
+	parent->instances.push_back(inst);
+	return inst;
 }
 
 

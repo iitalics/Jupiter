@@ -36,20 +36,21 @@ static int Main (std::vector<std::string>&& args)
 	env.operators.push_back(Op("::", 4, Assoc::Right));
 
 	auto Int = Ty::makeConcrete("Int");
+	auto Bool = Ty::makeConcrete("Bool");
 
 	env.addFunc("+")->instances.push_back(FuncInstance {
-		SigPtr(new Sig({ { "x", Int }, { "y", Int } })), Int,
-		"std_add_Int"
+		"+",
+		SigPtr(new Sig({ { "x", Int }, { "y", Int } })), Int
 	});
 
 	env.addFunc("<")->instances.push_back(FuncInstance {
-		SigPtr(new Sig({ { "x", Int }, { "y", Int } })), Int,
-		"std_less_Int"
+		"<",
+		SigPtr(new Sig({ { "x", Int }, { "y", Int } })), Bool
 	});
 
 	env.addFunc("==")->instances.push_back(FuncInstance {
-		SigPtr(new Sig({ { "x", Int }, { "y", Int } })), Int,
-		"std_eql_Int"
+		"==",
+		SigPtr(new Sig({ { "x", Int }, { "y", Int } })), Bool
 	});
 
 	try
@@ -70,7 +71,7 @@ static int Main (std::vector<std::string>&& args)
 			auto globfn = env.getFunc(fn.name);
 
 			globfn->overloads.push_back({
-					env,
+					globfn,
 					fn.signature, 
 					fn.body
 				});
