@@ -118,12 +118,21 @@ public:
 				res.push_back(x);
 		return list<T>(res);
 	}
+	template <typename PF>
+	bool all (PF pred) const
+	{
+		for (auto x : *this)
+			if (!pred(x))
+				return false;
+		return true;
+	}
 
 	// std::vector-feeling method aliases
 	inline bool empty () const { return nil(); }
 	inline size_t size () const { return length(); }
 	inline T front () const { return head(); }
 	inline T operator[] (size_t i) const { return ref(i); }
+	inline list& operator++ () { _pair = tail()._pair; return *this; }
 private:
 	explicit list (const pairPtr& p)
 		: _pair(p) {}
