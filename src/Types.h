@@ -41,6 +41,8 @@ public:
 	inline bool operator!= (TyKind k) const
 	{ return kind != k; }
 
+	bool aEquiv (TyPtr other) const;
+
 	std::string string () const;
 private:
 	void _string (std::ostringstream& ss) const;

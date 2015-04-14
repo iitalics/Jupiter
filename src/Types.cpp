@@ -40,6 +40,35 @@ TyPtr Ty::makePoly (const std::string& name)
 }
 
 
+
+bool Ty::aEquiv (TyPtr other) const
+{
+	if (kind != other->kind)
+		return false;
+
+	switch (kind)
+	{
+	case tyPoly:
+		return true;
+
+	case tyConcrete:
+		if (name != other->name)
+			return false;
+
+		for (auto s1 = subtypes, s2 = other->subtypes; ; ++s1, ++s2)
+			if (s1.nil() && s2.nil())
+				return true;
+			else if (s1.nil() || s2.nil())
+				return false;
+			else
+				if (!s1.head()->aEquiv(s2.head()))
+					return false;
+
+	default:
+		return false;
+	}
+}
+
 std::string Ty::string () const
 {
 	std::ostringstream ss;

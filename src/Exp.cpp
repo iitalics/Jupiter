@@ -3,6 +3,19 @@
 #include <cstring>
 
 
+bool Sig::aEquiv (SigPtr other) const
+{
+	if (args.size() != other->args.size())
+		return false;
+
+	for (auto it1 = args.cbegin(), it2 = other->args.cbegin();
+			it1 != args.cend(); it1++, it2++)
+		if (!it1->second->aEquiv(it2->second))
+			return false;
+
+	return true;
+}
+
 TyList Sig::tyList () const
 {
 	auto res = TyList();

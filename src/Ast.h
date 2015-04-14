@@ -25,6 +25,8 @@ struct Sig
 				const Span& sp = Span())
 		: args(_args), span(sp) {}
 
+	bool aEquiv (SigPtr other) const;
+
 	TyList tyList () const;
 	std::string string () const;
 };
