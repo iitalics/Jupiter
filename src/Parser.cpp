@@ -85,7 +85,16 @@ FuncDecl parseFuncDecl (Lexer& lex)
 	spStart = lex.eat(tFunc).span;
 	auto name = lex.eat(tIdent).str;
 	auto sig = parseSigParens(lex);
-	auto body = parseBlock(lex);
+	
+	ExpPtr body;
+	if (lex.current() == tEqual)
+	{
+		lex.advance();
+		body = parseExp(lex);
+	}
+	else
+		body = parseBlock(lex);
+
 	spEnd = sig->span;
 
 	return FuncDecl
