@@ -38,6 +38,12 @@ TyPtr Ty::makePoly (const std::string& name)
 
 	return ty;
 }
+TyPtr Ty::makeOverloaded (const std::string& name)
+{
+	auto ty = std::make_shared<Ty>(tyOverloaded);
+	ty->name = name;
+	return ty;
+}
 
 
 
@@ -138,7 +144,7 @@ void Ty::_string (std::ostringstream& ss) const
 		break;
 
 	case tyOverloaded:
-		ss << "<overload>";
+		ss << "#(" << name << ")";
 		break;
 
 	case tyWildcard:

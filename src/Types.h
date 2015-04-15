@@ -25,22 +25,15 @@ public:
 	static TyPtr makeConcrete (const std::string& t,
 						const TyList& sub = {});
 	static TyPtr makePoly (const std::string& name = std::string());
+	static TyPtr makeOverloaded (const std::string& name);
 	static inline TyPtr makeWildcard ()
-	{
-		return std::make_shared<Ty>(tyWildcard);
-	}
+	{ return std::make_shared<Ty>(tyWildcard); }
 	static inline TyPtr makeInvalid ()
-	{
-		return std::make_shared<Ty>(tyInvalid);
-	}
+	{ return std::make_shared<Ty>(tyInvalid); }
 	static inline TyPtr makeUnit ()
-	{
-		return makeConcrete("Tuple", {});
-	}
+	{ return makeConcrete("Tuple", {}); }
 	static inline TyPtr makeFn (const TyList& tys = {})
-	{
-		return makeConcrete("Fn", tys);
-	}
+	{ return makeConcrete("Fn", tys); }
 
 	// create new polytypes
 	static TyPtr newPoly (TyPtr ty); 
