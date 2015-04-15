@@ -1,5 +1,5 @@
 #include "Infer.h"
-
+#include <stdexcept>
 
 
 Subs::Subs (const RuleList& _rules)
@@ -68,57 +68,62 @@ Infer::Infer (const FuncOverload& overload, SigPtr sig)
 
 	auto ret = infer(overload.body, lenv);
 	fn.returnType = ret;
+
+	if (ret->kind == tyOverloaded)
+		throw sig->span.die("invalid for function to return overloaded type");
 }
 
 
 
-void Infer::unify (Subs& out, TyPtr t1, TyPtr t2,
+void Infer::unify (Subs& out, TyList l1, TyList l2,
 					const Span& span)
 {
-	if (t2->kind == tyPoly || t2->kind == tyOverloaded)
+	TyPtr t1, t2;
+
+	while (!l1.nil() && !l2.nil())
 	{
-		// swap arguments
-		auto tmp = t1;
-		t1 = t2;
-		t2 = tmp;
-	}
+		t1 = l1.head();
+		t2 = l2.head();
+		++l1, ++l2;
 
-	switch (t1->kind)
-	{
-	case tyPoly:
-		if (t2 == t1)
-			return;
-		//if (Ty::contains(t2, t1))
-		//	goto fail;
-		out += Subs::Rule { t1, t2 };
-		return;
-
-	case tyConcrete:
-		if (t2->kind != tyConcrete)
-			goto fail;
-
-		if (t1->name != t2->name)
-			goto fail;
-
-		// TODO: unifyList()...
-
-		for (auto s1 = t1->subtypes, s2 = t2->subtypes;
-				; ++s1, ++s2)
+		if (t2->kind == tyPoly ||
+				(t2->kind == tyOverloaded &&
+				 t1->kind != tyPoly))
 		{
-			// finished unifying all subtypes
-			if (s1.nil() && s2.nil())
-				return;
+			// swap arguments
+			auto tmp = t1;
+			t1 = t2;
+			t2 = tmp;
+		}
 
-			// inconsistent # of subtypes
-			if (s1.nil() || s2.nil())
+		switch (t1->kind)
+		{
+		case tyPoly:
+			if (t2 == t1)
+				break;;
+			//if (Ty::contains(t2, t1))
+			//	goto fail;
+			out += Subs::Rule { t1, t2 };
+			break;
+
+		case tyConcrete:
+			if (t2->kind != tyConcrete)
 				goto fail;
 
-			unify(out, s1.head(), s2.head(), span);
-		}
-		return;
+			if (t1->name != t2->name ||
+					t1->subtypes.size() != t2->subtypes.size())
+				goto fail;
 
-	default:
-		break;
+			unify(out, t1->subtypes, t2->subtypes, span);
+			break;
+
+		case tyOverloaded:
+			unifyOverload(out, t1->name, t2, l1, l2, span);
+			break;
+
+		default:
+			goto fail;
+		}
 	}
 
 fail:
@@ -128,6 +133,14 @@ fail:
 }
 
 
+void Infer::unifyOverload (Subs& out,
+						const std::string& name,
+						TyPtr t2,
+						TyList l1, TyList l2,
+						Span span)
+{
+	// TODO: unify overloaded type
+}
 
 
 TyPtr Infer::infer (ExpPtr exp, LocEnvPtr lenv)
@@ -185,7 +198,7 @@ TyPtr Infer::inferVar (ExpPtr exp, LocEnvPtr lenv)
 		auto& overload = fn->overloads.front();
 		auto inst = overload.inst(overload.signature);
 
-		return Ty::newPoly(inst.type());
+		return Ty::newPoly(inst.type());	
 	}
 	else
 	{
