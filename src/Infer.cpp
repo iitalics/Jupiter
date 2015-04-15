@@ -66,42 +66,202 @@ Infer::Infer (const FuncOverload& overload, SigPtr sig)
 	for (auto arg : sig->args)
 		lenv->newVar(arg.first, arg.second);
 
-	auto res = infer(overload.body, lenv, mainSubs);
-	unify(mainSubs, res, fn.returnType, overload.body->span);
-	fn.returnType = res;
+	auto ret = infer(overload.body, lenv);
+	fn.returnType = ret;
 }
 
 
 
-TyPtr Infer::infer (ExpPtr exp, LocEnvPtr lenv, Subs& subs)
+void Infer::unify (Subs& out, TyPtr t1, TyPtr t2,
+					const Span& span)
 {
-	return Ty::makePoly();
-}
-
-
-
-
-void Infer::unify (Subs& subs, TyPtr a, TyPtr b, Span span)
-{
-	if (!unifyList(subs, TyList(a), TyList(b)))
+	if (t2->kind == tyPoly || t2->kind == tyOverloaded)
 	{
-		std::ostringstream ss;
-		ss << "incompatible types " << a->string() << " and " << b->string();
-		throw span.die(ss.str());
+		// swap arguments
+		auto tmp = t1;
+		t1 = t2;
+		t2 = tmp;
+	}
+
+	switch (t1->kind)
+	{
+	case tyPoly:
+		if (t2 == t1)
+			return;
+		//if (Ty::contains(t2, t1))
+		//	goto fail;
+		out += Subs::Rule { t1, t2 };
+		return;
+
+	case tyConcrete:
+		if (t2->kind != tyConcrete)
+			goto fail;
+
+		if (t1->name != t2->name)
+			goto fail;
+
+		// TODO: unifyList()...
+
+		for (auto s1 = t1->subtypes, s2 = t2->subtypes;
+				; ++s1, ++s2)
+		{
+			// finished unifying all subtypes
+			if (s1.nil() && s2.nil())
+				return;
+
+			// inconsistent # of subtypes
+			if (s1.nil() || s2.nil())
+				goto fail;
+
+			unify(out, s1.head(), s2.head(), span);
+		}
+		return;
+
+	default:
+		break;
+	}
+
+fail:
+	std::ostringstream ss;
+	ss << "cannot unify types " << t1->string() << " and " << t2->string();
+	throw span.die(ss.str());
+}
+
+
+
+
+TyPtr Infer::infer (ExpPtr exp, LocEnvPtr lenv)
+{
+	switch (exp->kind)
+	{
+	case eInt:
+		return Ty::makeConcrete("Int");
+	case eReal:
+		return Ty::makeConcrete("Real");
+	case eString:
+		return Ty::makeConcrete("String");
+	case eBool:
+		return Ty::makeConcrete("Bool");
+
+	case eVar:
+		return inferVar(exp, lenv);
+	case eTuple:
+		return inferTuple(exp, lenv);
+	case eCall:
+		return inferCall(exp, lenv);
+	case eInfix:
+		return inferInfix(exp, lenv);
+	case eCond:
+		return inferCond(exp, lenv);
+//	case eLambda:
+//		return inferLambda(exp, lenv);
+	case eBlock:
+		return inferBlock(exp, lenv);
+	case eLet:
+		return inferLet(exp, lenv);
+
+	default:
+		throw exp->span.die("unimplemented kind of expression");
 	}
 }
 
-bool Infer::unifyList (Subs& subs, TyList la, TyList lb)
+TyPtr Infer::inferVar (ExpPtr exp, LocEnvPtr lenv)
 {
-	if (la.nil() || lb.nil())
-		return true;
+	auto idx = exp->get<int>();
 
-	auto a = la.head();
-	auto b = lb.head();
-	++la;
-	++lb;
+	if (idx == -1)
+	{
+		auto fn = parent->env.getFunc(exp->getString());
 
-	return unifyList(subs, la, lb);
+		if (fn == nullptr || fn->overloads.empty())
+			throw exp->span.die("invalid global");
+
+		if (fn->overloads.size() > 1)
+			throw exp->span.die("unimplemented: overloaded type");
+
+		// instance the only available overload
+		//  this is only a hacky temporary replacement
+		//  for overloaded types
+		auto& overload = fn->overloads.front();
+		auto inst = overload.inst(overload.signature);
+
+		return Ty::newPoly(inst.type());
+	}
+	else
+	{
+		auto var = lenv->get(idx);
+		if (var == nullptr)
+			throw exp->span.die("undeclared variable "
+				                "(DESUGAR SHOULD MAKE THIS UNREACHABLE!!)");
+
+		return Ty::newPoly(var->ty);
+	}
+}
+TyPtr Infer::inferBlock (ExpPtr exp, LocEnvPtr lenv)
+{
+	TyPtr res = nullptr;
+
+	LocEnvPtr lenv2 = LocEnv::make(lenv);
+
+	for (auto& e : exp->subexps)
+		res = infer(e, lenv2);
+
+	// empty block returns unit "()"
+	if (res == nullptr)
+		res = Ty::makeUnit();
+
+	return res;
 }
 
+
+TyPtr Infer::inferLet (ExpPtr exp, LocEnvPtr lenv)
+{
+	/*
+		infer  let x1 : a = e1 
+			= ()
+			where
+				t1 = infer e1
+				S  = unify t1 a
+				env += { x1 : S a }
+	*/
+
+	auto ty = exp->getType();                // given type
+	auto tye = infer(exp->subexps[0], lenv); // init type
+
+	Subs subs;
+	unify(subs, ty, tye, exp->span);
+
+	lenv->newVar(exp->getString(), subs(ty));
+
+	return nullptr;
+}
+
+TyPtr Infer::inferCall (ExpPtr exp, LocEnvPtr lenv)
+{
+	/*
+		infer  e1(e2,...,en)
+			= S a
+			where
+				t1,...,tn = infer(e1,...,en)
+				a : Ty    = newtype
+				S : Subs  = unify t1 "Fn"(t2,...,tn,a)
+	*/
+	auto fnty = infer(exp->subexps[0], lenv);
+	auto ret = Ty::makePoly();
+
+	// add args backward o_o
+	TyList args(ret);
+	for (size_t len = exp->subexps.size(), i = len; i-- > 1; )
+		args = TyList(infer(exp->subexps[i], lenv), args);
+
+	auto model = Ty::makeFn(args);
+	Subs subs;
+	unify(subs, model, fnty, exp->span);
+
+	return subs(ret);
+}
+
+TyPtr Infer::inferTuple (ExpPtr exp, LocEnvPtr lenv) { return Ty::makeInvalid(); }
+TyPtr Infer::inferInfix (ExpPtr exp, LocEnvPtr lenv) { return Ty::makeInvalid(); }
+TyPtr Infer::inferCond (ExpPtr exp, LocEnvPtr lenv) { return Ty::makeInvalid(); }
 

@@ -38,21 +38,10 @@ static int Main (std::vector<std::string>&& args)
 	auto Int = Ty::makeConcrete("Int");
 	auto Bool = Ty::makeConcrete("Bool");
 
-	env.addFunc("+")->instances.push_back(FuncInstance {
-		"+",
-		SigPtr(new Sig({ { "x", Int }, { "y", Int } })), Int
-	});
-
-	env.addFunc("<")->instances.push_back(FuncInstance {
-		"<",
-		SigPtr(new Sig({ { "x", Int }, { "y", Int } })), Bool
-	});
-
-	env.addFunc("==")->instances.push_back(FuncInstance {
-		"==",
-		SigPtr(new Sig({ { "x", Int }, { "y", Int } })), Bool
-	});
-
+	env.bake("+", { Int, Int }, Int);
+	env.bake("-", { Int }, Int);
+	env.bake("<", { Int, Int }, Bool);
+	env.bake("==", { Int, Int }, Bool);
 
 	try
 	{
@@ -61,6 +50,25 @@ static int Main (std::vector<std::string>&& args)
 		
 		env.loadToplevel(Parse::parseToplevel(lex));
 		lex.expect(tEOF);
+
+		GlobFunc toplevel(env, "#<toplevel>");
+		auto toplevelSpan = Span();
+		auto toplevelSig = std::make_shared<Sig>();
+
+		auto mainCall = Exp::make(eCall,
+							{ Exp::make(eVar, "main", int(-1), {}, toplevelSpan) },
+							toplevelSpan);
+
+		Desugar des(env);
+		mainCall = des.desugar(mainCall, LocEnv::make());
+
+		Infer inf({
+				&toplevel,
+				toplevelSig,
+				mainCall },
+			toplevelSig);
+
+		std::cout << "-> " << inf.fn.returnType->string() << std::endl;
 
 		return 0;
 	}

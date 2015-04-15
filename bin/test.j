@@ -1,6 +1,6 @@
-func bar (x) {
-	foo(4)
-}
-func foo (x) {
-	4
+func twice (x) { x + x }
+
+func main ()
+{
+	twice(3)
 }

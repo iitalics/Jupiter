@@ -29,14 +29,24 @@ using InferList = list<InferPtr>;
 
 struct Infer
 {
-	Subs mainSubs;
 	GlobFunc* parent;
 	FuncInstance fn;
 
 	Infer (const FuncOverload& overload, SigPtr sig);
 
-	void unify (Subs& subs, TyPtr a, TyPtr b, Span span);
-	bool unifyList (Subs& subs, TyList la, TyList lb);
+	void unify (Subs& out, TyPtr t1, TyPtr t2,
+				const Span& span = Span());
 
-	TyPtr infer (ExpPtr exp, LocEnvPtr lenv, Subs& subs);
+	void unify (Subs& out, TyList l1, TyList l2,
+				const Span& span = Span());
+
+	TyPtr infer (ExpPtr exp, LocEnvPtr lenv);
+	TyPtr inferVar (ExpPtr exp, LocEnvPtr lenv);
+	TyPtr inferTuple (ExpPtr exp, LocEnvPtr lenv);
+	TyPtr inferCall (ExpPtr exp, LocEnvPtr lenv);
+	TyPtr inferInfix (ExpPtr exp, LocEnvPtr lenv);
+	TyPtr inferCond (ExpPtr exp, LocEnvPtr lenv);
+	TyPtr inferBlock (ExpPtr exp, LocEnvPtr lenv);
+	TyPtr inferLet (ExpPtr exp, LocEnvPtr lenv);
+
 };
