@@ -444,7 +444,7 @@ TyPtr parseTypeTuple (Lexer& lex)
 		lex.advance();
 		inners.push_back(parseType(lex));
 
-		return Ty::makeConcrete("Fn", inners);
+		return Ty::makeFn(inners);
 	}
 
 	if (inners.size() == 1)
