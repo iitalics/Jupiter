@@ -28,6 +28,8 @@ struct FuncInstance
 	std::string name;
 	SigPtr signature;
 	TyPtr returnType;
+
+	TyPtr type () const;
 };
 
 class GlobFunc
@@ -56,9 +58,16 @@ public:
 	// modules
 	// utility functions
 
+	~GlobEnv ();
+
 	OpPrecedence getPrecedence (const std::string& oper) const;
 	GlobFuncPtr getFunc (const std::string& name) const;
 	GlobFuncPtr addFunc (const std::string& name);
+
+	// creates a function and an instance
+	void bake (const std::string& name,
+				const std::vector<TyPtr>& args,
+				TyPtr ret);
 
 	void loadToplevel (const GlobProto& proto);
 };

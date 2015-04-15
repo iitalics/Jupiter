@@ -9,6 +9,12 @@
 
 // ------------------------------------- GlobEnv -------------------------------------//
 
+GlobEnv::~GlobEnv ()
+{
+	for (auto f : functions)
+		delete f;
+}
+
 GlobEnv::OpPrecedence GlobEnv::getPrecedence (const std::string& operName) const
 {
 	for (auto& op : operators)
@@ -59,6 +65,27 @@ void GlobEnv::loadToplevel (const GlobProto& proto)
 	}
 }
 
+void GlobEnv::bake (const std::string& name,
+						const std::vector<TyPtr>& argTypes,
+						TyPtr ret)
+{
+	auto globfn = addFunc(name);
+	
+	Sig::ArgList args;
+	for (auto t : argTypes)
+		args.push_back({ "_", t });
+	auto sig = std::make_shared<Sig>(args);
+
+	globfn->overloads.push_back({
+		globfn,
+		sig,
+		Exp::make(eInvalid)
+	});
+	globfn->instances.push_back({
+		name, sig, ret
+	});
+}
+
 std::string FuncOverload::name () const { return parent->name; }
 FuncInstance FuncOverload::inst (SigPtr sig) const
 {
@@ -66,10 +93,24 @@ FuncInstance FuncOverload::inst (SigPtr sig) const
 		if (inst.signature->aEquiv(sig))
 			return inst;
 
+	std::cout << "instancing '" << parent->name << "' with: " << sig->string() << std::endl;
+
 	Infer inf(*this, sig);
 	auto& inst = inf.fn;
 	parent->instances.push_back(inst);
 	return inst;
+}
+
+TyPtr FuncInstance::type () const
+{
+	TyList list(returnType);
+
+	const auto& args = signature->args;
+
+	for (auto it = args.crbegin(); it != args.crend(); ++it)
+		list = TyList(it->second, list);
+
+	return Ty::makeFn(list);
 }
 
 
