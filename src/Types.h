@@ -3,6 +3,7 @@
 #include <sstream>
 
 
+struct Subs;
 class Ty;
 using TyPtr = std::shared_ptr<Ty>;
 using TyList = list<TyPtr>;
@@ -28,6 +29,21 @@ public:
 	{
 		return std::make_shared<Ty>(tyWildcard);
 	}
+	static inline TyPtr makeInvalid ()
+	{
+		return std::make_shared<Ty>(tyInvalid);
+	}
+	static inline TyPtr makeUnit ()
+	{
+		return makeConcrete("Tuple", {});
+	}
+	static inline TyPtr makeFn (const TyList& tys = {})
+	{
+		return makeConcrete("Fn", tys);
+	}
+
+	// create new polytypes
+	static TyPtr newPoly (TyPtr ty); 
 
 	explicit Ty (TyKind k = tyInvalid);
 	~Ty ();
@@ -42,8 +58,9 @@ public:
 	{ return kind != k; }
 
 	bool aEquiv (TyPtr other) const;
-
 	std::string string () const;
 private:
 	void _string (std::ostringstream& ss) const;
+
+	static TyPtr newPoly (TyPtr ty, Subs& subs);
 };

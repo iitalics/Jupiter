@@ -1,4 +1,4 @@
-#include "Types.h"
+#include "Infer.h"
 #include <sstream>
 #include <iostream>
 
@@ -68,6 +68,43 @@ bool Ty::aEquiv (TyPtr other) const
 		return false;
 	}
 }
+
+TyPtr Ty::newPoly (TyPtr ty)
+{
+	Subs subs;
+	return newPoly(ty, subs);
+}
+
+TyPtr Ty::newPoly (TyPtr ty, Subs& subs)
+{
+	switch (ty->kind)
+	{
+	case tyPoly:
+		{
+			for (const auto& r : subs.rules)
+				if (r.left == ty)
+					return r.right;
+			
+			auto newtype = Ty::makePoly();		
+			subs += Subs::Rule { ty, newtype };
+			return newtype;
+		}
+
+	case tyConcrete:
+		if (ty->subtypes.nil())
+			return ty;
+		return
+			Ty::makeConcrete(ty->name,
+				ty->subtypes.map([&] (TyPtr t)
+				{
+					return newPoly(t, subs);
+				}));
+
+	default:
+		return ty;
+	}
+}
+
 
 std::string Ty::string () const
 {
