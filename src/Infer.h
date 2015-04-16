@@ -31,23 +31,16 @@ struct Infer
 {
 	GlobFunc* parent;
 	FuncInstance fn;
+	Subs mainSubs;
 
 	Infer (const FuncOverload& overload, SigPtr sig);
 
-	void unify (Subs& out, TyList l1, TyList l2,
-				const Span& span = Span());
-
-	inline void unify (Subs& out, TyPtr t1, TyPtr t2,
-						const Span& span = Span())
-	{
-		unify(out, TyList(t1), TyList(t2), span);
-	}
-
-	void unifyOverload (Subs& out,
-	                       const std::string& name,
-	                       TyPtr t2,
-	                       TyList l1, TyList l2,
-	                       Span span);
+	Subs unify (TyPtr t1, TyPtr t2, const Span& span = Span());
+	
+	bool unify (Subs& out, TyList l1, TyList l2);
+	bool unifyOverload (Subs& out,
+	                       TyPtr t1, TyPtr t2,
+	                       TyList l1, TyList l2);
 
 	TyPtr infer (ExpPtr exp, LocEnvPtr lenv);
 	TyPtr inferVar (ExpPtr exp, LocEnvPtr lenv);

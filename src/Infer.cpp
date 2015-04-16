@@ -28,6 +28,7 @@ TyPtr Subs::apply (TyPtr ty, const RuleList& ru) const
 
 	switch (ty->kind)
 	{
+	case tyOverloaded:
 	case tyPoly:
 		if (rule.left == ty)
 			ty = rule.right;
@@ -44,8 +45,6 @@ TyPtr Subs::apply (TyPtr ty, const RuleList& ru) const
 					{
 						return apply(t, ru);
 					}));
-
-	case tyOverloaded:
 	default:
 		return ty;
 	}
@@ -63,8 +62,18 @@ Infer::Infer (const FuncOverload& overload, SigPtr sig)
 	  fn { overload.name(), sig, Ty::makePoly() }
 {
 	auto lenv = LocEnv::make();
-	for (auto arg : sig->args)
-		lenv->newVar(arg.first, arg.second);
+
+	for (size_t len = sig->args.size(), i = 0; i < len; i++)
+	{
+		auto& arg = overload.signature->args[0];
+		auto ty = sig->args[i].second;
+
+		lenv->newVar(arg.first, ty);
+	}
+
+	if (!unify(mainSubs, overload.signature->tyList(), sig->tyList()))
+		throw overload.signature->span.
+				die("invalid types when instancing overload!");
 
 	auto ret = infer(overload.body, lenv);
 	fn.returnType = ret;
@@ -75,16 +84,31 @@ Infer::Infer (const FuncOverload& overload, SigPtr sig)
 
 
 
-void Infer::unify (Subs& out, TyList l1, TyList l2,
-					const Span& span)
+Subs Infer::unify (TyPtr t1, TyPtr t2, const Span& span)
+{
+	Subs res;
+	if (!unify(res, TyList(t1), TyList(t2)))
+	{
+		std::ostringstream ss;
+		ss << "incompatible types " << t1->string() << " and " << t2->string();
+		throw span.die(ss.str());
+	}
+	else
+		return res;
+}
+
+bool Infer::unify (Subs& out, TyList l1, TyList l2)
 {
 	TyPtr t1, t2;
 
-	while (!l1.nil() && !l2.nil())
+	while (!(l1.nil() || l2.nil()))
 	{
 		t1 = l1.head();
 		t2 = l2.head();
 		++l1, ++l2;
+
+		if (t1->kind == tyWildcard || t2->kind == tyWildcard)
+			continue;
 
 		if (t2->kind == tyPoly ||
 				(t2->kind == tyOverloaded &&
@@ -100,7 +124,7 @@ void Infer::unify (Subs& out, TyList l1, TyList l2,
 		{
 		case tyPoly:
 			if (t2 == t1)
-				break;;
+				break;
 			//if (Ty::contains(t2, t1))
 			//	goto fail;
 			out += Subs::Rule { t1, t2 };
@@ -108,40 +132,97 @@ void Infer::unify (Subs& out, TyList l1, TyList l2,
 
 		case tyConcrete:
 			if (t2->kind != tyConcrete)
-				goto fail;
+				return false;
 
 			if (t1->name != t2->name ||
 					t1->subtypes.size() != t2->subtypes.size())
-				goto fail;
+				return false;
 
-			unify(out, t1->subtypes, t2->subtypes, span);
+			if (!unify(out, t1->subtypes, t2->subtypes))
+				return false;
 			break;
 
 		case tyOverloaded:
-			unifyOverload(out, t1->name, t2, l1, l2, span);
-			break;
+			// note: the loop ends here.
+			// unifyOverload() handles the rest of the types
+			return unifyOverload(out, t1, t2, l1, l2);
 
 		default:
-			goto fail;
+			return false;
 		}
 	}
 
-fail:
-	std::ostringstream ss;
-	ss << "cannot unify types " << t1->string() << " and " << t2->string();
-	throw span.die(ss.str());
+	return true;
 }
 
 
-void Infer::unifyOverload (Subs& out,
-						const std::string& name,
-						TyPtr t2,
-						TyList l1, TyList l2,
-						Span span)
+bool Infer::unifyOverload (Subs& out,
+                             TyPtr t1, TyPtr t2,
+                             TyList l1, TyList l2)
 {
-	// TODO: unify overloaded type
-}
+	auto& name = t1->name;
+	auto fn = parent->env.getFunc(name);
 
+	using Valid = std::tuple<FuncOverload&, Subs, TyPtr>;
+	std::vector<Valid> valid;
+
+	for (auto& over : fn->overloads)
+	{
+		// create type for overload's signature
+		// return type is wildcard because it doesn't matter
+		auto args = over.signature->tyList(Ty::makeWildcard());
+		auto fnty = Ty::newPoly(Ty::makeFn(args));
+
+		// try to unify, if it fails then try next overload
+		Subs subs = out;
+		if (!unify(subs, TyList(fnty, l1), TyList(t2, l2)))
+			continue;
+
+		// add to list of potential overloads
+		valid.push_back(Valid { over, subs, fnty });
+	}
+
+	// no overloads :(
+	if (valid.empty())
+		return false;
+
+	// decide best overload here
+	// TODO: ambiguous overloads = subs failure or compile error?
+	auto& best = valid.front();
+	if (valid.size() > 1)
+		return false;
+
+	auto& over = std::get<0>(best);
+	auto fnty  = std::get<2>(best);
+	out = std::get<1>(best);
+
+
+	// construct signature from overloaded function
+	auto sig = Sig::make();
+	size_t i = 0, len = over.signature->args.size();
+	for (auto ty : fnty->subtypes)
+		if (i >= len)
+			break;
+		else
+		{
+			sig->args.push_back(Sig::Arg {
+				over.signature->args[i].first,
+				out(ty)
+			});
+			i++;
+		}
+
+	// instanciate overloaded function
+	// TODO: cache?
+	auto resty = over.inst(sig).type();
+
+	// push final substitutions
+	if (!unify(out, TyList(resty), TyList(t2)))
+		return false;
+	out += { t1, resty };
+
+	return true;
+}
 
 TyPtr Infer::infer (ExpPtr exp, LocEnvPtr lenv)
 {
@@ -189,23 +270,13 @@ TyPtr Infer::inferVar (ExpPtr exp, LocEnvPtr lenv)
 		if (fn == nullptr || fn->overloads.empty())
 			throw exp->span.die("invalid global");
 
-		if (fn->overloads.size() > 1)
-			throw exp->span.die("unimplemented: overloaded type");
-
-		// instance the only available overload
-		//  this is only a hacky temporary replacement
-		//  for overloaded types
-		auto& overload = fn->overloads.front();
-		auto inst = overload.inst(overload.signature);
-
-		return Ty::newPoly(inst.type());	
+		return Ty::makeOverloaded(fn->name);
 	}
 	else
 	{
 		auto var = lenv->get(idx);
 		if (var == nullptr)
-			throw exp->span.die("undeclared variable "
-				                "(DESUGAR SHOULD MAKE THIS UNREACHABLE!!)");
+			throw exp->span.die("DESUGAR SHOULD MAKE THIS UNREACHABLE!!");
 
 		return Ty::newPoly(var->ty);
 	}
@@ -238,13 +309,17 @@ TyPtr Infer::inferLet (ExpPtr exp, LocEnvPtr lenv)
 				env += { x1 : S a }
 	*/
 
-	auto ty = exp->getType();                // given type
+	auto ty = mainSubs(exp->getType());      // given type
 	auto tye = infer(exp->subexps[0], lenv); // init type
 
-	Subs subs;
-	unify(subs, ty, tye, exp->span);
+	auto subs = unify(ty, tye, exp->subexps[0]->span);
 
-	lenv->newVar(exp->getString(), subs(ty));
+	ty = subs(ty);
+
+	if (ty->kind == tyOverloaded)
+		throw exp->span.die("invalid for variable to have overloaded type");
+
+	lenv->newVar(exp->getString(), ty);
 
 	return nullptr;
 }
@@ -268,8 +343,7 @@ TyPtr Infer::inferCall (ExpPtr exp, LocEnvPtr lenv)
 		args = TyList(infer(exp->subexps[i], lenv), args);
 
 	auto model = Ty::makeFn(args);
-	Subs subs;
-	unify(subs, model, fnty, exp->span);
+	Subs subs = unify(model, fnty, exp->span);
 
 	return subs(ret);
 }
