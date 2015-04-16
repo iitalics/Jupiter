@@ -37,11 +37,16 @@ static int Main (std::vector<std::string>&& args)
 
 	auto Int = Ty::makeConcrete("Int");
 	auto Bool = Ty::makeConcrete("Bool");
+	auto String = Ty::makeConcrete("String");
+	auto Unit = Ty::makeUnit();
 
 	env.bake("+", { Int, Int }, Int);
 	env.bake("-", { Int }, Int);
 	env.bake("<", { Int, Int }, Bool);
 	env.bake("==", { Int, Int }, Bool);
+	env.bake("nil", { }, Ty::makeConcrete("List", {Ty::makePoly()}));
+	env.bake("println", { String }, Unit);
+	env.bake("string", { Ty::makePoly() }, String);
 
 	try
 	{
