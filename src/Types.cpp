@@ -144,7 +144,7 @@ void Ty::_string (std::ostringstream& ss) const
 		break;
 
 	case tyOverloaded:
-		ss << "#(" << name << ")";
+		ss << "<overloaded function \"" << name << "\">";
 		break;
 
 	case tyWildcard:

@@ -90,7 +90,14 @@ Subs Infer::unify (TyPtr t1, TyPtr t2, const Span& span)
 	if (!unify(res, TyList(t1), TyList(t2)))
 	{
 		std::ostringstream ss;
-		ss << "incompatible types " << t1->string() << " and " << t2->string();
+		if (t1->kind == tyOverloaded)
+		{
+			ss << "function \"" << t1->name
+			   << "\" incompatible with type " << t2->string();
+		}
+		else
+			ss << "incompatible types "
+		       << t1->string() << " and " << t2->string();
 		throw span.die(ss.str());
 	}
 	else
@@ -309,10 +316,10 @@ TyPtr Infer::inferLet (ExpPtr exp, LocEnvPtr lenv)
 				env += { x1 : S a }
 	*/
 
-	auto ty = mainSubs(exp->getType());      // given type
-	auto tye = infer(exp->subexps[0], lenv); // init type
+	auto ty = mainSubs(exp->getType());      // written type
+	auto tye = infer(exp->subexps[0], lenv); // inferred type
 
-	auto subs = unify(ty, tye, exp->subexps[0]->span);
+	auto subs = unify(tye, ty, exp->subexps[0]->span);
 
 	ty = subs(ty);
 
@@ -343,7 +350,7 @@ TyPtr Infer::inferCall (ExpPtr exp, LocEnvPtr lenv)
 		args = TyList(infer(exp->subexps[i], lenv), args);
 
 	auto model = Ty::makeFn(args);
-	Subs subs = unify(model, fnty, exp->span);
+	Subs subs = unify(fnty, model, exp->span);
 
 	return subs(ret);
 }
