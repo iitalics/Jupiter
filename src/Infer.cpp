@@ -140,7 +140,8 @@ bool Infer::unify (Subs& out, TyList l1, TyList l2)
 
 			if (!unify(out, t1->subtypes, t2->subtypes))
 				return false;
-			break;
+			else
+				break;
 
 		case tyOverloaded:
 			// note: the loop ends here.
@@ -330,7 +331,7 @@ TyPtr Infer::inferCall (ExpPtr exp, LocEnvPtr lenv)
 		infer  e1(e2,...,en)
 			= S a
 			where
-				t1,...,tn = infer(e1,...,en)
+				t1,...,tn = infer e1,...,infer en
 				a : Ty    = newtype
 				S : Subs  = unify t1 "Fn"(t2,...,tn,a)
 	*/
@@ -348,7 +349,35 @@ TyPtr Infer::inferCall (ExpPtr exp, LocEnvPtr lenv)
 	return subs(ret);
 }
 
-TyPtr Infer::inferTuple (ExpPtr exp, LocEnvPtr lenv) { return Ty::makeInvalid(); }
-TyPtr Infer::inferInfix (ExpPtr exp, LocEnvPtr lenv) { return Ty::makeInvalid(); }
-TyPtr Infer::inferCond (ExpPtr exp, LocEnvPtr lenv) { return Ty::makeInvalid(); }
+TyPtr Infer::inferTuple (ExpPtr exp, LocEnvPtr lenv)
+{
+	TyList args;
 
+	for (auto it = exp->subexps.crbegin();
+			it != exp->subexps.crend(); ++it)
+		args = TyList(infer(*it, lenv), args);
+
+	return Ty::makeConcrete("Tuple", args);
+}
+TyPtr Infer::inferInfix (ExpPtr exp, LocEnvPtr lenv) { return Ty::makeInvalid(); }
+TyPtr Infer::inferCond (ExpPtr exp, LocEnvPtr lenv)
+{
+	/*
+		infer  if e1 then e2 else e3
+			= S t2
+			where
+				t1,t2,t3 = infer t1,...,infer t3
+				    unify t1 "Bool"
+				S = unify t2 t3
+	*/
+	TyPtr tc, t1, t2;
+
+	tc = infer(exp->subexps[0], lenv);
+	t1 = infer(exp->subexps[1], lenv);
+	t2 = infer(exp->subexps[2], lenv);
+
+	unify(tc, Ty::makeConcrete("Bool"), exp->subexps[0]->span);
+	auto subs = unify(t1, t2, exp->span);
+
+	return subs(t1); // == subs(t2)
+}
