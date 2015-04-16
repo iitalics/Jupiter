@@ -26,12 +26,9 @@ public:
 						const TyList& sub = {});
 	static TyPtr makePoly (const std::string& name = std::string());
 	static TyPtr makeOverloaded (const std::string& name);
-	static inline TyPtr makeWildcard ()
-	{ return std::make_shared<Ty>(tyWildcard); }
-	static inline TyPtr makeInvalid ()
-	{ return std::make_shared<Ty>(tyInvalid); }
-	static inline TyPtr makeUnit ()
-	{ return makeConcrete("Tuple", {}); }
+	static TyPtr makeWildcard ();
+	static TyPtr makeInvalid ();
+	static TyPtr makeUnit ();
 	static inline TyPtr makeFn (const TyList& tys = {})
 	{ return makeConcrete("Fn", tys); }
 
@@ -54,6 +51,7 @@ public:
 	std::string string () const;
 private:
 	void _string (std::ostringstream& ss) const;
+	void _concreteString (std::ostringstream& ss) const;
 
 	static TyPtr newPoly (TyPtr ty, Subs& subs);
 };

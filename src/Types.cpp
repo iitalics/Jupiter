@@ -44,7 +44,21 @@ TyPtr Ty::makeOverloaded (const std::string& name)
 	ty->name = name;
 	return ty;
 }
-
+TyPtr Ty::makeWildcard ()
+{
+	static auto ty = std::make_shared<Ty>(tyWildcard);
+	return ty;
+}
+TyPtr Ty::makeInvalid ()
+{
+	static auto ty = std::make_shared<Ty>(tyInvalid);
+	return ty;
+}
+TyPtr Ty::makeUnit ()
+{
+	static auto ty = makeConcrete("Tuple");
+	return ty;
+}
 
 
 bool Ty::aEquiv (TyPtr other) const
@@ -124,19 +138,7 @@ void Ty::_string (std::ostringstream& ss) const
 	switch (kind)
 	{
 	case tyConcrete:
-		ss << name;
-		if (!subtypes.nil())
-		{
-			size_t i = 0;
-			ss << '(';
-			for (auto t : subtypes)
-			{
-				if (i++ > 0)
-					ss << ", ";
-				t->_string(ss);
-			}
-			ss << ')';
-		}
+		_concreteString(ss);
 		break;
 
 	case tyPoly:
@@ -157,4 +159,54 @@ void Ty::_string (std::ostringstream& ss) const
 	}
 }
 
+void Ty::_concreteString (std::ostringstream& ss) const
+{
+	if (name == "List")
+	{
+		ss << "[";
+		subtypes.front()->_string(ss);
+		ss << "]";
+	}
+	else if (name == "Fn" && !subtypes.nil())
+	{
+		ss << '(';
+		auto s = subtypes;
+		for (size_t i = 0; !s.tail().nil(); ++s)
+		{
+			if (i++ > 0)
+				ss << ", ";
+			s.head()->_string(ss);
+		}
+		ss << ") -> ";
+		s.head()->_string(ss);
+	}
+	else if (name == "Tuple")
+	{
+		ss << '(';
+		size_t i = 0;
+		for (auto t : subtypes)
+		{
+			if (i++ > 0)
+				ss << ", ";
+			t->_string(ss);
+		}
+		ss << ')';
+	}
+	else
+	{
+		ss << name;
+		if (!subtypes.nil())
+		{
+			size_t i = 0;
+			ss << '(';
+			for (auto t : subtypes)
+			{
+				if (i++ > 0)
+					ss << ", ";
+				t->_string(ss);
+			}
+			ss << ')';
+		}
+	}
+}
 
