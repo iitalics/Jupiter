@@ -87,12 +87,12 @@ FuncDecl parseFuncDecl (Lexer& lex)
 	auto sig = parseSigParens(lex);
 	
 	ExpPtr body;
-	if (lex.current() == tEqual)
+/*	if (lex.current() == tEqual)
 	{
 		lex.advance();
 		body = parseExp(lex);
 	}
-	else
+	else */
 		body = parseBlock(lex);
 
 	spEnd = sig->span;
