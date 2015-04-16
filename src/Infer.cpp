@@ -99,13 +99,11 @@ Subs Infer::unify (TyPtr t1, TyPtr t2, const Span& span)
 
 bool Infer::unify (Subs& out, TyList l1, TyList l2)
 {
-	TyPtr t1, t2;
-
 	while (!(l1.nil() || l2.nil()))
 	{
 		// apply older substitution first!
-		t1 = out(l1.head());
-		t2 = out(l2.head());
+		auto t1 = out(l1.head());
+		auto t2 = out(l2.head());
 		++l1, ++l2;
 
 		if (t1->kind == tyWildcard || t2->kind == tyWildcard)
