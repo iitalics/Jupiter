@@ -74,7 +74,7 @@ void GlobEnv::bake (const std::string& name,
 	Sig::ArgList args;
 	for (auto t : argTypes)
 		args.push_back({ "_", t });
-	auto sig = std::make_shared<Sig>(args);
+	auto sig = Sig::make(args);
 
 	globfn->overloads.push_back({
 		globfn,

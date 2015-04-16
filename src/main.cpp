@@ -53,7 +53,7 @@ static int Main (std::vector<std::string>&& args)
 
 		GlobFunc toplevel(env, "#<toplevel>");
 		auto toplevelSpan = Span();
-		auto toplevelSig = std::make_shared<Sig>();
+		auto toplevelSig = Sig::make();
 
 		auto mainCall = Exp::make(eCall,
 							{ Exp::make(eVar, "main", int(-1), {}, toplevelSpan) },

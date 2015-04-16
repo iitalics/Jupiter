@@ -18,12 +18,15 @@ struct Sig
 	using Arg = std::pair<std::string, TyPtr>;
 	using ArgList = std::vector<Arg>;
 
+	inline static
+	SigPtr make (const ArgList& args = {},
+		            const Span& span = Span())
+	{
+		return SigPtr(new Sig { args, span });
+	}
+
 	ArgList args;
 	Span span;
-
-	inline Sig (const ArgList& _args = {},
-				const Span& sp = Span())
-		: args(_args), span(sp) {}
 
 	bool aEquiv (SigPtr other) const;
 

@@ -174,7 +174,7 @@ SigPtr Desugar::desugar (SigPtr sig)
 		args.push_back(Sig::Arg(sig->args[i].first, 
 							desugar(sig->args[i].second)));
 
-	return std::make_shared<Sig>(args, sig->span);
+	return Sig::make(args, sig->span);
 }
 FuncDecl Desugar::desugar (const FuncDecl& func)
 {
