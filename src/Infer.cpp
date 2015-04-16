@@ -76,7 +76,10 @@ Infer::Infer (const FuncOverload& overload, SigPtr sig)
 				die("invalid types when instancing overload!");
 
 	auto ret = infer(overload.body, lenv);
-	fn.returnType = ret;
+	
+	unify(ret, fn.returnType, mainSubs, overload.signature->span);
+
+	ret = fn.returnType = mainSubs(fn.returnType);
 
 	if (ret->kind == tyOverloaded)
 		throw sig->span.die("invalid for function to return overloaded type");
@@ -84,10 +87,9 @@ Infer::Infer (const FuncOverload& overload, SigPtr sig)
 
 
 
-Subs Infer::unify (TyPtr t1, TyPtr t2, const Span& span)
+void Infer::unify (TyPtr t1, TyPtr t2, Subs& subs, const Span& span)
 {
-	Subs res;
-	if (!unify(res, TyList(t1), TyList(t2)))
+	if (!unify(subs, TyList(t1), TyList(t2)))
 	{
 		std::ostringstream ss;
 		if (t1->kind == tyOverloaded)
@@ -100,8 +102,6 @@ Subs Infer::unify (TyPtr t1, TyPtr t2, const Span& span)
 		       << t1->string() << " and " << t2->string();
 		throw span.die(ss.str());
 	}
-	else
-		return res;
 }
 
 bool Infer::unify (Subs& out, TyList l1, TyList l2)
@@ -109,16 +109,17 @@ bool Infer::unify (Subs& out, TyList l1, TyList l2)
 	while (!(l1.nil() || l2.nil()))
 	{
 		// apply older substitution first!
-		auto t1 = out(l1.head());
-		auto t2 = out(l2.head());
+		auto t1 = out(l1.head()); // variable
+		auto t2 = out(l2.head()); // model
 		++l1, ++l2;
 
-		if (t1->kind == tyWildcard || t2->kind == tyWildcard)
-			continue;
+		if (t1->kind == tyOverloaded)
+			return unifyOverload(out, t1, t2, l1, l2);
 
-		if (t2->kind == tyPoly ||
-				(t2->kind == tyOverloaded &&
-				 t1->kind != tyPoly))
+	//	if (t1->kind == tyWildcard || t2->kind == tyWildcard)
+	//		continue;
+
+		if (t2->kind == tyPoly)
 		{
 			// swap arguments
 			auto tmp = t1;
@@ -149,11 +150,6 @@ bool Infer::unify (Subs& out, TyList l1, TyList l2)
 			else
 				break;
 
-		case tyOverloaded:
-			// note: the loop ends here.
-			// unifyOverload() handles the rest of the types
-			return unifyOverload(out, t1, t2, l1, l2);
-
 		default:
 			return false;
 		}
@@ -176,13 +172,13 @@ bool Infer::unifyOverload (Subs& out,
 	for (auto& over : fn->overloads)
 	{
 		// create type for overload's signature
-		// return type is wildcard because it doesn't matter
-		auto args = over.signature->tyList(Ty::makeWildcard());
+		// edit: "wildcard types" are a bad idea
+		auto args = over.signature->tyList(Ty::makePoly());
 		auto fnty = Ty::newPoly(Ty::makeFn(args));
 
 		// try to unify, if it fails then try next overload
 		Subs subs = out;
-		if (!unify(subs, TyList(fnty, l1), TyList(t2, l2)))
+		if (!unify(subs, TyList(t2, l1), TyList(fnty, l2)))
 			continue;
 
 		// add to list of potential overloads

@@ -35,7 +35,13 @@ struct Infer
 
 	Infer (const FuncOverload& overload, SigPtr sig);
 
-	Subs unify (TyPtr t1, TyPtr t2, const Span& span = Span());
+	void unify (TyPtr t1, TyPtr t2, Subs& subs, const Span& span = Span());
+	inline Subs unify (TyPtr t1, TyPtr t2, const Span& span = Span())
+	{
+		Subs subs;
+		unify(t1, t2, subs, span);
+		return subs;
+	}
 	
 	bool unify (Subs& out, TyList l1, TyList l2);
 	bool unifyOverload (Subs& out,
