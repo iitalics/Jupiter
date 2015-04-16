@@ -103,8 +103,9 @@ bool Infer::unify (Subs& out, TyList l1, TyList l2)
 
 	while (!(l1.nil() || l2.nil()))
 	{
-		t1 = l1.head();
-		t2 = l2.head();
+		// apply older substitution first!
+		t1 = out(l1.head());
+		t2 = out(l2.head());
 		++l1, ++l2;
 
 		if (t1->kind == tyWildcard || t2->kind == tyWildcard)
