@@ -27,7 +27,7 @@ struct Sig
 
 	bool aEquiv (SigPtr other) const;
 
-	TyList tyList () const;
+	TyList tyList (TyPtr ret = nullptr) const;
 	std::string string () const;
 };
 

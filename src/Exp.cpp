@@ -16,9 +16,10 @@ bool Sig::aEquiv (SigPtr other) const
 	return true;
 }
 
-TyList Sig::tyList () const
+TyList Sig::tyList (TyPtr ret) const
 {
-	auto res = TyList();
+	auto res = ret == nullptr ? TyList() : TyList(ret);
+	
 	for (auto it = args.rbegin(); it != args.rend(); it++)
 		res = TyList(it->second, res);
 	return res;

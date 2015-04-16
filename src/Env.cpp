@@ -103,14 +103,7 @@ FuncInstance FuncOverload::inst (SigPtr sig) const
 
 TyPtr FuncInstance::type () const
 {
-	TyList list(returnType);
-
-	const auto& args = signature->args;
-
-	for (auto it = args.crbegin(); it != args.crend(); ++it)
-		list = TyList(it->second, list);
-
-	return Ty::makeFn(list);
+	return Ty::makeFn(signature->tyList(returnType));
 }
 
 
