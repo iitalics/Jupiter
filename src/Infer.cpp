@@ -98,8 +98,12 @@ void Infer::unify (TyPtr t1, TyPtr t2, Subs& subs, const Span& span)
 			   << "\" incompatible with type " << t2->string();
 		}
 		else
+		{
+			auto strs = Ty::stringAll({ t1, t2 });
+
 			ss << "incompatible types "
-		       << t1->string() << " and " << t2->string();
+		       << strs[0] << " and " << strs[1];
+		}
 		throw span.die(ss.str());
 	}
 }

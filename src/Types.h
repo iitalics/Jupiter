@@ -49,9 +49,17 @@ public:
 
 	bool aEquiv (TyPtr other) const;
 	std::string string () const;
+
+	static std::vector<std::string> stringAll (const TyList& tys);
 private:
-	void _string (std::ostringstream& ss) const;
-	void _concreteString (std::ostringstream& ss) const;
+	struct Pretty
+	{
+		std::ostringstream ss;
+		std::vector<const Ty*> poly;
+	};
+	void _string (Pretty& pr) const;
+	void _polyString (Pretty& pr) const;
+	void _concreteString (Pretty& pr) const;
 
 	static TyPtr newPoly (TyPtr ty, Subs& subs);
 };

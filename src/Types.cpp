@@ -20,21 +20,7 @@ TyPtr Ty::makePoly (const std::string& name)
 {
 	auto ty = std::make_shared<Ty>(tyPoly);
 
-	if (name.empty())
-	{
-		static int idx = 0;
-		std::ostringstream ss;
-		
-		if (idx <= 10)
-			ss << char('a' + idx);
-		else
-			ss << "t" << (idx - 10);
-		idx++;
-
-		ty->name = ss.str();
-	}
-	else
-		ty->name = name;
+	ty->name = name;
 
 	return ty;
 }
@@ -128,84 +114,124 @@ TyPtr Ty::newPoly (TyPtr ty, Subs& subs)
 
 std::string Ty::string () const
 {
-	std::ostringstream ss;
-	_string(ss);
-	return ss.str();
+	Pretty pr;
+	_string(pr);
+	return pr.ss.str();
 }
 
-void Ty::_string (std::ostringstream& ss) const
+std::vector<std::string> Ty::stringAll (const TyList& tys)
+{
+	std::vector<std::string> res;
+	Pretty pr;
+
+	for (auto ty : tys)
+	{
+		pr.ss.str("");
+		ty->_string(pr);
+		res.push_back(pr.ss.str());
+	}
+
+	return res;
+}
+
+void Ty::_string (Pretty& pr) const
 {
 	switch (kind)
 	{
 	case tyConcrete:
-		_concreteString(ss);
+		_concreteString(pr);
 		break;
 
 	case tyPoly:
-		ss << '\\' << name;
+		_polyString(pr);
 		break;
 
 	case tyOverloaded:
-		ss << "<overloaded function \"" << name << "\">";
+		pr.ss << "<overloaded function \"" << name << "\">";
 		break;
 
 	case tyWildcard:
-		ss << "_";
+		pr.ss << "_";
 		break;
 
 	default:
-		ss << "??";
+		pr.ss << "??";
 		break;
 	}
 }
 
-void Ty::_concreteString (std::ostringstream& ss) const
+void Ty::_polyString (Pretty& pr) const
+{
+	if (!name.empty())
+	{
+		pr.ss << "\\" << name;
+		return;
+	}
+
+	size_t i, len = pr.poly.size();
+
+	for (i = 0; i < len; i++)
+		if (pr.poly[i] == this)
+			break;
+
+	if (i >= len)
+		pr.poly.push_back(this);
+
+	pr.ss << "\\^";
+
+	if (i <= 10)
+		pr.ss << char('a' + i);
+	else
+		pr.ss << "t" << (i - 10);
+}
+
+void Ty::_concreteString (Pretty& pr) const
 {
 	if (name == "List")
 	{
-		ss << "[";
-		subtypes.front()->_string(ss);
-		ss << "]";
+		pr.ss << "[";
+		subtypes.front()->_string(pr);
+		pr.ss << "]";
 	}
 	else if (name == "Fn" && !subtypes.nil())
 	{
-		ss << '(';
+		pr.ss << '(';
 		auto s = subtypes;
 		for (size_t i = 0; !s.tail().nil(); ++s)
 		{
 			if (i++ > 0)
-				ss << ", ";
-			s.head()->_string(ss);
+				pr.ss << ", ";
+			s.head()->_string(pr);
 		}
-		ss << ") -> ";
-		s.head()->_string(ss);
+		pr.ss << ") -> ";
+		s.head()->_string(pr);
 	}
 	else if (name == "Tuple")
 	{
-		ss << '(';
+		pr.ss << '(';
 		size_t i = 0;
 		for (auto t : subtypes)
 		{
 			if (i++ > 0)
-				ss << ", ";
-			t->_string(ss);
+				pr.ss << ", ";
+			t->_string(pr);
 		}
-		ss << ')';
+		pr.ss << ')';
 	}
 	else
 	{
-		ss << name;
+		pr.ss << name;
 		if (!subtypes.nil())
 		{
 			size_t i = 0;
-			ss << '(';
+			pr.ss << '(';
 			for (auto t : subtypes)
 			{
 				if (i++ > 0)
-					ss << ", ";
-				t->_string(ss);
+					pr.ss << ", ";
+				t->_string(pr);
 			}
-			ss << ')';
+			pr.ss << ')';
 		}
 	}
 }

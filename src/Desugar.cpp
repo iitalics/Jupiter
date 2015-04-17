@@ -152,7 +152,7 @@ TyPtr Desugar::desugar (TyPtr ty)
 			auto it = polynames.find(ty->name);
 			if (it == polynames.end())
 			{
-				auto t2 = Ty::makePoly();
+				auto t2 = Ty::makePoly(ty->name);
 				return (polynames[ty->name] = t2);
 			}
 			else
