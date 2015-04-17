@@ -79,7 +79,7 @@ Infer::Infer (const FuncOverload& overload, SigPtr sig)
 	
 	unify(ret, fn.returnType, mainSubs, overload.signature->span);
 
-	ret = fn.returnType = mainSubs(fn.returnType);
+	fn.returnType = mainSubs(fn.returnType);
 
 	if (ret->kind == tyOverloaded)
 		throw sig->span.die("invalid for function to return overloaded type");
@@ -169,11 +169,13 @@ bool Infer::unifyOverload (Subs& out,
 	using Valid = std::tuple<FuncOverload&, Subs, TyPtr>;
 	std::vector<Valid> valid;
 
+	auto ret = Ty::makePoly();
+
 	for (auto& over : fn->overloads)
 	{
 		// create type for overload's signature
 		// edit: "wildcard types" are a bad idea
-		auto args = over.signature->tyList(Ty::makePoly());
+		auto args = over.signature->tyList(ret);
 		auto fnty = Ty::newPoly(Ty::makeFn(args));
 
 		// try to unify, if it fails then try next overload
@@ -287,11 +289,18 @@ TyPtr Infer::inferVar (ExpPtr exp, LocEnvPtr lenv)
 TyPtr Infer::inferBlock (ExpPtr exp, LocEnvPtr lenv)
 {
 	TyPtr res = nullptr;
+	auto dummy = Ty::makePoly();
 
 	LocEnvPtr lenv2 = LocEnv::make(lenv);
 
 	for (auto& e : exp->subexps)
+	{
 		res = infer(e, lenv2);
+
+		// instance overloaded types
+		if (res != nullptr)
+			unify(res, dummy, e->span);
+	}
 
 	// empty block returns unit "()"
 	if (res == nullptr)
@@ -315,9 +324,9 @@ TyPtr Infer::inferLet (ExpPtr exp, LocEnvPtr lenv)
 	auto ty = mainSubs(exp->getType());      // written type
 	auto tye = infer(exp->subexps[0], lenv); // inferred type
 
-	auto subs = unify(tye, ty, exp->subexps[0]->span);
+	unify(tye, ty, mainSubs, exp->subexps[0]->span);
 
-	ty = subs(ty);
+	ty = mainSubs(ty);
 
 	if (ty->kind == tyOverloaded)
 		throw exp->span.die("invalid for variable to have overloaded type");
