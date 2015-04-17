@@ -223,7 +223,7 @@ bool Infer::unifyOverload (Subs& out,
 
 	// instanciate overloaded function
 	// TODO: cache?
-	auto resty = over.inst(sig).type();
+	auto resty = Ty::newPoly(over.inst(sig).type());
 
 	// push final substitutions
 	if (!unify(out, TyList(resty), TyList(t2)))
