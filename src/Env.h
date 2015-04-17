@@ -15,12 +15,13 @@ using LocEnvPtr = std::shared_ptr<LocEnv>;
 class FuncOverload
 {
 public:
-	GlobFuncPtr parent;
+	GlobEnv& env;
+	std::string name;
 	SigPtr signature;
 	ExpPtr body;
+	std::vector<FuncInstance> instances;
 
-	std::string name () const;
-	FuncInstance inst (SigPtr sig) const;
+	FuncInstance inst (SigPtr sig);
 };
 
 struct FuncInstance
@@ -41,7 +42,6 @@ public:
 	GlobEnv& env;
 	std::string name;
 	std::vector<FuncOverload> overloads;
-	std::vector<FuncInstance> instances;
 };
 
 

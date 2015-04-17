@@ -29,7 +29,7 @@ using InferList = list<InferPtr>;
 
 struct Infer
 {
-	GlobFunc* parent;
+	GlobEnv& env;
 	FuncInstance fn;
 	Subs mainSubs;
 

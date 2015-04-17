@@ -58,8 +58,8 @@ TyPtr Subs::apply (TyPtr ty, const RuleList& ru) const
 
 
 Infer::Infer (const FuncOverload& overload, SigPtr sig)
-	: parent(overload.parent),
-	  fn { overload.name(), sig, Ty::makePoly() }
+	: env(overload.env),
+	  fn { overload.name, sig, Ty::makePoly() }
 {
 	auto lenv = LocEnv::make();
 
@@ -168,7 +168,7 @@ bool Infer::unifyOverload (Subs& out,
                              TyList l1, TyList l2)
 {
 	auto& name = t1->name;
-	auto fn = parent->env.getFunc(name);
+	auto fn = env.getFunc(name);
 
 	using Valid = std::tuple<FuncOverload&, Subs, TyPtr>;
 	std::vector<Valid> valid;
@@ -274,7 +274,7 @@ TyPtr Infer::inferVar (ExpPtr exp, LocEnvPtr lenv)
 
 	if (idx == -1)
 	{
-		auto fn = parent->env.getFunc(exp->getString());
+		auto fn = env.getFunc(exp->getString());
 
 		if (fn == nullptr || fn->overloads.empty())
 			throw exp->span.die("invalid global");

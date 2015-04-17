@@ -56,7 +56,6 @@ static int Main (std::vector<std::string>&& args)
 		env.loadToplevel(Parse::parseToplevel(lex));
 		lex.expect(tEOF);
 
-		GlobFunc toplevel(env, "#<toplevel>");
 		auto toplevelSpan = Span();
 		auto toplevelSig = Sig::make();
 
@@ -68,9 +67,11 @@ static int Main (std::vector<std::string>&& args)
 		mainCall = des.desugar(mainCall, LocEnv::make());
 
 		Infer inf({
-				&toplevel,
+				env,
+				"#<toplevel>",
 				toplevelSig,
-				mainCall },
+				mainCall,
+				{} },
 			toplevelSig);
 
 		std::cout << "-> " << inf.fn.returnType->string() << std::endl;

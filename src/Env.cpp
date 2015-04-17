@@ -58,9 +58,11 @@ void GlobEnv::loadToplevel (const GlobProto& proto)
 		auto fnd = des.desugar(fn);
 
 		globfn->overloads.push_back({
-				globfn,
+				*this,
+				fnd.name,
 				fnd.signature, 
-				fnd.body
+				fnd.body,
+				{}
 			});
 	}
 }
@@ -77,27 +79,25 @@ void GlobEnv::bake (const std::string& name,
 	auto sig = Sig::make(args);
 
 	globfn->overloads.push_back({
-		globfn,
+		*this,
+		name,
 		sig,
-		Exp::make(eInvalid)
-	});
-	globfn->instances.push_back({
-		name, sig, ret
+		Exp::make(eInvalid),
+		{ { name, sig, ret } }
 	});
 }
 
-std::string FuncOverload::name () const { return parent->name; }
-FuncInstance FuncOverload::inst (SigPtr sig) const
+FuncInstance FuncOverload::inst (SigPtr sig)
 {
-	for (auto& inst : parent->instances)
+	for (auto& inst : instances)
 		if (inst.signature->aEquiv(sig))
 			return inst;
 
-	std::cout << "instancing '" << parent->name << "' with: " << sig->string() << std::endl;
+	std::cout << "instancing '" << name << "' with: " << sig->string() << std::endl;
 
 	Infer inf(*this, sig);
 	auto& inst = inf.fn;
-	parent->instances.push_back(inst);
+	instances.push_back(inst);
 	return inst;
 }
 
