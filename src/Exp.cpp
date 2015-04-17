@@ -29,15 +29,15 @@ std::string Sig::string () const
 	std::ostringstream ss;
 
 	ss << "(";
-	bool first = true;
-	for (auto& a : args)
-	{
-		if (first)
-			first = false;
-		else
-			ss << ", ";
 
-		ss << a.first << " : " << a.second->string();
+	size_t i, len = args.size();
+	auto strs = Ty::stringAll(tyList());
+
+	for (i = 0; i < len; i++)
+	{
+		if (i > 0)
+			ss << ", ";
+		ss << args[i].first << " : " << strs[i];
 	}
 	ss << ")";
 
