@@ -39,14 +39,19 @@ static int Main (std::vector<std::string>&& args)
 	auto Bool = Ty::makeConcrete("Bool");
 	auto String = Ty::makeConcrete("String");
 	auto Unit = Ty::makeUnit();
+	auto polyA = Ty::makePoly();
+	auto polyB = Ty::makePoly();
+	auto polyList = Ty::makeConcrete("List", { polyA });
 
 	env.bake("+", { Int, Int }, Int);
 	env.bake("-", { Int }, Int);
 	env.bake("<", { Int, Int }, Bool);
 	env.bake("==", { Int, Int }, Bool);
-	env.bake("nil", { }, Ty::makeConcrete("List", {Ty::makePoly()}));
 	env.bake("println", { String }, Unit);
-	env.bake("string", { Ty::makePoly() }, String);
+	env.bake("string", { polyA }, String);
+	env.bake("nil", { }, polyList);
+	env.bake("hd", { polyList }, polyA);
+	env.bake("tl", { polyList }, polyList);
 
 	try
 	{
