@@ -79,7 +79,14 @@ Infer::Infer (const FuncOverload& overload, SigPtr sig)
 	
 	unify(ret, fn.returnType, mainSubs, overload.signature->span);
 
-	fn.returnType = mainSubs(fn.returnType);
+	ret = fn.returnType = mainSubs(fn.returnType);
+
+	fn.signature = Sig::make();
+	for (auto& arg : sig->args)
+		fn.signature->args.push_back({
+			arg.first,
+			mainSubs(arg.second)
+		});
 
 	if (ret->kind == tyOverloaded)
 		throw sig->span.die("invalid for function to return overloaded type");
@@ -185,10 +192,17 @@ bool Infer::unifyOverload (Subs& out,
 		// try to unify, if it fails then try next overload
 		Subs subs = out;
 		if (!unify(subs, TyList(t2, l1), TyList(fnty, l2)))
-			continue;
+			goto cont;//continue;
+
+		fnty = subs(fnty);
+
+		for (auto s = fnty->subtypes; !s.tail().nil(); ++s)
+			if (s.head()->kind == tyPoly)
+				goto cont;
 
 		// add to list of potential overloads
 		valid.push_back(Valid { over, subs, fnty });
+	cont:;
 	}
 
 	// no overloads :(
@@ -215,8 +229,7 @@ bool Infer::unifyOverload (Subs& out,
 		else
 		{
 			sig->args.push_back(Sig::Arg {
-				over.signature->args[i].first,
-				out(ty)
+				over.signature->args[i].first, ty
 			});
 			i++;
 		}
