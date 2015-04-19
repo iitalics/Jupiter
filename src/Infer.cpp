@@ -379,11 +379,24 @@ TyPtr Infer::inferCall (ExpPtr exp, LocEnvPtr lenv)
 
 TyPtr Infer::inferTuple (ExpPtr exp, LocEnvPtr lenv)
 {
+	/*
+		infer  (e1,...,en)
+			= "Tuple"(t1,...,tn)
+			where
+				t1,...,tn = infer e1,....,infer en
+	*/
 	TyList args;
+	auto dummy = Ty::makePoly();
 
 	for (auto it = exp->subexps.crbegin();
 			it != exp->subexps.crend(); ++it)
-		args = TyList(infer(*it, lenv), args);
+	{
+		auto ty = infer(*it, lenv);
+		args = TyList(ty, args);
+		
+		// instance overloaded types
+		unify(ty, dummy, (*it)->span);
+	}
 
 	return Ty::makeConcrete("Tuple", args);
 }
