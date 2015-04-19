@@ -3,6 +3,7 @@
 #include "Ast.h"
 #include "Types.h"
 #include "Desugar.h"
+#include "Compiler.h"
 
 static int Main (std::vector<std::string>&& args);
 
@@ -26,6 +27,7 @@ static int Main (std::vector<std::string>&& args)
 	}
 
 	GlobEnv env;
+	Compiler compiler;
 	using Op = GlobEnv::OpPrecedence;
 
 	env.operators.push_back(Op("+", 7, Assoc::Left));
@@ -43,15 +45,14 @@ static int Main (std::vector<std::string>&& args)
 	auto polyB = Ty::makePoly();
 	auto polyList = Ty::makeConcrete("List", { polyA });
 
-	env.bake("+", { Int, Int }, Int);
-	env.bake("-", { Int }, Int);
-	env.bake("<", { Int, Int }, Bool);
-	env.bake("==", { Int, Int }, Bool);
-	env.bake("println", { String }, Unit);
-	env.bake("string", { polyA }, String);
-	env.bake("nil", { }, polyList);
-	env.bake("hd", { polyList }, polyA);
-	env.bake("tl", { polyList }, polyList);
+	env.bake(&compiler, "juStd_addInt",  "+", { Int, Int }, Int);
+	env.bake(&compiler, "juStd_subInt",  "-", { Int }, Int);
+	env.bake(&compiler, "juStd_ltInt",   "<", { Int, Int }, Bool);
+	env.bake(&compiler, "juStd_eqInt",   "==", { Int, Int }, Bool);
+	env.bake(&compiler, "juStd_println", "println", { String }, Unit);
+	env.bake(&compiler, "juStd_nil",     "nil", { }, polyList);
+	env.bake(&compiler, "juStd_hd",      "hd", { polyList }, polyA);
+	env.bake(&compiler, "juStd_tl",      "tl", { polyList }, polyList);
 
 	try
 	{
@@ -61,25 +62,21 @@ static int Main (std::vector<std::string>&& args)
 		env.loadToplevel(Parse::parseToplevel(lex));
 		lex.expect(tEOF);
 
-		auto toplevelSpan = Span();
-		auto toplevelSig = Sig::make();
+		auto entrySpan = Span();
+		auto entrySig = Sig::make();
+		auto entryBody =
+			Exp::make(eCall,
+				{ Exp::make(eVar, "main", int(-1), {}, entrySpan) },
+				entrySpan);
+		FuncOverload entryOverload {
+			env,
+			"#<entry>",
+			entrySig,
+			entryBody,
+			{} };
 
-		auto mainCall = Exp::make(eCall,
-							{ Exp::make(eVar, "main", int(-1), {}, toplevelSpan) },
-							toplevelSpan);
+		compiler.compile(entryOverload, entrySig);
 
-		Desugar des(env);
-		mainCall = des.desugar(mainCall, LocEnv::make());
-
-		Infer inf({
-				env,
-				"#<toplevel>",
-				toplevelSig,
-				mainCall,
-				{} },
-			toplevelSig);
-
-		std::cout << "-> " << inf.fn.returnType->string() << std::endl;
 
 		return 0;
 	}

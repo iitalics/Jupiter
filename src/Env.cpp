@@ -1,5 +1,6 @@
 #include "Infer.h"
 #include "Desugar.h"
+#include "Compiler.h"
 #include <sstream>
 
 
@@ -67,27 +68,29 @@ void GlobEnv::loadToplevel (const GlobProto& proto)
 	}
 }
 
-void GlobEnv::bake (const std::string& name,
-						const std::vector<TyPtr>& argTypes,
-						TyPtr ret)
+void GlobEnv::bake (Compiler* comp, const std::string& intName,
+                        const std::string& name,
+                        const std::vector<TyPtr>& args,
+                        TyPtr ret)
 {
-	auto globfn = addFunc(name);
-	
-	Sig::ArgList args;
-	for (auto t : argTypes)
-		args.push_back({ "_", t });
-	auto sig = Sig::make(args);
+	auto sig = Sig::make();
+	for (const auto& ty : args)
+		sig->args.push_back({ "_", ty });
 
-	globfn->overloads.push_back({
+	// env.bake() is currently messed up and this
+	//  routine won't work until I convert `FuncOverload`
+	//  to a pointer type
+
+	addFunc(name)->overloads.push_back({
 		*this,
 		name,
 		sig,
 		Exp::make(eInvalid),
-		{ { name, sig, ret } }
+		{}
 	});
 }
 
-FuncInstance FuncOverload::inst (SigPtr sig)
+FuncInstance FuncOverload::inst (SigPtr sig, Compiler* compiler)
 {
 	for (auto& inst : instances)
 		if (inst.signature->aEquiv(sig))
@@ -95,11 +98,16 @@ FuncInstance FuncOverload::inst (SigPtr sig)
 
 	std::cout << "instancing '" << name << "' with: " << sig->string() << std::endl;
 
-	Infer inf(*this, sig);
-	auto& inst = inf.fn;
-	instances.push_back(inst);
-	return inst;
+	auto cunit = compiler->compile(*this, sig);
+	instances.push_back(cunit->funcInst);
+	return cunit->funcInst;
 }
+
+FuncInstance::FuncInstance (CompileUnit* _cunit, SigPtr sig, TyPtr ret)
+	: name(_cunit->overload.name),
+	  signature(sig),
+	  returnType(ret),
+	  cunit(_cunit) {}
 
 TyPtr FuncInstance::type () const
 {

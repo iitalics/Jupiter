@@ -1,4 +1,5 @@
 #include "Infer.h"
+#include "Compiler.h"
 #include <stdexcept>
 
 
@@ -57,10 +58,13 @@ TyPtr Subs::apply (TyPtr ty, const RuleList& ru) const
 
 
 
-Infer::Infer (const FuncOverload& overload, SigPtr sig)
-	: env(overload.env),
-	  fn { overload.name, sig, Ty::makePoly() }
+Infer::Infer (CompileUnit* _cunit, SigPtr sig)
+	: env(_cunit->overload.env),
+	  fn(_cunit, sig),
+	  mainSubs()
 {
+	auto& overload = _cunit->overload;
+	auto& fn = _cunit->funcInst;
 	auto lenv = LocEnv::make();
 
 	for (size_t len = sig->args.size(), i = 0; i < len; i++)
@@ -175,14 +179,14 @@ bool Infer::unifyOverload (Subs& out,
                              TyList l1, TyList l2)
 {
 	auto& name = t1->name;
-	auto fn = env.getFunc(name);
+	auto globfn = env.getFunc(name);
 
 	using Valid = std::tuple<FuncOverload&, Subs, TyPtr>;
 	std::vector<Valid> valid;
 
 	auto ret = Ty::makePoly();
 
-	for (auto& over : fn->overloads)
+	for (auto& over : globfn->overloads)
 	{
 		// create type for overload's signature
 		// edit: "wildcard types" are a bad idea
@@ -236,7 +240,7 @@ bool Infer::unifyOverload (Subs& out,
 
 	// instanciate overloaded function
 	// TODO: cache?
-	auto resty = Ty::newPoly(over.inst(sig).type());
+	auto resty = Ty::newPoly(over.inst(sig, fn.cunit->compiler).type());
 
 	// push final substitutions
 	if (!unify(out, TyList(resty), TyList(t2)))

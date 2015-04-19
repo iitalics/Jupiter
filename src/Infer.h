@@ -2,6 +2,11 @@
 #include "Env.h"
 
 
+struct CompileUnit;
+struct Infer;
+using InferPtr = Infer*;
+using InferList = list<InferPtr>;
+
 struct Subs
 {
 	struct Rule
@@ -23,17 +28,13 @@ private:
 	TyPtr apply (TyPtr ty, const RuleList& r) const;
 };
 
-struct Infer;
-using InferPtr = Infer*;
-using InferList = list<InferPtr>;
-
 struct Infer
 {
 	GlobEnv& env;
 	FuncInstance fn;
 	Subs mainSubs;
 
-	Infer (const FuncOverload& overload, SigPtr sig);
+	Infer (CompileUnit* cunit, SigPtr sig);
 
 	void unify (TyPtr t1, TyPtr t2, Subs& subs, const Span& span = Span());
 	inline Subs unify (TyPtr t1, TyPtr t2, const Span& span = Span())

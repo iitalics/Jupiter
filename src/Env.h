@@ -1,7 +1,10 @@
 #pragma once
-#include "Compiler.h"
+#include "Jupiter.h"
+#include "Ast.h"
 #include <tuple>
 
+class Compiler;
+struct CompileUnit;
 class LocEnv;
 class FuncOverload;
 struct FuncInstance;
@@ -21,7 +24,7 @@ public:
 	ExpPtr body;
 	std::vector<FuncInstance> instances;
 
-	FuncInstance inst (SigPtr sig);
+	FuncInstance inst (SigPtr sig, Compiler* comp);
 };
 
 struct FuncInstance
@@ -29,6 +32,11 @@ struct FuncInstance
 	std::string name;
 	SigPtr signature;
 	TyPtr returnType;
+
+	CompileUnit* cunit;
+
+	FuncInstance (CompileUnit* cunit,
+					SigPtr sig, TyPtr ret = Ty::makePoly());
 
 	TyPtr type () const;
 };
@@ -65,9 +73,11 @@ public:
 	GlobFuncPtr addFunc (const std::string& name);
 
 	// creates a function and an instance
-	void bake (const std::string& name,
-				const std::vector<TyPtr>& args,
-				TyPtr ret);
+	void bake (Compiler* comp,
+		        const std::string& intName,
+	            const std::string& name,
+	            const std::vector<TyPtr>& args,
+	            TyPtr ret);
 
 	void loadToplevel (const GlobProto& proto);
 };
