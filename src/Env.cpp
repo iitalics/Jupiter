@@ -58,13 +58,13 @@ void GlobEnv::loadToplevel (const GlobProto& proto)
 		Desugar des(*this);
 		auto fnd = des.desugar(fn);
 
-		globfn->overloads.push_back({
-				*this,
-				fnd.name,
-				fnd.signature, 
-				fnd.body,
-				{}
-			});
+		auto overload = Overload::make(
+			*this,
+			fnd.name,
+			fnd.signature, 
+			fnd.body);
+
+		globfn->overloads.push_back(overload);
 	}
 }
 
@@ -77,34 +77,34 @@ void GlobEnv::bake (Compiler* comp, const std::string& intName,
 	for (const auto& ty : args)
 		sig->args.push_back({ "_", ty });
 
-	// env.bake() is currently messed up and this
-	//  routine won't work until I convert `FuncOverload`
-	//  to a pointer type
+	auto overload = Overload::make(*this, name, sig, Exp::make(eInvalid));
+	auto cu = comp->bake(overload, sig, ret, intName);
 
-	addFunc(name)->overloads.push_back({
-		*this,
-		name,
-		sig,
-		Exp::make(eInvalid),
-		{}
-	});
+	addFunc(name)->overloads.push_back(overload);
+	overload->instances.push_back(FuncInstance(cu, sig, ret));
 }
 
-FuncInstance FuncOverload::inst (SigPtr sig, Compiler* compiler)
+OverloadPtr Overload::make (GlobEnv& env, const std::string& name,
+                              SigPtr sig, ExpPtr body)
 {
-	for (auto& inst : instances)
+	return OverloadPtr(new Overload { env, name, sig, body, {} });
+}
+
+FuncInstance Overload::inst (OverloadPtr over, SigPtr sig, Compiler* compiler)
+{
+	for (auto& inst : over->instances)
 		if (inst.signature->aEquiv(sig))
 			return inst;
 
-	std::cout << "instancing '" << name << "' with: " << sig->string() << std::endl;
+	std::cout << "instancing '" << over->name << "' with: " << sig->string() << std::endl;
 
-	auto cunit = compiler->compile(*this, sig);
-	instances.push_back(cunit->funcInst);
+	auto cunit = compiler->compile(over, sig);
+	over->instances.push_back(cunit->funcInst);
 	return cunit->funcInst;
 }
 
 FuncInstance::FuncInstance (CompileUnit* _cunit, SigPtr sig, TyPtr ret)
-	: name(_cunit->overload.name),
+	: name(_cunit->overload->name),
 	  signature(sig),
 	  returnType(ret),
 	  cunit(_cunit) {}

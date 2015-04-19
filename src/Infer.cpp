@@ -59,29 +59,28 @@ TyPtr Subs::apply (TyPtr ty, const RuleList& ru) const
 
 
 Infer::Infer (CompileUnit* _cunit, SigPtr sig)
-	: env(_cunit->overload.env),
+	: env(_cunit->overload->env),
 	  fn(_cunit, sig),
 	  mainSubs()
 {
-	auto& overload = _cunit->overload;
-	auto& fn = _cunit->funcInst;
+	auto overload = _cunit->overload;
 	auto lenv = LocEnv::make();
 
 	for (size_t len = sig->args.size(), i = 0; i < len; i++)
 	{
-		auto& arg = overload.signature->args[0];
+		auto& arg = overload->signature->args[0];
 		auto ty = sig->args[i].second;
 
 		lenv->newVar(arg.first, ty);
 	}
 
-	if (!unify(mainSubs, overload.signature->tyList(), sig->tyList()))
-		throw overload.signature->span.
+	if (!unify(mainSubs, overload->signature->tyList(), sig->tyList()))
+		throw overload->signature->span.
 				die("invalid types when instancing overload!");
 
-	auto ret = infer(overload.body, lenv);
+	auto ret = infer(overload->body, lenv);
 	
-	unify(ret, fn.returnType, mainSubs, overload.signature->span);
+	unify(ret, fn.returnType, mainSubs, overload->signature->span);
 
 	ret = fn.returnType = mainSubs(fn.returnType);
 
@@ -181,16 +180,16 @@ bool Infer::unifyOverload (Subs& out,
 	auto& name = t1->name;
 	auto globfn = env.getFunc(name);
 
-	using Valid = std::tuple<FuncOverload&, Subs, TyPtr>;
+	using Valid = std::tuple<OverloadPtr, Subs, TyPtr>;
 	std::vector<Valid> valid;
 
 	auto ret = Ty::makePoly();
 
-	for (auto& over : globfn->overloads)
+	for (auto& overload : globfn->overloads)
 	{
 		// create type for overload's signature
 		// edit: "wildcard types" are a bad idea
-		auto args = over.signature->tyList(ret);
+		auto args = overload->signature->tyList(ret);
 		auto fnty = Ty::newPoly(Ty::makeFn(args));
 
 		// try to unify, if it fails then try next overload
@@ -205,7 +204,7 @@ bool Infer::unifyOverload (Subs& out,
 				goto cont;
 
 		// add to list of potential overloads
-		valid.push_back(Valid { over, subs, fnty });
+		valid.push_back(Valid { overload, subs, fnty });
 	cont:;
 	}
 
@@ -219,28 +218,29 @@ bool Infer::unifyOverload (Subs& out,
 	if (valid.size() > 1)
 		return false;
 
-	auto& over = std::get<0>(best);
-	auto fnty  = std::get<2>(best);
+	auto overload = std::get<0>(best);
+	auto fnty = std::get<2>(best);
 	out = std::get<1>(best);
 
 
 	// construct signature from overloaded function
 	auto sig = Sig::make();
-	size_t i = 0, len = over.signature->args.size();
+	size_t i = 0, len = overload->signature->args.size();
 	for (auto ty : fnty->subtypes)
 		if (i >= len)
 			break;
 		else
 		{
 			sig->args.push_back(Sig::Arg {
-				over.signature->args[i].first, ty
+				overload->signature->args[i].first, ty
 			});
 			i++;
 		}
 
 	// instanciate overloaded function
 	// TODO: cache?
-	auto resty = Ty::newPoly(over.inst(sig, fn.cunit->compiler).type());
+	auto inst = Overload::inst(overload, sig, fn.cunit->compiler);
+	auto resty = Ty::newPoly(inst.type());
 
 	// push final substitutions
 	if (!unify(out, TyList(resty), TyList(t2)))

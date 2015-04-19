@@ -10,14 +10,14 @@ struct CompileUnit
 {
 	Compiler* compiler;
 
-	FuncOverload& overload;
+	OverloadPtr overload;
 	std::string internalName;
 	FuncInstance funcInst;
 
 private:
 	friend class Compiler;
-	CompileUnit (Compiler* comp, FuncOverload& over, SigPtr sig);
-	CompileUnit (Compiler* comp, FuncOverload& over,
+	CompileUnit (Compiler* comp, OverloadPtr overload, SigPtr sig);
+	CompileUnit (Compiler* comp, OverloadPtr overload,
 	               SigPtr sig, TyPtr ret,
 	               const std::string& intName);
 };
@@ -32,8 +32,8 @@ public:
 
 	std::string genUniqueName (const std::string& prefix = "");
 
-	CompileUnit* compile (FuncOverload& overload, SigPtr sig);
-	CompileUnit* bake (FuncOverload& overload,
+	CompileUnit* compile (OverloadPtr overload, SigPtr sig);
+	CompileUnit* bake (OverloadPtr overload,
 						SigPtr sig, TyPtr ret,
 						const std::string& internalName);
 private:

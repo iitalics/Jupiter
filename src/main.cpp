@@ -68,12 +68,12 @@ static int Main (std::vector<std::string>&& args)
 			Exp::make(eCall,
 				{ Exp::make(eVar, "main", int(-1), {}, entrySpan) },
 				entrySpan);
-		FuncOverload entryOverload {
-			env,
-			"#<entry>",
-			entrySig,
-			entryBody,
-			{} };
+		auto entryOverload =
+			Overload::make(
+				env,
+				"#<entry>",
+				entrySig,
+				entryBody);
 
 		compiler.compile(entryOverload, entrySig);
 

@@ -4,18 +4,18 @@
 #include <tuple>
 
 class Compiler;
-struct CompileUnit;
-class LocEnv;
-class FuncOverload;
-struct FuncInstance;
+class Overload;
 class GlobFunc;
 class LocEnv;
 class GlobEnv;
+struct FuncInstance;
+struct CompileUnit;
 using GlobFuncPtr = GlobFunc*;
 using LocEnvPtr = std::shared_ptr<LocEnv>;
+using OverloadPtr = std::shared_ptr<Overload>;
 
 
-class FuncOverload
+class Overload
 {
 public:
 	GlobEnv& env;
@@ -24,7 +24,10 @@ public:
 	ExpPtr body;
 	std::vector<FuncInstance> instances;
 
-	FuncInstance inst (SigPtr sig, Compiler* comp);
+	static OverloadPtr make (GlobEnv& env, const std::string& name,
+	                           SigPtr sig, ExpPtr body);
+	static FuncInstance inst (OverloadPtr overload,
+	                            SigPtr sig, Compiler* comp);
 };
 
 struct FuncInstance
@@ -49,7 +52,7 @@ public:
 
 	GlobEnv& env;
 	std::string name;
-	std::vector<FuncOverload> overloads;
+	std::vector<OverloadPtr> overloads;
 };
 
 

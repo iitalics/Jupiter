@@ -18,13 +18,13 @@ std::string Compiler::genUniqueName (const std::string& prefix)
 	return ss.str();
 }
 
-CompileUnit* Compiler::compile (FuncOverload& overload, SigPtr sig)
+CompileUnit* Compiler::compile (OverloadPtr overload, SigPtr sig)
 {
 	auto cu = new CompileUnit(this, overload, sig);
 	units.push_back(cu);
 	return cu;
 }
-CompileUnit* Compiler::bake (FuncOverload& overload,
+CompileUnit* Compiler::bake (OverloadPtr overload,
                               SigPtr sig, TyPtr ret,
                               const std::string& intName)
 {
@@ -35,7 +35,7 @@ CompileUnit* Compiler::bake (FuncOverload& overload,
 }
 
 
-CompileUnit::CompileUnit (Compiler* comp, FuncOverload& over,
+CompileUnit::CompileUnit (Compiler* comp, OverloadPtr over,
                             SigPtr sig, TyPtr ret,
                             const std::string& intName)
 	: compiler(comp),
@@ -44,13 +44,13 @@ CompileUnit::CompileUnit (Compiler* comp, FuncOverload& over,
 	  funcInst(this, sig, ret)
 {}
 
-CompileUnit::CompileUnit (Compiler* comp, FuncOverload& over, SigPtr sig)
+CompileUnit::CompileUnit (Compiler* comp, OverloadPtr over, SigPtr sig)
 	: compiler(comp),
 	  overload(over),
 	  internalName(comp->genUniqueName("fn")),
 	  funcInst(this, sig)
 {
-	std::cout << "compiling '" << over.name << "'" << std::endl;
+	std::cout << "compiling '" << over->name << "'" << std::endl;
 
 	Infer inf(this, sig);
 	funcInst = inf.fn;
