@@ -96,7 +96,7 @@ FuncInstance Overload::inst (OverloadPtr over, SigPtr sig, Compiler* compiler)
 		if (inst.signature->aEquiv(sig))
 			return inst;
 
-	std::cout << "instancing '" << over->name << "' with: " << sig->string() << std::endl;
+	std::cerr << "instancing '" << over->name << "' with: " << sig->string() << std::endl;
 
 	auto cunit = compiler->compile(over, sig);
 	over->instances.push_back(cunit->funcInst);
