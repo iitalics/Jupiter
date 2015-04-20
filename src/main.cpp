@@ -30,12 +30,12 @@ static int Main (std::vector<std::string>&& args)
 	Compiler compiler;
 	using Op = GlobEnv::OpPrecedence;
 
-	env.operators.push_back(Op("+", 7, Assoc::Left));
-	env.operators.push_back(Op("-", 7, Assoc::Left));
-	env.operators.push_back(Op("*", 6, Assoc::Left));
-	env.operators.push_back(Op("/", 6, Assoc::Left));
-	env.operators.push_back(Op("^", 5, Assoc::Right));
-	env.operators.push_back(Op("::", 4, Assoc::Right));
+	env.operators.push_back(Op("::", 80, Assoc::Right));
+	env.operators.push_back(Op("+",  70, Assoc::Left));
+	env.operators.push_back(Op("-",  70, Assoc::Left));
+	env.operators.push_back(Op("*",  60, Assoc::Left));
+	env.operators.push_back(Op("/",  60, Assoc::Left));
+	env.operators.push_back(Op("^",  50, Assoc::Right));
 
 	auto Int = Ty::makeConcrete("Int");
 	auto Bool = Ty::makeConcrete("Bool");
