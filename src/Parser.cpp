@@ -146,7 +146,7 @@ ExpPtr parseExp (Lexer& lex)
 		{
 			// <op>
 			tok = lex.advance();
-			e = Exp::make(eVar, tok.str, int(-1), {}, tok.span);
+			e = Exp::make(eVar, tok.str, bool(true), {}, tok.span);
 			vals.push_back(e);
 
 			// <term>
@@ -195,7 +195,7 @@ ExpPtr parseTermPrefix (Lexer& lex)
 
 	case tIdent:
 		tok = lex.advance();
-		return Exp::make(eVar, tok.str, int(-1), {}, tok.span);
+		return Exp::make(eVar, tok.str, bool(true), {}, tok.span);
 
 	case tLParen:
 		return parseTuple(lex);

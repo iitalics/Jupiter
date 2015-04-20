@@ -142,14 +142,13 @@ LocEnv::~LocEnv ()
 LocEnv::VarPtr LocEnv::newVar (TyPtr ty)
 {
 	std::ostringstream ss;
-	ss << "#temp" << *_count;
+	ss << "#t" << (*_count)++;
 	return newVar(ss.str(), ty);
 }
 
 LocEnv::VarPtr LocEnv::newVar (const std::string& name, TyPtr ty)
 {
-	int& r = *_count;
-	auto v = new Var { name, ty, r++ };
+	auto v = new Var { name, ty };
 	vars.push_back(v);
 	return v;
 }
@@ -164,18 +163,6 @@ LocEnv::VarPtr LocEnv::get (const std::string& name)
 		return nullptr;
 	else
 		return parent->get(name);
-}
-
-LocEnv::VarPtr LocEnv::get (int idx)
-{
-	for (auto& v : vars)
-		if (v->idx == idx)
-			return v;
-
-	if (parent == nullptr)
-		return nullptr;
-	else
-		return parent->get(idx);
 }
 
 bool LocEnv::has (const std::string& name)

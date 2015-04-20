@@ -102,7 +102,6 @@ public:
 	{
 		std::string name;
 		TyPtr ty;
-		int idx;
 	};
 	using VarPtr = Var*;
 
@@ -113,7 +112,6 @@ public:
 	VarPtr newVar (const std::string& name, TyPtr ty = nullptr);
 
 	VarPtr get (const std::string& name);
-	VarPtr get (int idx);
 
 	bool has (const std::string& name);
 

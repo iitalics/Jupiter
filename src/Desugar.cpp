@@ -59,7 +59,7 @@ ExpPtr Desugar::desugarVar (ExpPtr e, LocEnvPtr lenv)
 		return desugarGlobal(e);
 	else
 	{
-		e->set<int>(var->idx);
+		e->set<bool>(false);
 		return e;
 	}
 }
@@ -72,7 +72,7 @@ ExpPtr Desugar::desugarGlobal (ExpPtr e)
 		throw e->span.die(ss.str());
 	}
 
-	e->set<int>(-1);
+	e->set<bool>(true);
 	return e;
 }
 
@@ -120,8 +120,8 @@ ExpPtr Desugar::desugarLet (ExpPtr e, LocEnvPtr lenv)
 	auto res = desugarSubexps(e, lenv);
 	
 	// letrec?
-	auto newvar = lenv->newVar(e->getString());
-	res->set<int>(newvar->idx);
+	lenv->newVar(e->getString());
+	res->set<bool>(false);
 	return res;
 }
 

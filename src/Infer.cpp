@@ -287,9 +287,7 @@ TyPtr Infer::infer (ExpPtr exp, LocEnvPtr lenv)
 
 TyPtr Infer::inferVar (ExpPtr exp, LocEnvPtr lenv)
 {
-	auto idx = exp->get<int>();
-
-	if (idx == -1)
+	if (exp->get<bool>()) // global
 	{
 		auto fn = env.getFunc(exp->getString());
 
@@ -300,7 +298,7 @@ TyPtr Infer::inferVar (ExpPtr exp, LocEnvPtr lenv)
 	}
 	else
 	{
-		auto var = lenv->get(idx);
+		auto var = lenv->get(exp->getString());
 		if (var == nullptr)
 			throw exp->span.die("DESUGAR SHOULD MAKE THIS UNREACHABLE!!");
 
