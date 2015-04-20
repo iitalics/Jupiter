@@ -77,6 +77,10 @@ static int Main (std::vector<std::string>&& args)
 
 		compiler.compile(entryOverload, entrySig);
 
+		std::ostringstream ss;
+		compiler.output(ss);
+		std::cout << ss.str() << std::endl;
+
 
 		return 0;
 	}
