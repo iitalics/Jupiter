@@ -1,5 +1,7 @@
 #include "Compiler.h"
 #include <sstream>
+#include <iomanip>
+#include <ctime>
 
 
 Compiler::Compiler ()
@@ -35,6 +37,11 @@ CompileUnit* Compiler::bake (OverloadPtr overload,
 }
 void Compiler::output (std::ostream& os)
 {
+    auto now = std::time(nullptr);
+
+	os << "; compiled: "
+	   << std::asctime(std::localtime(&now))
+	   << std::endl << std::endl;
 	for (auto cu : units)
 		cu->output(os);
 }
@@ -225,19 +232,19 @@ void CompileUnit::compileOp (const Operand& op, int tempId)
 		switch (op.src->kind)
 		{
 		case eInt:
-			ssBody << "bitcast i32 "
+			ssBody << "inttoptr i32 "
 			       << ((op.src->get<int_t>() << 1) | 1) << " to i8*"
 			       << "  ; int";
 			break;
 
 		case eBool:
-			ssBody << "bitcast i32 "
+			ssBody << "inttoptr i32 "
 			       << ((op.src->get<bool>() ? 3 : 1)) << " to i8*"
 			       << "  ; boolean";
 			break;
 
 		default:
-			ssBody << "i8* null  ; ??";
+			ssBody << "bitcast i8* null to i8*  ; ??";
 			break;
 		}
 		break;
