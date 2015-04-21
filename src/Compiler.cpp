@@ -354,8 +354,8 @@ CompileUnit::Operand CompileUnit::compileLet (ExpPtr e, EnvPtr env, Lifetime* li
 	auto idx = findRegister(&env->life);
 	env->vars.push_back({ e->getString(), idx });
 
-	auto op = compile(e->subexps[0], env, life);
-	ssBody << "store i8* " << compileOp(op) << ", i8** " << regString(idx) << std::endl;
+	auto res = compileOp(compile(e->subexps[0], env, life));
+	ssBody << "store i8* " << res << ", i8** " << regString(idx) << std::endl;
 
 	return { opLit, 0, e };
 }
