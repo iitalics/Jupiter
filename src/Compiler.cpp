@@ -88,6 +88,9 @@ CompileUnit::CompileUnit (Compiler* comp, OverloadPtr overload, SigPtr sig)
 
 	// TODO: put in arguments 
 	auto env = makeEnv();
+	for (size_t i = 0, len = sig->args.size(); i < len; i++)
+		env->vars.push_back({ sig->args[i].first, -int(i + 1) });
+
 	auto life = Lifetime(this);
 	auto res = compileOp(compile(overload->body, env, &life));
 	ssBody << "ret i8* " << res << std::endl;
@@ -154,11 +157,21 @@ void CompileUnit::writePrefix ()
 	ssPrefix << std::endl << std::endl
 	         << ";;; " << overload->name << " : "
 	         << funcInst.type()->string() << std::endl
-	         << "define fastcc i8* @" << internalName << " () {" << std::endl;
+	         << "define fastcc i8* @" << internalName << " (";
+
+	for (size_t i = 0, len = overload->signature->args.size(); i < len; i++)
+	{
+		if (i > 0)
+			ssPrefix << ", ";
+
+		ssPrefix << "i8* " << argString(i);
+	}
+
+	ssPrefix << ") {" << std::endl;
 }
 void CompileUnit::writeEnd ()
 {
-	ssEnd << "}\n";
+	ssEnd << "}" << std::endl;
 }
 void CompileUnit::output (std::ostream& out)
 {
@@ -268,7 +281,7 @@ CompileUnit::Operand CompileUnit::compileVar (ExpPtr e, EnvPtr env, Lifetime* li
 		auto idx = env->get(e->getString()).idx;
 
 		if (idx < 0) // argument
-			return { opArg, -idx, e };
+			return { opArg, -(idx + 1), e };
 		else
 			return { opVar, idx, e };
 	}

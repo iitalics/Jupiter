@@ -1,4 +1,6 @@
+func twice (n) { n + n }
+
 func main () {
-	let n = 1;
-	n + 7
+	let x = 4;
+	twice(x)
 }
