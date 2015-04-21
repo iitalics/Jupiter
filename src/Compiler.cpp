@@ -184,45 +184,41 @@ std::string CompileUnit::tempString (int id) const
 
 std::string CompileUnit::compileOp (const Operand& op)
 {
-	ssBody << tempString(temps) << " = ";
 	switch (op.kind)
 	{
 	case opLit:
 		switch (op.src->kind)
 		{
 		case eInt:
-			ssBody << "inttoptr i32 "
+			ssBody << tempString(temps) << " = inttoptr i32 "
 			       << ((op.src->get<int_t>() << 1) | 1) << " to i8*"
-			       << "  ; int";
+			       << "  ; int: " << op.src->string() << std::endl;
 			break;
 
 		case eBool:
-			ssBody << "inttoptr i32 "
-			       << ((op.src->get<bool>() ? 3 : 1)) << " to i8*"
-			       << "  ; boolean";
+			ssBody << tempString(temps) << "inttoptr i32 "
+			       << ((op.src->get<bool>() ? 3 : 0)) << " to i8*"
+			       << "  ; boolean: " << op.src->string() << std::endl;
 			break;
 
 		default:
-			ssBody << "bitcast i8* null to i8*  ; ??";
-			break;
+			// eLit, eBlock, eTuple as "literal" results
+			//  in the unit (represented as null to the runtime)
+			return "i8* null";
 		}
 		break;
 
 	case opVar:
-		ssBody << "load i8** "
-		       << regString(op.idx);
+		ssBody << tempString(temps) << " = load i8** "
+		       << regString(op.idx) << std::endl;
 		break;
 
 	case opArg:
-		ssBody << "i8* " << argString(op.idx);
-		break;
+		return argString(op.idx);
 
 	default:
-		ssBody << "i8* null";
-		break;
+		return "null";
 	}
-
-	ssBody << std::endl;
 
 	return tempString(temps++);
 }
@@ -240,6 +236,9 @@ CompileUnit::Operand CompileUnit::compile (ExpPtr e, EnvPtr env, Lifetime* life)
 
 	case eBlock:
 		return compileBlock(e, env, life);
+
+	case eLet:
+		return compileLet(e, env, life);
 
 	case eCall:
 		return compileCall(e, env, life);
@@ -278,16 +277,16 @@ CompileUnit::Operand CompileUnit::compileVar (ExpPtr e, EnvPtr env, Lifetime* li
 CompileUnit::Operand CompileUnit::compileBlock (ExpPtr e, EnvPtr env, Lifetime* life)
 {
 	auto env2 = makeEnv(env);
-	Lifetime life2(this);
 	Operand op { opLit, 0, e };
 
 	for (size_t i = 0, len = e->subexps.size(); i < len; i++)
 	{
-		op = compile(e->subexps[i], env2, &life2);
+		op = compile(e->subexps[i], env2, life);
 
 		// reduce all but last op
 		if (i < len - 1)
 			compileOp(op);
+		// else tail call?
 	}
 
 	return op;
@@ -337,3 +336,13 @@ CompileUnit::Operand CompileUnit::compileCall (ExpPtr e, EnvPtr env, Lifetime* l
 }
 
 
+CompileUnit::Operand CompileUnit::compileLet (ExpPtr e, EnvPtr env, Lifetime* life)
+{
+	auto idx = findRegister(&env->life);
+	env->vars.push_back({ e->getString(), idx });
+
+	auto op = compile(e->subexps[0], env, life);
+	ssBody << "store i8* " << compileOp(op) << ", i8** " << regString(idx) << std::endl;
+
+	return { opLit, 0, e };
+}

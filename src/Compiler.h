@@ -86,6 +86,7 @@ struct CompileUnit
 	std::string compileOp (const Operand& op);
 	Operand compile (ExpPtr e, EnvPtr env, Lifetime* life);
 	Operand compileVar (ExpPtr e, EnvPtr env, Lifetime* life);
+	Operand compileLet (ExpPtr e, EnvPtr env, Lifetime* life);
 	Operand compileBlock (ExpPtr e, EnvPtr env, Lifetime* life);
 	Operand compileCall (ExpPtr e, EnvPtr env, Lifetime* life);
 };
