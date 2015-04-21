@@ -217,7 +217,7 @@ std::string CompileUnit::compileOp (const Operand& op)
 		default:
 			// eLit, eBlock, eTuple as "literal" results
 			//  in the unit (represented as null to the runtime)
-			return "i8* null";
+			return "null";
 		}
 		break;
 
