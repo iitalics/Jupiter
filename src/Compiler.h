@@ -2,6 +2,7 @@
 #include "Env.h"
 #include "Infer.h"
 #include <sstream>
+#include <map>
 
 class Compiler;
 
@@ -22,7 +23,9 @@ struct CompileUnit
 	std::ostringstream ssBody;
 	std::ostringstream ssEnd;
 
+	std::map<ExpPtr, std::string> special;
 	std::vector<Lifetime*> regs;
+	int temps;
 
 	struct Lifetime
 	{
@@ -80,8 +83,11 @@ struct CompileUnit
 	EnvPtr makeEnv (EnvPtr parent = nullptr);
 	int findRegister (Lifetime* life);
 
-	Operand compile (ExpPtr e, EnvPtr env);
-	void compileOp (const Operand& op, int tempId = 0);
+	std::string compileOp (const Operand& op);
+	Operand compile (ExpPtr e, EnvPtr env, Lifetime* life);
+	Operand compileVar (ExpPtr e, EnvPtr env, Lifetime* life);
+	Operand compileBlock (ExpPtr e, EnvPtr env, Lifetime* life);
+	Operand compileCall (ExpPtr e, EnvPtr env, Lifetime* life);
 };
 
 

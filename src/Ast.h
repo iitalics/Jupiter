@@ -6,13 +6,6 @@
 #include <memory>
 #include <algorithm>
 
-class Exp;
-struct Sig;
-using ExpPtr = std::shared_ptr<Exp>;
-using SigPtr = std::shared_ptr<Sig>;
-using ExpList = std::vector<ExpPtr>;
-
-
 struct Sig
 {
 	using Arg = std::pair<std::string, TyPtr>;

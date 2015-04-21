@@ -247,6 +247,8 @@ bool Infer::unifyOverload (Subs& out,
 		return false;
 	out += { t1, resty };
 
+	fn.cunit->special[t1->srcExp] = inst.cunit->internalName;
+
 	return true;
 }
 
@@ -294,7 +296,7 @@ TyPtr Infer::inferVar (ExpPtr exp, LocEnvPtr lenv)
 		if (fn == nullptr || fn->overloads.empty())
 			throw exp->span.die("invalid global");
 
-		return Ty::makeOverloaded(fn->name);
+		return Ty::makeOverloaded(exp, fn->name);
 	}
 	else
 	{
@@ -339,7 +341,6 @@ TyPtr Infer::inferLet (ExpPtr exp, LocEnvPtr lenv)
 				S  = unify t1 a
 				env += { x1 : S a }
 	*/
-
 	auto ty = mainSubs(exp->getType());      // written type
 	auto tye = infer(exp->subexps[0], lenv); // inferred type
 

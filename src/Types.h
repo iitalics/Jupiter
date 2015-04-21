@@ -5,8 +5,14 @@
 
 struct Subs;
 class Ty;
+class Exp;
+struct Sig;
 using TyPtr = std::shared_ptr<Ty>;
 using TyList = list<TyPtr>;
+using ExpPtr = std::shared_ptr<Exp>;
+using SigPtr = std::shared_ptr<Sig>;
+using ExpList = std::vector<ExpPtr>;
+
 
 
 enum TyKind
@@ -25,7 +31,7 @@ public:
 	static TyPtr makeConcrete (const std::string& t,
 						const TyList& sub = {});
 	static TyPtr makePoly (const std::string& name = std::string());
-	static TyPtr makeOverloaded (const std::string& name);
+	static TyPtr makeOverloaded (ExpPtr src, const std::string& name);
 	static TyPtr makeWildcard ();
 	static TyPtr makeInvalid ();
 	static TyPtr makeUnit ();
@@ -41,6 +47,7 @@ public:
 	TyKind kind;
 	TyList subtypes;
 	std::string name;
+	ExpPtr srcExp;
 
 	inline bool operator== (TyKind k) const
 	{ return kind == k; }

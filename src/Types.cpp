@@ -5,7 +5,8 @@
 
 
 Ty::Ty (TyKind k)
-	: kind(k), subtypes(), name("") {}
+	: kind(k), subtypes(),
+	  name(""), srcExp(nullptr) {}
 
 Ty::~Ty () {}
 
@@ -24,10 +25,11 @@ TyPtr Ty::makePoly (const std::string& name)
 
 	return ty;
 }
-TyPtr Ty::makeOverloaded (const std::string& name)
+TyPtr Ty::makeOverloaded (ExpPtr src, const std::string& name)
 {
 	auto ty = std::make_shared<Ty>(tyOverloaded);
 	ty->name = name;
+	ty->srcExp = src;
 	return ty;
 }
 TyPtr Ty::makeWildcard ()
