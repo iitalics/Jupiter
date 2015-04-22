@@ -12,7 +12,6 @@ all: $(OUT)
 
 $(OUT): $(OBJS)
 	ar rcs $(OUT) $(OBJS)
-	cc $(OBJS)
 
 obj/%.o: ./%
 	$(CC) $(CFLAGS) -c -o $@ $<

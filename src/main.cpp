@@ -46,7 +46,7 @@ static int Main (std::vector<std::string>&& args)
 	auto polyList = Ty::makeConcrete("List", { polyA });
 
 	env.bake(&compiler, "juStd_addInt",  "+", { Int, Int }, Int);
-	env.bake(&compiler, "juStd_subInt",  "-", { Int }, Int);
+	env.bake(&compiler, "juStd_negInt",  "-", { Int }, Int);
 	env.bake(&compiler, "juStd_ltInt",   "<", { Int, Int }, Bool);
 	env.bake(&compiler, "juStd_eqInt",   "==", { Int, Int }, Bool);
 	env.bake(&compiler, "juStd_println", "println", { String }, Unit);

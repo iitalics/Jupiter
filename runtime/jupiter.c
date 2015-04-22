@@ -31,9 +31,9 @@ void ju_destroy () {}
 
 
 // object management
-juc ju_make (ju_int tag, ju_int nmems, ...)
+juc ju_make_buf (ju_int tag, size_t aug, ju_int nmems, ...)
 {
-	ju_obj* obj = malloc(sizeof(ju_obj) + nmems * sizeof(juc));
+	ju_obj* obj = malloc(sizeof(ju_obj) + nmems * sizeof(juc) + aug);
 
 	obj->nmems = nmems;
 	obj->tag = tag;
@@ -50,6 +50,13 @@ juc ju_make (ju_int tag, ju_int nmems, ...)
 	return obj;
 }
 
+juc ju_make_str (const char* buf, size_t size)
+{
+	juc obj = ju_make_buf(0, size, 1, ju_from_int((ju_int) size));
+	memcpy(ju_get_buffer(obj), buf, size);
+	return obj;
+}
+
 juc ju_get (juc cell, ju_int i)
 {
 	if (cell == NULL || ju_is_int(cell))
@@ -62,4 +69,20 @@ juc ju_get (juc cell, ju_int i)
 		return ju_null;
 
 	return obj->mems[i];
+}
+
+char* ju_get_buffer (juc cell)
+{
+	if (cell == NULL || ju_is_int(cell))
+		return NULL;
+
+	ju_obj* const obj = cell;
+
+	// memory located after sub-members
+	return (char*)(obj->mems + obj->nmems);
+}
+
+size_t ju_get_length (juc obj)
+{
+	return ju_to_int(ju_get(obj, 0));
 }
