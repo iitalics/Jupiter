@@ -51,6 +51,24 @@ void Compiler::output (std::ostream& os)
 
 
 
+
+
+
+
+CompileUnit::Env::Env (CompileUnit* cunit, EnvPtr _parent)
+	: parent(_parent) {}
+
+CompileUnit::Var CompileUnit::Env::get (const std::string& name) const
+{
+	for (auto& v : vars)
+		if (v.name == name)
+			return v;
+	return parent->get(name);
+}
+
+
+
+// baked
 CompileUnit::CompileUnit (Compiler* comp, OverloadPtr over,
                             SigPtr sig, TyPtr ret,
                             const std::string& intName)
@@ -59,6 +77,7 @@ CompileUnit::CompileUnit (Compiler* comp, OverloadPtr over,
 	  internalName(intName),
 	  funcInst(this, sig, ret)
 {
+	// declare baked signature
 	ssPrefix << "declare i8* @" << intName
 	         << " (";
 
@@ -72,290 +91,252 @@ CompileUnit::CompileUnit (Compiler* comp, OverloadPtr over,
 	ssPrefix << ")" << std::endl;
 }
 
+
+
+CompileUnit::EnvPtr CompileUnit::makeEnv (EnvPtr parent)
+{
+	return std::make_shared<Env>(this, parent);
+}
+std::string CompileUnit::makeUnique (const std::string& str)
+{
+	// TODO: binary search? or too much
+	bool unique;
+	std::string res = str;
+
+	for (int k = 2; ; k++)
+	{
+		unique = true;
+		for (auto& nu : nonUnique)
+			if (nu == res)
+			{
+				unique = false;
+				break;
+			}
+
+		if (unique)
+		{
+			nonUnique.push_back(res);
+			return "%" + res;
+		}
+		else
+		{
+			std::ostringstream ss;
+			ss << str << k;
+			res = ss.str();
+		}
+	}
+}
+std::string CompileUnit::getTemp ()
+{
+	size_t i, len;
+	for (i = 0, len = tempLifetimes.size(); i < len; i++)
+	{
+		if (tempLifetimes[i] == -1)
+			break;
+	}
+	
+	if (i >= len)
+		tempLifetimes.push_back(lifetime);
+	else
+		tempLifetimes[i] = lifetime;
+
+	std::ostringstream ss;
+	ss << "%.t" << i;
+
+	if (i >= len)
+		stackAlloc(ss.str());
+	return ss.str();
+}
+void CompileUnit::pushLifetime () { lifetime++; }
+void CompileUnit::popLifetime ()
+{
+	for (size_t i = 0, len = tempLifetimes.size(); i < len; i++)
+		if (tempLifetimes[i] >= lifetime)
+			tempLifetimes[i] = -1;
+
+	lifetime--;
+}
+
+
+
+
+
+// normal
 CompileUnit::CompileUnit (Compiler* comp, OverloadPtr overload, SigPtr sig)
 	: compiler(comp),
 	  overload(overload),
 	  internalName(comp->genUniqueName("fn")),
 	  funcInst(this, sig),
-	  
-	  temps(0)
+
+	  lifetime(0)
 {
 	Infer inf(this, sig);
 	funcInst = inf.fn;
 
-	writePrefix();
-	writeEnd();
-
 	// TODO: put in arguments 
 	auto env = makeEnv();
 	for (size_t i = 0, len = sig->args.size(); i < len; i++)
-		env->vars.push_back({ sig->args[i].first, -int(i + 1) });
+		env->vars.push_back({
+			sig->args[i].first,
+			makeUnique(sig->args[i].first),
+			false });
 
-	auto life = Lifetime(this);
-	auto res = compileOp(compile(overload->body, env, &life));
-	ssBody << "ret i8* " << res << std::endl;
+	writePrefix(env);
+	writeEnd();
+
+	auto res = compile(overload->body, env, false);
+	ssBody << "ret " << res << std::endl;
 }
 
-
-// Env
-CompileUnit::Env::Env (CompileUnit* cunit, EnvPtr _parent)
-	: parent(_parent),
-	  life(cunit) {}
-CompileUnit::Var CompileUnit::Env::get (const std::string& name) const
+void CompileUnit::output (std::ostream& out)
 {
-	for (auto& v : vars)
-		if (v.name == name)
-			return v;
-
-	return parent->get(name);
+	out << ssPrefix.str() << ssBody.str() << ssEnd.str();
 }
-CompileUnit::EnvPtr CompileUnit::makeEnv (EnvPtr parent)
+void CompileUnit::writePrefix (EnvPtr env)
 {
-	return std::make_shared<Env>(this, parent);
-}
-
-// Lifetime
-CompileUnit::Lifetime::Lifetime (CompileUnit* _cunit)
-	: cunit(_cunit) {}
-CompileUnit::Lifetime::~Lifetime ()
-{ relinquish(); }
-
-void CompileUnit::Lifetime::relinquish ()
-{
-	for (auto idx : regs)
-		cunit->regs[idx] = nullptr;
-}
-int CompileUnit::Lifetime::claim (int idx)
-{
-	cunit->regs[idx] = this;
-	return idx;
-}
-int CompileUnit::findRegister (Lifetime* life)
-{
-	// look for available registers
-	int idx, len = regs.size();
-	for (idx = 0; idx < len; idx++)
-		if (regs[idx] == nullptr)
-			return life->claim(idx);
-
-	// none found, add one
-	regs.push_back(nullptr);
-
-
-	// declare new register
-	ssPrefix << regString(len) << " = alloca i8*" << std::endl;
-
-	return life->claim(len);
-}
-
-
-/*   Compiling   */
-
-
-void CompileUnit::writePrefix ()
-{
-	ssPrefix << std::endl << std::endl
-	         << ";;; " << overload->name << " : "
+	ssPrefix << std::endl << std::endl << std::endl
+	         << ";;;   " << funcInst.name << " "
 	         << funcInst.type()->string() << std::endl
-	         << "define fastcc i8* @" << internalName << " (";
+	         << "define fastcc i8* @"
+	         << internalName << " (";
 
-	for (size_t i = 0, len = overload->signature->args.size(); i < len; i++)
+	for (size_t i = 0, len = env->vars.size(); i < len; i++)
 	{
 		if (i > 0)
 			ssPrefix << ", ";
 
-		ssPrefix << "i8* " << argString(i);
+		ssPrefix << "i8* " << env->vars[i].internal;
 	}
-
-	ssPrefix << ") {" << std::endl;
+	ssPrefix << ") unnamed_addr" << std::endl
+	         << "{" << std::endl;
 }
 void CompileUnit::writeEnd ()
 {
 	ssEnd << "}" << std::endl;
 }
-void CompileUnit::output (std::ostream& out)
+void CompileUnit::stackAlloc (const std::string& name)
 {
-	out << ssPrefix.str() << ssBody.str() << ssEnd.str();
+	ssPrefix << name << " = alloca i8*" << std::endl;
 }
 
-// \x25 = '%'
-std::string CompileUnit::regString (int idx) const
-{
-	std::ostringstream ss; ss << '%' << "s" << idx;
-	return ss.str();
-}
-std::string CompileUnit::argString (int idx) const
-{
-	std::ostringstream ss; ss << '%' << "arg" << idx;
-	return ss.str();
-}
-std::string CompileUnit::tempString (int id) const
-{
-	std::ostringstream ss; ss << '%' << "t" << id;
-	return ss.str();
-}
 
-std::string CompileUnit::compileOp (const Operand& op)
+
+std::string CompileUnit::compile (ExpPtr e, EnvPtr env, bool retain)
 {
-	switch (op.kind)
+	/*
+	non-retained:
+		int
+		bool
+		var
+
+	retained:
+		everything else
+	*/
+
+	if (retain && e->kind != eInt && e->kind != eBool && e->kind != eVar)
 	{
-	case opLit:
-		switch (op.src->kind)
-		{
-		case eInt:
-			ssBody << tempString(temps) << " = inttoptr i32 "
-			       << ((op.src->get<int_t>() << 1) | 1) << " to i8*"
-			       << "  ; int: " << op.src->string() << std::endl;
-			break;
-
-		case eBool:
-			ssBody << tempString(temps) << "inttoptr i32 "
-			       << ((op.src->get<bool>() ? 3 : 0)) << " to i8*"
-			       << "  ; boolean: " << op.src->string() << std::endl;
-			break;
-
-		default:
-			// eLit, eBlock, eTuple as "literal" results
-			//  in the unit (represented as null to the runtime)
-			return "null";
-		}
-		break;
-
-	case opVar:
-		ssBody << tempString(temps) << " = load i8** "
-		       << regString(op.idx) << std::endl;
-		break;
-
-	case opArg:
-		return argString(op.idx);
-
-	default:
-		return "null";
+		auto res = compile(e, env, false);
+		auto temp = getTemp();
+		ssBody << "store " << res << ", i8** " << temp << std::endl;
+		return res;
 	}
 
-	return tempString(temps++);
-}
+	std::ostringstream ss;
 
-CompileUnit::Operand CompileUnit::compile (ExpPtr e, EnvPtr env, Lifetime* life)
-{
 	switch (e->kind)
 	{
 	case eInt:
+		ss << "i8* inttoptr (i32 "
+		   << (1 | (e->get<int_t>() << 1))
+		   << " to i8*)";
+		return ss.str();
+
 	case eBool:
-		return { opLit, 0, e };
-
-	case eVar:
-		return compileVar(e, env, life);
-
-	case eBlock:
-		return compileBlock(e, env, life);
-
-	case eLet:
-		return compileLet(e, env, life);
-
-	case eCall:
-		return compileCall(e, env, life);
-
-	default: break;
-	}
-
-	static std::vector<std::string> kinds = {
-		"invalid", "int", "real",
-		"string", "bool", "var",
-		"tuple", "call", "infix",
-		"cond", "lambda", "block",
-		"let",
-	};
-
-	std::ostringstream ss;
-	ss << "not sure how to compile '" << kinds[int(e->kind)] << "'";
-	throw e->span.die(ss.str());
-}
-
-CompileUnit::Operand CompileUnit::compileVar (ExpPtr e, EnvPtr env, Lifetime* life)
-{
-	if (e->get<bool>())
-		throw e->span.die("can only compile non-global variables");
-	else
-	{
-		auto idx = env->get(e->getString()).idx;
-
-		if (idx < 0) // argument
-			return { opArg, -(idx + 1), e };
+		if (e->get<bool>())
+			return "i8* null";
 		else
-			return { opVar, idx, e };
+			return "i8* inttoptr (i32 1 to i8*)";
+
+	case eVar:   return compileVar(e, env);
+	case eCall:  return compileCall(e, env);
+	case eLet: return   compileLet(e, env);
+	case eBlock: return compileBlock(e, env);
+
+	default:
+		throw e->span.die("cannot compile expression: " + e->string());
 	}
 }
 
-CompileUnit::Operand CompileUnit::compileBlock (ExpPtr e, EnvPtr env, Lifetime* life)
+std::string CompileUnit::compileVar (ExpPtr e, EnvPtr env)
 {
-	auto env2 = makeEnv(env);
-	Operand op { opLit, 0, e };
-
-	for (size_t i = 0, len = e->subexps.size(); i < len; i++)
-	{
-		op = compile(e->subexps[i], env2, life);
-
-		// reduce all but last op
-		if (i < len - 1)
-			compileOp(op);
-		// else tail call?
-	}
-
-	return op;
-}
-
-CompileUnit::Operand CompileUnit::compileCall (ExpPtr e, EnvPtr env, Lifetime* life)
-{
-	auto fn = e->subexps[0];
-
-	if (fn->kind == eVar && fn->get<bool>()) ; // why is this even
+	if (e->get<bool>()) // global
+		throw e->span.die("cannot compile 'naked' globals");
 	else
-		throw e->span.die("can only compile calls to globals");
-
-	Lifetime life2(this);
-
-	std::vector<Operand> operands;
-	std::vector<std::string> args;
-	operands.reserve(e->subexps.size() - 1);
-	args.reserve(e->subexps.size() - 1);
-
-	for (size_t i = 1, len = e->subexps.size(); i < len; i++)
-		operands.push_back(compile(e->subexps[i], env, &life2));
-
-	life2.relinquish();
-	auto resIdx = findRegister(life);
-
-	for (auto& op : operands)
-		args.push_back(compileOp(op));
-
-	ssBody << tempString(temps) << " = call i8* @"
-	       << special[fn] << " (";
-
-	for (size_t i = 0, len = operands.size(); i < len; i++)
 	{
-		if (i > 0)
-			ssBody << ", ";
+		auto var = env->get(e->getString());
 
-		ssBody << "i8* " << args[i];
+		if (var.stackAlloc)
+		{
+			auto val = makeUnique(".v");
+			ssBody << val << " = load i8** " << var.internal << std::endl;
+
+			return "i8* " + val;
+		}
+		else
+			return "i8* " + var.internal;
 	}
-
-	ssBody << ")" << std::endl
-	       << "store i8* " << tempString(temps)
-	       << ", i8** " << regString(resIdx) << std::endl;
-
-	temps++;
-	return { opVar, resIdx, e };
 }
 
-
-CompileUnit::Operand CompileUnit::compileLet (ExpPtr e, EnvPtr env, Lifetime* life)
+std::string CompileUnit::compileCall (ExpPtr e, EnvPtr env)
 {
-	auto idx = findRegister(&env->life);
-	env->vars.push_back({ e->getString(), idx });
+	std::ostringstream args;
+	auto fn = e->subexps.front();
 
-	auto res = compileOp(compile(e->subexps[0], env, life));
-	ssBody << "store i8* " << res << ", i8** " << regString(idx) << std::endl;
+	if (fn->kind == eVar && fn->get<bool>()) ;
+	else
+		throw fn->span.die("cannot call non-global");
 
-	return { opLit, 0, e };
+	pushLifetime();
+	for (size_t i = 1, len = e->subexps.size(); i < len; i++)
+	{
+		if (i > 1)
+			args << ", ";
+
+		args << compile(e->subexps[i], env, true);
+	}
+	popLifetime();
+
+	auto res = makeUnique(".r");
+
+	ssBody << res << " = call i8* @"
+	       << special[fn] << "(" << args.str() << ")" << std::endl;
+
+	return "i8* " + res;
+}
+
+std::string CompileUnit::compileLet (ExpPtr e, EnvPtr env)
+{
+	auto internal = makeUnique(e->getString());
+	stackAlloc(internal);
+
+	env->vars.push_back({
+		e->getString(),
+		internal,
+		true
+	});
+
+	auto res = compile(e->subexps.front(), env, false);
+	ssBody << "store " << res << ", i8** " << internal << std::endl;
+
+	return "i8* null"; // returns unit
+}
+
+std::string CompileUnit::compileBlock (ExpPtr e, EnvPtr env)
+{
+	std::string res = "i8* null";
+
+	for (auto e2 : e->subexps)
+		res = compile(e2, env, false);
+
+	return res;
 }

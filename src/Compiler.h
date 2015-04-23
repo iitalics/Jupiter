@@ -23,48 +23,25 @@ struct CompileUnit
 	std::ostringstream ssBody;
 	std::ostringstream ssEnd;
 
+
 	std::map<ExpPtr, std::string> special;
-	std::vector<Lifetime*> regs;
-	int temps;
+	std::vector<std::string> nonUnique;
+	std::vector<int> tempLifetimes;
+	int lifetime;
 
-	struct Lifetime
-	{
-		CompileUnit* cunit;
-		std::vector<int> regs;
-
-		explicit Lifetime (CompileUnit* cunit);
-		~Lifetime ();
-
-		void relinquish ();
-		int claim (int idx);
-	};
 	struct Var
 	{
 		std::string name;
-		int idx;
+		std::string internal;
+		bool stackAlloc;
 	};
 	struct Env
 	{
 		EnvPtr parent;
 		std::vector<Var> vars;
-		Lifetime life;
 
-		explicit Env (CompileUnit* cunit, EnvPtr parent);
+		Env (CompileUnit* cunit, EnvPtr parent);
 		Var get (const std::string& name) const;
-	};
-
-	enum OpKind
-	{
-		opVar,
-		opLit,
-		opArg
-	};
-	struct Operand
-	{
-		OpKind kind;
-
-		int idx;
-		ExpPtr src;
 	};
 
 	CompileUnit (Compiler* comp, OverloadPtr overload, SigPtr sig);
@@ -72,23 +49,26 @@ struct CompileUnit
 	               SigPtr sig, TyPtr ret,
 	               const std::string& intName);
 
-	void writePrefix ();
+	void writePrefix (EnvPtr env);
 	void writeEnd ();
 	void output (std::ostream& out);
-
-	std::string regString (int idx) const;
-	std::string argString (int idx) const;
-	std::string tempString (int id = 0) const;
+	
+	void stackAlloc (const std::string& name);
 
 	EnvPtr makeEnv (EnvPtr parent = nullptr);
-	int findRegister (Lifetime* life);
+	std::string makeUnique (const std::string& str);
 
-	std::string compileOp (const Operand& op);
-	Operand compile (ExpPtr e, EnvPtr env, Lifetime* life);
-	Operand compileVar (ExpPtr e, EnvPtr env, Lifetime* life);
-	Operand compileLet (ExpPtr e, EnvPtr env, Lifetime* life);
-	Operand compileBlock (ExpPtr e, EnvPtr env, Lifetime* life);
-	Operand compileCall (ExpPtr e, EnvPtr env, Lifetime* life);
+	std::string getTemp ();
+	void pushLifetime ();
+	void popLifetime ();
+
+	std::string compile (ExpPtr exp, EnvPtr env,
+					bool retain = true);
+
+	std::string compileVar (ExpPtr e, EnvPtr env);
+	std::string compileCall (ExpPtr e, EnvPtr env);
+	std::string compileLet (ExpPtr e, EnvPtr env);
+	std::string compileBlock (ExpPtr e, EnvPtr env);
 };
 
 
