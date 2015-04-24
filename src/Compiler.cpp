@@ -5,7 +5,7 @@
 
 
 Compiler::Compiler ()
-	: nameId(0) {}
+	: nameId(0), entry(nullptr) {}
 
 Compiler::~Compiler ()
 {
@@ -35,19 +35,56 @@ CompileUnit* Compiler::bake (OverloadPtr overload,
 	units.push_back(cu);
 	return cu;
 }
+void Compiler::entryPoint (CompileUnit* cunit)
+{
+	if (entry != nullptr)
+		throw cunit->overload->signature->
+				span.die("only one entry point per program allowed");
+
+	entry = cunit;
+}
 void Compiler::output (std::ostream& os)
 {
     auto now = std::time(nullptr);
 
 	os << "; compiled: "
 	   << std::asctime(std::localtime(&now))
-	   << std::endl << std::endl;
+	   << std::endl;
+
+	outputRuntimeHeader(os);
+
+	os << std::endl << std::endl;
+
 	for (auto cu : units)
 		cu->output(os);
+
+	if (entry != nullptr)
+		outputEntryPoint(os);
 }
+void Compiler::outputRuntimeHeader (std::ostream& os)
+{
+	os
+		<< "; jupiter runtime header for version 0.0.1" << std::endl
+		<< "declare i32 @ju_to_int (i8*)" << std::endl
+		<< "declare i1  @ju_to_bool (i8*)" << std::endl
+		<< "declare i8* @ju_from_int (i32)" << std::endl
+		<< "declare i8* @ju_from_bool (i1)" << std::endl
+		<< "declare i1  @ju_is_int (i8*)" << std::endl
+		<< "declare i8* @ju_make_buf (i32, i32, i32, ...)" << std::endl
+		<< "declare i8* @ju_make_str (i8*, i32)" << std::endl
+		<< "declare i8* @ju_get (i8*, i32)" << std::endl
 
-
-
+		;
+}
+void Compiler::outputEntryPoint (std::ostream& os)
+{
+	os << std::endl
+	   << ";;;   jupiter entry point -> main()" << std::endl
+	   << "define i32 @main (i32 %argc, i8** %argv) {" << std::endl
+	   << "call i8* @" << entry->internalName << " ()" << std::endl
+	   << "ret i32 0" << std::endl
+	   << "}" << std::endl;
+}
 
 
 
@@ -121,7 +158,10 @@ std::string CompileUnit::makeUnique (const std::string& str)
 		else
 		{
 			std::ostringstream ss;
-			ss << str << k;
+			if (str[0] == '.')
+				ss << str << k;
+			else
+				ss << str << '.' << k;
 			res = ss.str();
 		}
 	}
@@ -223,16 +263,6 @@ void CompileUnit::stackAlloc (const std::string& name)
 
 std::string CompileUnit::compile (ExpPtr e, EnvPtr env, bool retain)
 {
-	/*
-	non-retained:
-		int
-		bool
-		var
-
-	retained:
-		everything else
-	*/
-
 	if (retain && e->kind != eInt && e->kind != eBool && e->kind != eVar)
 	{
 		auto res = compile(e, env, false);
@@ -257,14 +287,66 @@ std::string CompileUnit::compile (ExpPtr e, EnvPtr env, bool retain)
 		else
 			return "i8* inttoptr (i32 1 to i8*)";
 
-	case eVar:   return compileVar(e, env);
-	case eCall:  return compileCall(e, env);
-	case eLet: return   compileLet(e, env);
-	case eBlock: return compileBlock(e, env);
+	case eVar:    return compileVar(e, env);
+	case eString: return compileString(e, env);
+	case eCall:   return compileCall(e, env);
+	case eLet:    return compileLet(e, env);
+	case eBlock:  return compileBlock(e, env);
 
 	default:
 		throw e->span.die("cannot compile expression: " + e->string());
 	}
+}
+
+static bool needs_escape (char c)
+{
+	static const char list[] = 
+		"abcdefghijklmnopqrstuvwxyz"
+		"ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+		"0123456789`-=[];',./""~!@#"
+		"$%^&*()_+{}|:<>?";
+
+	for (size_t i = 0; i < sizeof(list) - 1; i++)
+		if (list[i] == c)
+			return false;
+	return true;
+}
+static char hex_char (int k)
+{
+	if (k < 10)
+		return char('a' + k);
+	else
+		return char('a' + k - 10);
+}
+
+std::string CompileUnit::compileString (ExpPtr e, EnvPtr env)
+{
+	auto str = e->getString();
+	std::ostringstream strType;
+	strType << "[" << str.size() << " x i8]";
+
+	auto strConst = compiler->genUniqueName("string");
+	auto res = makeUnique(".str");
+
+	ssEnd << "@" << strConst
+	      << " = private unnamed_addr constant "
+	      << strType.str() << " c\"";
+
+	for (size_t i = 0, len = str.size(); i < len; i++)
+		if (needs_escape(str[i]))
+			ssEnd << "\\"
+			      << hex_char((str[i] >> 4) & 0xf)
+			      << hex_char(str[i] & 0xf);
+		else
+			ssEnd << str[i];
+
+	ssEnd << "\"" << std::endl;
+
+	ssBody << res << " = call i8* @ju_make_str ("
+		   << "i8* getelementptr (" << strType.str() << "* @" << strConst
+		   << ", i32 0, i32 0), i32 " << str.size() << ")" << std::endl;
+	
+	return "i8* " + res;
 }
 
 std::string CompileUnit::compileVar (ExpPtr e, EnvPtr env)

@@ -1,6 +1,5 @@
-func twice (n) { n + n }
+# working helloworld program!
 
 func main () {
-	let x = 4;
-	twice(x)
+	println("Hello, world!")
 }

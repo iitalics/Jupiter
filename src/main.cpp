@@ -75,7 +75,7 @@ static int Main (std::vector<std::string>&& args)
 				entrySig,
 				entryBody);
 
-		compiler.compile(entryOverload, entrySig);
+		compiler.entryPoint(compiler.compile(entryOverload, entrySig));
 
 		std::ostringstream ss;
 		compiler.output(ss);

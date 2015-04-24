@@ -65,6 +65,7 @@ struct CompileUnit
 	std::string compile (ExpPtr exp, EnvPtr env,
 					bool retain = true);
 
+	std::string compileString (ExpPtr e, EnvPtr env);
 	std::string compileVar (ExpPtr e, EnvPtr env);
 	std::string compileCall (ExpPtr e, EnvPtr env);
 	std::string compileLet (ExpPtr e, EnvPtr env);
@@ -86,9 +87,16 @@ public:
 						SigPtr sig, TyPtr ret,
 						const std::string& internalName);
 
+	void entryPoint (CompileUnit* cunit);
+
 	void output (std::ostream& os);
 private:
 	std::vector<CompileUnit*> units;
 	int nameId;
+
+	CompileUnit* entry;
+
+	void outputRuntimeHeader (std::ostream& os); 
+	void outputEntryPoint (std::ostream& os);
 };
 
