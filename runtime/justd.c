@@ -30,14 +30,25 @@ juc juStd_eqInt (juc a, juc b)
 {
 	return (a == b) ? ju_true : ju_false;
 }
-juc juStd_println (juc a)
+juc juStd_println ()
+{
+	putchar('\n');
+	fflush(stdout);
+
+	return ju_unit;
+}
+juc juStd_printString (juc a)
 {
 	fwrite(ju_get_buffer(a),
 			1,
 			ju_get_length(a),
 			stdout);
-	putchar('\n');
-	fflush(stdout);
+
+	return ju_unit;
+}
+juc juStd_printInt (juc ca)
+{
+	printf("%d", ju_to_int(ca));
 
 	return ju_unit;
 }

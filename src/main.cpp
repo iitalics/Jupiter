@@ -45,14 +45,16 @@ static int Main (std::vector<std::string>&& args)
 	auto polyB = Ty::makePoly();
 	auto polyList = Ty::makeConcrete("List", { polyA });
 
-	env.bake(&compiler, "juStd_addInt",  "+", { Int, Int }, Int);
-	env.bake(&compiler, "juStd_negInt",  "-", { Int }, Int);
-	env.bake(&compiler, "juStd_ltInt",   "<", { Int, Int }, Bool);
-	env.bake(&compiler, "juStd_eqInt",   "==", { Int, Int }, Bool);
-	env.bake(&compiler, "juStd_println", "println", { String }, Unit);
-	env.bake(&compiler, "juStd_nil",     "nil", { }, polyList);
-	env.bake(&compiler, "juStd_hd",      "hd", { polyList }, polyA);
-	env.bake(&compiler, "juStd_tl",      "tl", { polyList }, polyList);
+	env.bake(&compiler, "juStd_addInt",       "+", { Int, Int }, Int);
+	env.bake(&compiler, "juStd_negInt",       "-", { Int }, Int);
+	env.bake(&compiler, "juStd_ltInt",        "<", { Int, Int }, Bool);
+	env.bake(&compiler, "juStd_eqInt",        "==", { Int, Int }, Bool);
+	env.bake(&compiler, "juStd_printString",  "print", { String }, Unit);
+	env.bake(&compiler, "juStd_printInt",     "print", { Int }, Unit);
+	env.bake(&compiler, "juStd_println",      "println", { }, Unit);
+	env.bake(&compiler, "juStd_nil",          "nil", { }, polyList);
+	env.bake(&compiler, "juStd_hd",           "hd", { polyList }, polyA);
+	env.bake(&compiler, "juStd_tl",           "tl", { polyList }, polyList);
 
 	try
 	{

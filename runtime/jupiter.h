@@ -44,14 +44,3 @@ char*  ju_get_buffer (juc obj);
 size_t ju_get_length (juc obj);
 
 
-
-
-
-juc juStd_addInt (juc a, juc b);
-juc juStd_negInt (juc a);
-juc juStd_ltInt (juc a, juc b);
-juc juStd_eqInt (juc a, juc b);
-juc juStd_println (juc a);
-
-
-
