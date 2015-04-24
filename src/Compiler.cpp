@@ -304,7 +304,7 @@ static bool needs_escape (char c)
 		"abcdefghijklmnopqrstuvwxyz"
 		"ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 		"0123456789`-=[];',./""~!@#"
-		"$%^&*()_+{}|:<>?";
+		"$%^&*()_+{}|:<>? ";
 
 	for (size_t i = 0; i < sizeof(list) - 1; i++)
 		if (list[i] == c)
@@ -314,7 +314,7 @@ static bool needs_escape (char c)
 static char hex_char (int k)
 {
 	if (k < 10)
-		return char('a' + k);
+		return char('0' + k);
 	else
 		return char('a' + k - 10);
 }
@@ -335,8 +335,8 @@ std::string CompileUnit::compileString (ExpPtr e, EnvPtr env)
 	for (size_t i = 0, len = str.size(); i < len; i++)
 		if (needs_escape(str[i]))
 			ssEnd << "\\"
-			      << hex_char((str[i] >> 4) & 0xf)
-			      << hex_char(str[i] & 0xf);
+			      << hex_char(int(str[i]) / 16)
+			      << hex_char(int(str[i]) & 0xf);
 		else
 			ssEnd << str[i];
 
