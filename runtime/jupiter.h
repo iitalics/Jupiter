@@ -4,7 +4,7 @@
 #include <stdlib.h>
 
 typedef    void*  juc;
-typedef intptr_t  ju_int;
+typedef int32_t  ju_int;
 
 typedef struct {
 
