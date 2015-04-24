@@ -80,7 +80,7 @@ void Compiler::outputEntryPoint (std::ostream& os)
 {
 	os << std::endl
 	   << ";;;   jupiter entry point -> main()" << std::endl
-	   << "define i32 @main (i32 %argc, i8** %argv) {" << std::endl
+	   << "define i32 @main (i32 %argc, i8** %argv)" << std::endl << "{" << std::endl
 	   << "call i8* @" << entry->internalName << " ()" << std::endl
 	   << "ret i32 0" << std::endl
 	   << "}" << std::endl;
