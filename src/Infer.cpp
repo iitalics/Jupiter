@@ -68,7 +68,7 @@ Infer::Infer (CompileUnit* _cunit, SigPtr sig)
 
 	for (size_t len = sig->args.size(), i = 0; i < len; i++)
 	{
-		auto& arg = overload->signature->args[0];
+		auto& arg = overload->signature->args[i];
 		auto ty = sig->args[i].second;
 
 		lenv->newVar(arg.first, ty);
