@@ -257,7 +257,6 @@ void Lexer::_number (const std::string& str)
 	int_t num = 0;
 
 	for (size_t i = 0; i < str.size(); i++)
-	{
 		if (!is_digit(str[i]))
 		{
 			auto sp = _current.span;
@@ -266,12 +265,45 @@ void Lexer::_number (const std::string& str)
 
 			throw sp.die("invalid character in number literal");
 		}
+		else
+			num = (num * 10) + int_t(str[i] - '0');
 
-		num = (num * 10) + int_t(str[i] - '0');
+	if (_peek() == '.')
+	{
+		_adv();
+
+		auto start = _filepos;
+
+		while (is_ident(_peek()))
+			_adv();
+
+		auto sp = Span(_file, start, _filepos);
+		auto str = sp.data();
+		auto dec = real_t(num), mag = 10.0;
+
+		for (size_t i = 0; i < str.size(); i++)
+			if (!is_digit(str[i]))
+			{
+				sp.start += i;
+				sp *= 1;
+
+				throw sp.die("invalid character in number literal");
+			}
+			else
+			{
+				dec += int_t(str[i] - '0') / mag;
+				mag *= 10;
+			}
+
+		_current.span.end = _filepos;
+		_current.tok = tNumberReal;
+		_current.valueReal = dec;
 	}
-
-	_current.tok = tNumberInt;
-	_current.valueInt = num;
+	else
+	{
+		_current.tok = tNumberInt;
+		_current.valueInt = num;
+	}
 }
 void Lexer::_ident ()
 {

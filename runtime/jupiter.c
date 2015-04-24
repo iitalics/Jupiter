@@ -57,6 +57,13 @@ juc ju_make_str (const char* buf, size_t size)
 	return obj;
 }
 
+juc ju_make_real (ju_real r)
+{
+	juc obj = ju_make_buf(0, sizeof(ju_real), 0);
+	*((ju_real*) ju_get_buffer(obj)) = r;
+	return obj;
+}
+
 juc ju_get (juc cell, ju_int i)
 {
 	if (cell == NULL || ju_is_int(cell))
@@ -85,4 +92,9 @@ char* ju_get_buffer (juc cell)
 size_t ju_get_length (juc obj)
 {
 	return ju_to_int(ju_get(obj, 0));
+}
+
+ju_real ju_get_real (juc obj)
+{
+	return *((ju_real*) ju_get_buffer(obj));
 }

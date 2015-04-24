@@ -52,3 +52,10 @@ juc juStd_printInt (juc ca)
 
 	return ju_unit;
 }
+juc juStd_printReal (juc ca)
+{
+	// TODO: improve this
+	printf("%.6f", ju_get_real(ca));
+
+	return ju_unit;
+}

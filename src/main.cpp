@@ -38,6 +38,7 @@ static int Main (std::vector<std::string>&& args)
 	env.operators.push_back(Op("^",  50, Assoc::Right));
 
 	auto Int = Ty::makeConcrete("Int");
+	auto Real = Ty::makeConcrete("Real");
 	auto Bool = Ty::makeConcrete("Bool");
 	auto String = Ty::makeConcrete("String");
 	auto Unit = Ty::makeUnit();
@@ -51,6 +52,7 @@ static int Main (std::vector<std::string>&& args)
 	env.bake(&compiler, "juStd_eqInt",        "==", { Int, Int }, Bool);
 	env.bake(&compiler, "juStd_printString",  "print", { String }, Unit);
 	env.bake(&compiler, "juStd_printInt",     "print", { Int }, Unit);
+	env.bake(&compiler, "juStd_printReal",    "print", { Real }, Unit);
 	env.bake(&compiler, "juStd_println",      "println", { }, Unit);
 	env.bake(&compiler, "juStd_nil",          "nil", { }, polyList);
 	env.bake(&compiler, "juStd_hd",           "hd", { polyList }, polyA);

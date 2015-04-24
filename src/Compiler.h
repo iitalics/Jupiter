@@ -66,6 +66,7 @@ struct CompileUnit
 					bool retain = true);
 
 	std::string compileString (ExpPtr e, EnvPtr env);
+	std::string compileReal (ExpPtr e, EnvPtr env);
 	std::string compileVar (ExpPtr e, EnvPtr env);
 	std::string compileCall (ExpPtr e, EnvPtr env);
 	std::string compileLet (ExpPtr e, EnvPtr env);

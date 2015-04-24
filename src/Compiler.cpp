@@ -72,6 +72,7 @@ void Compiler::outputRuntimeHeader (std::ostream& os)
 		<< "declare i1  @ju_is_int (i8*)" << std::endl
 		<< "declare i8* @ju_make_buf (i32, i32, i32, ...)" << std::endl
 		<< "declare i8* @ju_make_str (i8*, i32)" << std::endl
+		<< "declare i8* @ju_make_real (double)" << std::endl
 		<< "declare i8* @ju_get (i8*, i32)" << std::endl
 
 		;
@@ -289,6 +290,7 @@ std::string CompileUnit::compile (ExpPtr e, EnvPtr env, bool retain)
 
 	case eVar:    return compileVar(e, env);
 	case eString: return compileString(e, env);
+	case eReal:   return compileReal(e, env);
 	case eCall:   return compileCall(e, env);
 	case eLet:    return compileLet(e, env);
 	case eBlock:  return compileBlock(e, env);
@@ -349,6 +351,24 @@ std::string CompileUnit::compileString (ExpPtr e, EnvPtr env)
 	return "i8* " + res;
 }
 
+std::string CompileUnit::compileReal (ExpPtr e, EnvPtr env)
+{
+	auto res = makeUnique(".real");
+	auto val = e->get<real_t>();
+
+	ssBody << res << " = call i8* @ju_make_real (double 0x";
+
+	// hex representation of double
+	int64_t i64cast = 0;
+	*((double*) &i64cast) = val;
+	for (size_t i = 16; i-- > 0; )
+		ssBody << hex_char((i64cast >> (4 * i)) & 0xf);
+
+	ssBody << ")" << std::endl;
+
+	return "i8* " + res;
+}
+
 std::string CompileUnit::compileVar (ExpPtr e, EnvPtr env)
 {
 	if (e->get<bool>()) // global
@@ -391,7 +411,7 @@ std::string CompileUnit::compileCall (ExpPtr e, EnvPtr env)
 	auto res = makeUnique(".r");
 
 	ssBody << res << " = call i8* @"
-	       << special[fn] << "(" << args.str() << ")" << std::endl;
+	       << special[fn] << " (" << args.str() << ")" << std::endl;
 
 	return "i8* " + res;
 }

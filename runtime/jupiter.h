@@ -3,8 +3,9 @@
 #include <stdbool.h>
 #include <stdlib.h>
 
-typedef    void*  juc;
+typedef    void* juc;
 typedef int32_t  ju_int;
+typedef  double  ju_real;
 
 typedef struct {
 
@@ -38,9 +39,10 @@ juc    ju_from_bool (bool b);
 juc    ju_make_buf (ju_int tag, size_t aug, ju_int nmems, ...);
 #define ju_make(tag, ...) ju_make_buf(tag, 0, __VA_ARGS__)
 juc    ju_make_str (const char* buf, size_t size);
+juc    ju_make_real (ju_real r);
 
 juc    ju_get (juc obj, ju_int i);
 char*  ju_get_buffer (juc obj);
 size_t ju_get_length (juc obj);
-
+ju_real ju_get_real (juc obj);
 
