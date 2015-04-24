@@ -80,7 +80,7 @@ void Compiler::outputEntryPoint (std::ostream& os)
 {
 	os << std::endl
 	   << ";;;   jupiter entry point -> main()" << std::endl
-	   << "define i32 @main (i32 %argc, i8** %argv)" << std::endl << "{" << std::endl
+	   << "define ccc i32 @main (i32 %argc, i8** %argv)" << std::endl << "{" << std::endl
 	   << "call i8* @" << entry->internalName << " ()" << std::endl
 	   << "ret i32 0" << std::endl
 	   << "}" << std::endl;
@@ -237,7 +237,7 @@ void CompileUnit::writePrefix (EnvPtr env)
 	ssPrefix << std::endl << std::endl << std::endl
 	         << ";;;   " << funcInst.name << " "
 	         << funcInst.type()->string() << std::endl
-	         << "define fastcc i8* @"
+	         << "define i8* @"
 	         << internalName << " (";
 
 	for (size_t i = 0, len = env->vars.size(); i < len; i++)
