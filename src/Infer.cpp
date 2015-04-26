@@ -40,12 +40,19 @@ TyPtr Subs::apply (TyPtr ty, const RuleList& ru) const
 		if (ty->subtypes.size() == 0)
 			return ty;
 		else
-			return
-				Ty::makeConcrete(ty->name,
-					ty->subtypes.map([=] (TyPtr t)
-					{
-						return apply(t, ru);
-					}));
+		{
+			auto diff = false;
+			auto newTypes = ty->subtypes.map([&] (TyPtr t)
+			{
+				auto t2 = apply(t, ru);
+				if (t != t2)
+					diff = true;
+				return t2;
+			});
+			
+			if (diff)
+				return Ty::makeConcrete(ty->name, newTypes);
+		}
 	default:
 		return ty;
 	}
