@@ -140,7 +140,7 @@ bool Infer::unify (Subs& out, TyList l1, TyList l2)
 	//	if (t1->kind == tyWildcard || t2->kind == tyWildcard)
 	//		continue;
 
-		if (t2->kind == tyPoly)
+		if (t1->kind != tyPoly && t2->kind == tyPoly)
 		{
 			// swap arguments
 			auto tmp = t1;
@@ -155,7 +155,7 @@ bool Infer::unify (Subs& out, TyList l1, TyList l2)
 				break;
 			//if (Ty::contains(t2, t1))
 			//	goto fail;
-			out += Subs::Rule { t1, t2 };
+			out += Subs::Rule { t1, t2 }; /* t1 := t2 */
 			break;
 
 		case tyConcrete:
@@ -219,11 +219,12 @@ bool Infer::unifyOverload (Subs& out,
 	if (valid.empty())
 		return false;
 
-	// decide best overload here
-	// TODO: ambiguous overloads = subs failure or compile error?
+	// TODO: decide best overload here
+	//  right now it assumes that all
+	//  overloads are equally valid
 	auto& best = valid.front();
 	if (valid.size() > 1)
-		return false;
+		throw t1->srcExp->span.die("ambiguous arguments to overloaded function");
 
 	auto overload = std::get<0>(best);
 	auto fnty = std::get<2>(best);
@@ -252,7 +253,7 @@ bool Infer::unifyOverload (Subs& out,
 	// push final substitutions
 	if (!unify(out, TyList(resty), TyList(t2)))
 		return false;
-	out += { t1, resty };
+	out += { t1, resty }; /* t1 := rety */
 
 	fn.cunit->special[t1->srcExp] = inst.cunit->internalName;
 
@@ -261,16 +262,21 @@ bool Infer::unifyOverload (Subs& out,
 
 TyPtr Infer::infer (ExpPtr exp, LocEnvPtr lenv)
 {
+	static auto tyInt = Ty::makeConcrete("Int");
+	static auto tyReal = Ty::makeConcrete("Real");
+	static auto tyString = Ty::makeConcrete("String");
+	static auto tyBool = Ty::makeConcrete("Bool");
+
 	switch (exp->kind)
 	{
 	case eInt:
-		return Ty::makeConcrete("Int");
+		return tyInt;
 	case eReal:
-		return Ty::makeConcrete("Real");
+		return tyReal;
 	case eString:
-		return Ty::makeConcrete("String");
+		return tyString;
 	case eBool:
-		return Ty::makeConcrete("Bool");
+		return tyBool;
 
 	case eVar:
 		return inferVar(exp, lenv);
@@ -317,12 +323,12 @@ TyPtr Infer::inferVar (ExpPtr exp, LocEnvPtr lenv)
 TyPtr Infer::inferBlock (ExpPtr exp, LocEnvPtr lenv)
 {
 	TyPtr res = nullptr;
-	auto dummy = Ty::makePoly();
 
 	LocEnvPtr lenv2 = LocEnv::make(lenv);
 
 	for (auto& e : exp->subexps)
 	{
+		auto dummy = Ty::makePoly();
 		res = infer(e, lenv2);
 
 		// instance overloaded types
