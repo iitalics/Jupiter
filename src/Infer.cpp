@@ -300,8 +300,6 @@ TyPtr Infer::infer (ExpPtr exp, LocEnvPtr lenv)
 		return inferTuple(exp, lenv);
 	case eCall:
 		return inferCall(exp, lenv);
-	case eInfix:
-		return inferInfix(exp, lenv);
 	case eCond:
 		return inferCond(exp, lenv);
 //	case eLambda:
@@ -312,7 +310,7 @@ TyPtr Infer::infer (ExpPtr exp, LocEnvPtr lenv)
 		return inferLet(exp, lenv);
 
 	default:
-		throw exp->span.die("unimplemented kind of expression");
+		throw exp->span.die("cannot infer this kind of expression");
 	}
 }
 
@@ -432,7 +430,6 @@ TyPtr Infer::inferTuple (ExpPtr exp, LocEnvPtr lenv)
 
 	return Ty::makeConcrete("Tuple", args);
 }
-TyPtr Infer::inferInfix (ExpPtr exp, LocEnvPtr lenv) { return Ty::makeInvalid(); }
 TyPtr Infer::inferCond (ExpPtr exp, LocEnvPtr lenv)
 {
 	/*

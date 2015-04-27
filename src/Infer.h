@@ -55,7 +55,6 @@ struct Infer
 	TyPtr inferVar (ExpPtr exp, LocEnvPtr lenv);
 	TyPtr inferTuple (ExpPtr exp, LocEnvPtr lenv);
 	TyPtr inferCall (ExpPtr exp, LocEnvPtr lenv);
-	TyPtr inferInfix (ExpPtr exp, LocEnvPtr lenv);
 	TyPtr inferCond (ExpPtr exp, LocEnvPtr lenv);
 	TyPtr inferBlock (ExpPtr exp, LocEnvPtr lenv);
 	TyPtr inferLet (ExpPtr exp, LocEnvPtr lenv);
