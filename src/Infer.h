@@ -31,7 +31,7 @@ private:
 struct Infer
 {
 	GlobEnv& env;
-	FuncInstance fn;
+	FuncInstance& fn;
 	Subs mainSubs;
 
 	Infer (CompileUnit* cunit, SigPtr sig);

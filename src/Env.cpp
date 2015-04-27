@@ -100,6 +100,7 @@ FuncInstance Overload::inst (OverloadPtr over, SigPtr sig, Compiler* compiler)
 
 	auto cunit = compiler->compile(over, sig);
 	over->instances.push_back(cunit->funcInst);
+	cunit->compile();
 	return cunit->funcInst;
 }
 

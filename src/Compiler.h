@@ -23,7 +23,7 @@ struct CompileUnit
 	std::ostringstream ssBody;
 	std::ostringstream ssEnd;
 
-
+	bool finishedInfer;
 	std::map<ExpPtr, std::string> special;
 	std::vector<std::string> nonUnique;
 	std::vector<int> tempLifetimes;
@@ -48,6 +48,8 @@ struct CompileUnit
 	CompileUnit (Compiler* comp, OverloadPtr overload,
 	               SigPtr sig, TyPtr ret,
 	               const std::string& intName);
+
+	void compile ();
 
 	void writePrefix (EnvPtr env);
 	void writeEnd ();

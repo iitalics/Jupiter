@@ -67,12 +67,12 @@ TyPtr Subs::apply (TyPtr ty, const RuleList& ru) const
 
 Infer::Infer (CompileUnit* _cunit, SigPtr sig)
 	: env(_cunit->overload->env),
-	  fn(_cunit, sig),
-	  mainSubs()
+	  fn(_cunit->funcInst)
 {
 	auto overload = _cunit->overload;
 	auto lenv = LocEnv::make();
 
+	// construct environment for arguments
 	for (size_t len = sig->args.size(), i = 0; i < len; i++)
 	{
 		auto& arg = overload->signature->args[i];
@@ -81,25 +81,14 @@ Infer::Infer (CompileUnit* _cunit, SigPtr sig)
 		lenv->newVar(arg.first, ty);
 	}
 
-	if (!unify(mainSubs, overload->signature->tyList(), sig->tyList()))
-		throw overload->signature->span.
-				die("invalid types when instancing overload!");
-
+	// infer return type
 	auto ret = infer(overload->body, lenv);
 	
+	// check with temporary return type
 	unify(ret, fn.returnType, mainSubs, overload->signature->span);
 
-	ret = fn.returnType = mainSubs(fn.returnType);
-
-	fn.signature = Sig::make();
-	for (auto& arg : sig->args)
-		fn.signature->args.push_back({
-			arg.first,
-			mainSubs(arg.second)
-		});
-
-	if (ret->kind == tyOverloaded)
-		throw sig->span.die("invalid for function to return overloaded type");
+	// update to new type
+	fn.returnType = mainSubs(fn.returnType);
 }
 
 
@@ -187,7 +176,7 @@ bool Infer::unifyOverload (Subs& out,
 	auto& name = t1->name;
 	auto globfn = env.getFunc(name);
 
-	using Valid = std::tuple<OverloadPtr, Subs, TyPtr>;
+	using Valid = std::tuple<OverloadPtr, TyPtr, Subs>;
 	std::vector<Valid> valid;
 
 	auto ret = Ty::makePoly();
@@ -195,23 +184,24 @@ bool Infer::unifyOverload (Subs& out,
 	for (auto& overload : globfn->overloads)
 	{
 		// create type for overload's signature
-		// edit: "wildcard types" are a bad idea
 		auto args = overload->signature->tyList(ret);
 		auto fnty = Ty::newPoly(Ty::makeFn(args));
 
 		// try to unify, if it fails then try next overload
 		Subs subs = out;
 		if (!unify(subs, TyList(t2, l1), TyList(fnty, l2)))
-			goto cont;//continue;
+			goto cont;
 
 		fnty = subs(fnty);
 
+		// if any of the arguments are complete polytypes,
+		//  it is considered an invalid overload
 		for (auto s = fnty->subtypes; !s.tail().nil(); ++s)
 			if (s.head()->kind == tyPoly)
 				goto cont;
 
 		// add to list of potential overloads
-		valid.push_back(Valid { overload, subs, fnty });
+		valid.push_back(Valid { overload, fnty, subs });
 	cont:;
 	}
 
@@ -224,12 +214,19 @@ bool Infer::unifyOverload (Subs& out,
 	//  overloads are equally valid
 	auto& best = valid.front();
 	if (valid.size() > 1)
-		throw t1->srcExp->span.die("ambiguous arguments to overloaded function");
+	{
+		for (auto& v : valid)
+			std::cout << "e.g. "
+		              << std::get<0>(v)->signature->string() << std::endl;
+
+		std::ostringstream ss;
+		ss << "ambiguous arguments to function '" << globfn->name << "'";
+		throw t1->srcExp->span.die(ss.str());
+	}
 
 	auto overload = std::get<0>(best);
-	auto fnty = std::get<2>(best);
-	out = std::get<1>(best);
-
+	auto fnty = std::get<1>(best);
+	out = std::get<2>(best);
 
 	// construct signature from overloaded function
 	auto sig = Sig::make();
@@ -245,16 +242,22 @@ bool Infer::unifyOverload (Subs& out,
 			i++;
 		}
 
-	// instanciate overloaded function
-	// TODO: cache?
+	// instanciate overloaded function with
+	//  this signature
 	auto inst = Overload::inst(overload, sig, fn.cunit->compiler);
-	auto resty = Ty::newPoly(inst.type());
+	TyPtr resty;
+
+	if (inst.cunit->finishedInfer)
+		resty = Ty::newPoly(inst.type());
+	else
+		throw t1->srcExp->span.die("recursive type inference unimplemented");
 
 	// push final substitutions
 	if (!unify(out, TyList(resty), TyList(t2)))
 		return false;
 	out += { t1, resty }; /* t1 := rety */
 
+	// push overload instance name for the compiler to use
 	fn.cunit->special[t1->srcExp] = inst.cunit->internalName;
 
 	return true;
@@ -388,7 +391,7 @@ TyPtr Infer::inferCall (ExpPtr exp, LocEnvPtr lenv)
 		args = TyList(infer(exp->subexps[i], lenv), args);
 
 	auto model = Ty::makeFn(args);
-	Subs subs = unify(fnty, model, exp->span);
+	auto subs = unify(fnty, model, exp->span);
 
 	return subs(ret);
 }

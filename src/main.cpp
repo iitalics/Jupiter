@@ -79,7 +79,9 @@ static int Main (std::vector<std::string>&& args)
 				entrySig,
 				entryBody);
 
-		compiler.entryPoint(compiler.compile(entryOverload, entrySig));
+		auto cunit = compiler.compile(entryOverload, entrySig);
+		compiler.entryPoint(cunit);
+		cunit->compile();
 
 		std::ostringstream ss;
 		compiler.output(ss);

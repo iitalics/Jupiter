@@ -113,7 +113,8 @@ CompileUnit::CompileUnit (Compiler* comp, OverloadPtr over,
 	: compiler(comp),
 	  overload(over),
 	  internalName(intName),
-	  funcInst(this, sig, ret)
+	  funcInst(this, sig, ret),
+	  finishedInfer(true)
 {
 	// declare baked signature
 	ssPrefix << "declare i8* @" << intName
@@ -128,6 +129,18 @@ CompileUnit::CompileUnit (Compiler* comp, OverloadPtr over,
 	}
 	ssPrefix << ")" << std::endl;
 }
+
+// normal
+CompileUnit::CompileUnit (Compiler* comp, OverloadPtr overload, SigPtr sig)
+	: compiler(comp),
+	  overload(overload),
+	  internalName(comp->genUniqueName("fn")),
+	  funcInst(this, sig),
+	  finishedInfer(false),
+
+	  lifetime(0)
+{}
+
 
 
 
@@ -202,17 +215,17 @@ void CompileUnit::popLifetime ()
 
 
 
-// normal
-CompileUnit::CompileUnit (Compiler* comp, OverloadPtr overload, SigPtr sig)
-	: compiler(comp),
-	  overload(overload),
-	  internalName(comp->genUniqueName("fn")),
-	  funcInst(this, sig),
 
-	  lifetime(0)
+void CompileUnit::compile ()
 {
+	if (finishedInfer)
+		return;
+	
+	auto& sig = funcInst.signature;
+
 	Infer inf(this, sig);
-	funcInst = inf.fn;
+
+	finishedInfer = true;
 
 	// TODO: put in arguments 
 	auto env = makeEnv();
@@ -228,6 +241,7 @@ CompileUnit::CompileUnit (Compiler* comp, OverloadPtr overload, SigPtr sig)
 	auto res = compile(overload->body, env, false);
 	ssBody << "ret " << res << std::endl;
 }
+
 
 void CompileUnit::output (std::ostream& out)
 {
