@@ -112,6 +112,15 @@ void Infer::unify (TyPtr t1, TyPtr t2, Subs& subs, const Span& span)
 		}
 		throw span.die(ss.str());
 	}
+	else
+	{
+		// update each circular call
+		for (auto& cu : circular)
+		{
+			auto& inst = cu->funcInst;
+			inst.returnType = subs(inst.returnType);
+		}
+	}
 }
 
 bool Infer::unify (Subs& out, TyList l1, TyList l2)
@@ -250,7 +259,11 @@ bool Infer::unifyOverload (Subs& out,
 	if (inst.cunit->finishedInfer)
 		resty = Ty::newPoly(inst.type());
 	else
-		throw t1->srcExp->span.die("recursive type inference unimplemented");
+	{
+		// circular call, aka (in)direct recursion
+		resty = inst.type();
+		circular.insert(inst.cunit);
+	}
 
 	// push final substitutions
 	if (!unify(out, TyList(resty), TyList(t2)))

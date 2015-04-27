@@ -1,5 +1,6 @@
 #pragma once
 #include "Env.h"
+#include <set>
 
 
 struct CompileUnit;
@@ -33,6 +34,7 @@ struct Infer
 	GlobEnv& env;
 	FuncInstance& fn;
 	Subs mainSubs;
+	std::set<CompileUnit*> circular;
 
 	Infer (CompileUnit* cunit, SigPtr sig);
 
