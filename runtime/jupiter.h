@@ -28,6 +28,10 @@ typedef struct {
 void   ju_init ();
 void   ju_destroy ();
 
+void   juGC_root (juc* root);
+void   juGC_unroot (int n);
+void   juGC_store (juc* root, juc value);
+
 bool   ju_is_int (juc cell);
 #define ju_is_obj(_c) !ju_is_int(_c)
 

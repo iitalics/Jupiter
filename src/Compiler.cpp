@@ -103,6 +103,9 @@ void Compiler::outputRuntimeHeader (std::ostream& os)
 {
 	os
 		<< "; jupiter runtime header for version 0.0.1" << std::endl
+		<< "declare void @juGC_root (i8**)" << std::endl
+		<< "declare void @juGC_unroot (i32)" << std::endl
+		<< "declare void @juGC_store (i8**, i8*)" << std::endl
 		<< "declare i32 @ju_to_int (i8*)" << std::endl
 		<< "declare i1  @ju_to_bool (i8*)" << std::endl
 		<< "declare i8* @ju_from_int (i32)" << std::endl
@@ -277,8 +280,13 @@ void CompileUnit::compile ()
 	writePrefix(env);
 	writeEnd();
 
+	ssBody << std::endl;
+
 	auto res = compile(overload->body, env, false);
-	ssBody << "ret " << res << std::endl;
+
+	ssBody << "call void @juGC_unroot (i32 "
+		   << tempLifetimes.size() << ")" << std::endl
+           << "ret " << res << std::endl;
 }
 
 
@@ -310,7 +318,14 @@ void CompileUnit::writeEnd ()
 }
 void CompileUnit::stackAlloc (const std::string& name)
 {
-	ssPrefix << name << " = alloca i8*" << std::endl;
+	ssPrefix << name << " = alloca i8*" << std::endl
+	         << "store i8* null, i8** " << name << std::endl
+	         << "call void @juGC_root (i8** " << name << ")" << std::endl;
+}
+void CompileUnit::stackStore (const std::string& name, 
+                                const std::string& value)
+{
+	ssBody << "call void @juGC_store (i8** " << name << ", " << value << ")" << std::endl;
 }
 bool CompileUnit::needsRetain (ExpPtr exp)
 {
@@ -335,7 +350,7 @@ std::string CompileUnit::compile (ExpPtr e, EnvPtr env, bool retain)
 	{
 		auto res = compile(e, env, false);
 		auto temp = getTemp();
-		ssBody << "store " << res << ", i8** " << temp << std::endl;
+		stackStore(temp, res);
 		return res;
 	}
 
@@ -483,7 +498,7 @@ std::string CompileUnit::compileLet (ExpPtr e, EnvPtr env)
 	});
 
 	auto res = compile(e->subexps.front(), env, false);
-	ssBody << "store " << res << ", i8** " << internal << std::endl;
+	stackStore(internal, res);
 
 	return "i8* null"; // returns unit
 }
@@ -519,17 +534,15 @@ std::string CompileUnit::compileCond (ExpPtr e, EnvPtr env)
 	       << lthen.substr(1) << ":" << std::endl;
 
 	{
-		auto res = compile(e->subexps[1], env, false);
-		ssBody << "store " << res << ", i8** " << temp << std::endl
-		       << "br label " << lend << std::endl
+		stackStore(temp, compile(e->subexps[1], env, false));
+		ssBody << "br label " << lend << std::endl
 		       << std::endl
 		       << lelse.substr(1) << ":" << std::endl;
 	}
 
 	{
-		auto res = compile(e->subexps[2], env, false);
-		ssBody << "store " << res << ", i8** " << temp << std::endl
-		       << "br label " << lend << std::endl
+		stackStore(temp, compile(e->subexps[2], env, false));
+		ssBody << "br label " << lend << std::endl
 		       << std::endl
 		       << lend.substr(1) << ":" << std::endl;
 	}

@@ -30,6 +30,19 @@ void ju_init () {}
 void ju_destroy () {}
 
 
+
+
+void juGC_root (juc* root) {}
+void juGC_unroot (int n) {}
+void juGC_store (juc* root, juc value)
+{
+	*root = value;
+}
+
+
+
+
+
 // object management
 juc ju_make_buf (ju_int tag, size_t aug, ju_int nmems, ...)
 {

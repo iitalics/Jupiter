@@ -56,6 +56,8 @@ struct CompileUnit
 	void output (std::ostream& out);
 	
 	void stackAlloc (const std::string& name);
+	void stackStore (const std::string& name, 
+						const std::string& value);
 
 	EnvPtr makeEnv (EnvPtr parent = nullptr);
 	std::string makeUnique (const std::string& str);
