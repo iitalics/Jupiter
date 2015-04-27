@@ -224,10 +224,6 @@ bool Infer::unifyOverload (Subs& out,
 	auto& best = valid.front();
 	if (valid.size() > 1)
 	{
-		for (auto& v : valid)
-			std::cout << "e.g. "
-		              << std::get<0>(v)->signature->string() << std::endl;
-
 		std::ostringstream ss;
 		ss << "ambiguous arguments to function '" << globfn->name << "'";
 		throw t1->srcExp->span.die(ss.str());
