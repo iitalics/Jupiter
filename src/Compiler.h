@@ -87,6 +87,7 @@ public:
 	~Compiler ();
 
 	std::string genUniqueName (const std::string& prefix = "");
+	std::string mangle (const std::string& ident);
 
 	CompileUnit* compile (OverloadPtr overload, SigPtr sig);
 	CompileUnit* bake (OverloadPtr overload,

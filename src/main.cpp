@@ -75,7 +75,7 @@ static int Main (std::vector<std::string>&& args)
 		auto entryOverload =
 			Overload::make(
 				env,
-				"#<entry>",
+				"#entry",
 				entrySig,
 				entryBody);
 

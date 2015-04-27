@@ -2,6 +2,7 @@
 #include <sstream>
 #include <iomanip>
 #include <ctime>
+#include <cctype>
 
 
 Compiler::Compiler ()
@@ -13,10 +14,47 @@ Compiler::~Compiler ()
 		delete cu;
 }
 
+static bool needs_escape (char c)
+{
+	static const char list[] = 
+		"abcdefghijklmnopqrstuvwxyz"
+		"ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+		"0123456789`-=[];',./""~!@#"
+		"$%^&*()_+{}|:<>? ";
+
+	for (size_t i = 0; i < sizeof(list) - 1; i++)
+		if (list[i] == c)
+			return false;
+	return true;
+}
+
+std::string Compiler::mangle (const std::string& ident)
+{
+	std::ostringstream ss;
+
+	for (auto c : ident)
+		if (c == '_') ss << "__";
+		else if (c == '-') ss << "_mn";
+		else if (c == '+') ss << "_pl";
+		else if (c == '*') ss << "_st";
+		else if (c == '/') ss << "_sl";
+		else if (c == '<') ss << "_ls";
+		else if (c == '>') ss << "_gr";
+		else if (c == '=') ss << "_eq";
+		else if (c == '?') ss << "_is";
+		else if (c == '#') ss << "_J";
+		else if (!(isalpha(c) || isdigit(c)))
+			ss << "_";
+		else
+			ss << c;
+
+	return ss.str();
+}
+
 std::string Compiler::genUniqueName (const std::string& prefix)
 {
 	std::ostringstream ss;
-	ss << prefix << "_u" << (nameId++);
+	ss << prefix << "_" << (nameId++);
 	return ss.str();
 }
 
@@ -134,7 +172,8 @@ CompileUnit::CompileUnit (Compiler* comp, OverloadPtr over,
 CompileUnit::CompileUnit (Compiler* comp, OverloadPtr overload, SigPtr sig)
 	: compiler(comp),
 	  overload(overload),
-	  internalName(comp->genUniqueName("fn")),
+	  internalName(comp->genUniqueName("fn_" +
+	  					comp->mangle(overload->name))),
 	  funcInst(this, sig),
 	  finishedInfer(false),
 
@@ -329,19 +368,6 @@ std::string CompileUnit::compile (ExpPtr e, EnvPtr env, bool retain)
 	}
 }
 
-static bool needs_escape (char c)
-{
-	static const char list[] = 
-		"abcdefghijklmnopqrstuvwxyz"
-		"ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-		"0123456789`-=[];',./""~!@#"
-		"$%^&*()_+{}|:<>? ";
-
-	for (size_t i = 0; i < sizeof(list) - 1; i++)
-		if (list[i] == c)
-			return false;
-	return true;
-}
 static char hex_char (int k)
 {
 	if (k < 10)
