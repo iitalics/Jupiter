@@ -1,9 +1,15 @@
+# simple recursion example
+
 func println (x) { print(x); println(); }
+func - (x, y) { x + -(y) }
 
 func sum (n) {
-	1 + sum(n + 1)
+	if n < 1 then
+		0
+	else
+		n + sum(n - 1)
 }
 
 func main () {
-	println(sum(10))
+	println(sum(10)) # -> 55
 }

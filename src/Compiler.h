@@ -64,6 +64,8 @@ struct CompileUnit
 	void pushLifetime ();
 	void popLifetime ();
 
+	bool needsRetain (ExpPtr exp);
+
 	std::string compile (ExpPtr exp, EnvPtr env,
 					bool retain = true);
 
@@ -73,6 +75,7 @@ struct CompileUnit
 	std::string compileCall (ExpPtr e, EnvPtr env);
 	std::string compileLet (ExpPtr e, EnvPtr env);
 	std::string compileBlock (ExpPtr e, EnvPtr env);
+	std::string compileCond (ExpPtr e, EnvPtr env);
 };
 
 

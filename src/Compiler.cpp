@@ -273,12 +273,26 @@ void CompileUnit::stackAlloc (const std::string& name)
 {
 	ssPrefix << name << " = alloca i8*" << std::endl;
 }
+bool CompileUnit::needsRetain (ExpPtr exp)
+{
+	switch (exp->kind)
+	{
+	case eInt:
+	case eBool:
+	case eVar:
+	case eCond:
+		return false;
+
+	default: return true;
+	}
+}
+
 
 
 
 std::string CompileUnit::compile (ExpPtr e, EnvPtr env, bool retain)
 {
-	if (retain && e->kind != eInt && e->kind != eBool && e->kind != eVar)
+	if (retain && needsRetain(e))
 	{
 		auto res = compile(e, env, false);
 		auto temp = getTemp();
@@ -308,6 +322,7 @@ std::string CompileUnit::compile (ExpPtr e, EnvPtr env, bool retain)
 	case eCall:   return compileCall(e, env);
 	case eLet:    return compileLet(e, env);
 	case eBlock:  return compileBlock(e, env);
+	case eCond:   return compileCond(e, env);
 
 	default:
 		throw e->span.die("cannot compile expression: " + e->string());
@@ -455,4 +470,46 @@ std::string CompileUnit::compileBlock (ExpPtr e, EnvPtr env)
 		res = compile(e2, env, false);
 
 	return res;
+}
+
+std::string CompileUnit::compileCond (ExpPtr e, EnvPtr env)
+{
+	/*
+		br <cond>, <then>, <else>
+	*/
+	auto temp = getTemp();
+	auto cmp = makeUnique(".cond");
+	auto lthen = makeUnique("Lthen");
+	auto lelse = makeUnique("Lelse");
+	auto lend = makeUnique("Lend");
+
+	auto cond = compile(e->subexps[0], env, false);
+	ssBody << cmp << " = icmp ne "
+	       << cond << ", null" << std::endl
+	       << "br i1 " << cmp
+	       << ", label " << lthen
+	       << ", label " << lelse << std::endl
+	       << std::endl
+	       << lthen.substr(1) << ":" << std::endl;
+
+	{
+		auto res = compile(e->subexps[1], env, false);
+		ssBody << "store " << res << ", i8** " << temp << std::endl
+		       << "br label " << lend << std::endl
+		       << std::endl
+		       << lelse.substr(1) << ":" << std::endl;
+	}
+
+	{
+		auto res = compile(e->subexps[2], env, false);
+		ssBody << "store " << res << ", i8** " << temp << std::endl
+		       << "br label " << lend << std::endl
+		       << std::endl
+		       << lend.substr(1) << ":" << std::endl;
+	}
+
+	auto res = makeUnique(".r");
+	ssBody << res << " = load i8** " << temp << std::endl;
+
+	return "i8* " + res;
 }
