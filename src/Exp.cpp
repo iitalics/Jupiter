@@ -102,7 +102,7 @@ void Exp::_string (std::ostringstream& ss, bool tag, int increase, int ind) cons
 		"string", "bool", "var",
 		"tuple", "call", "infix",
 		"cond", "lambda", "block",
-		"let",
+		"let", "^make", "^get", "^put"
 	};
 
 	if (tag)
@@ -220,6 +220,16 @@ void Exp::_string (std::ostringstream& ss, bool tag, int increase, int ind) cons
 			ss << ' ';
 			subexps[i]->_string(ss, tag, increase, ind);
 		}
+		break;
+
+	case eiMake:
+		ss << "^make " << getType()->string();
+		break;
+
+	case eiGet:
+		ss << "^get " << getType()->string() << " "
+		   << get<int_t>() << " ";
+		subexps[0]->_string(ss, tag, increase, ind);
 		break;
 
 	case eLambda:

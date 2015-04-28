@@ -199,12 +199,17 @@ ExpPtr parseTermPrefix (Lexer& lex)
 
 	case tLParen:
 		return parseTuple(lex);
-
 	case tIf:
 		return parseCond(lex);
-
 	case tLCurl:
 		return parseBlock(lex);
+
+	case tiMake:
+		return parseiMake(lex);
+	case tiGet:
+		return parseiGet(lex);
+	case tiPut:
+		return parseiPut(lex);
 
 	default:
 		//lex.expect("term");
@@ -378,6 +383,48 @@ ExpPtr parseLet (Lexer& lex)
 	e->set<int>(-1);
 	return e;
 }
+
+ExpPtr parseiMake (Lexer& lex)
+{
+	// ^make <ty>
+	Span spStart, spEnd;
+
+	spStart = lex.eat(tiMake).span;
+	auto ty = parseType(lex);
+	spEnd = lex.current().span;
+	auto tag = lex.eat(tString).valueInt;
+
+	if (ty->kind != tyConcrete || ty->name != "Fn")
+		throw spStart.die("^make expects function type");
+
+	// TODO: hash 'tag' into a unique integer
+	auto e = Exp::make(eiMake, int_t(0), {}, spStart + spEnd);
+	e->setType(ty);
+
+	return e;
+}
+ExpPtr parseiGet (Lexer& lex)
+{
+	// ^get <ty> <idx> <term>
+
+	Span spStart, spEnd;
+
+	spStart = lex.eat(tiGet).span;
+	auto ty = parseType(lex);
+	auto idx = lex.eat(tNumberInt).valueInt;
+	auto body = parseTerm(lex);
+	spEnd = body->span;
+
+	auto e = Exp::make(eiGet, idx, { body }, spStart + spEnd);
+	e->setType(ty);
+
+	return e;
+}
+ExpPtr parseiPut (Lexer& lex)
+{
+	throw lex.current().span.die("^put unimplemented");
+}
+
 
 
 

@@ -78,6 +78,7 @@ struct CompileUnit
 	std::string compileLet (ExpPtr e, EnvPtr env);
 	std::string compileBlock (ExpPtr e, EnvPtr env);
 	std::string compileCond (ExpPtr e, EnvPtr env);
+	std::string compileiGet (ExpPtr e, EnvPtr env);
 };
 
 

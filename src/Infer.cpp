@@ -72,6 +72,8 @@ Infer::Infer (CompileUnit* _cunit, SigPtr sig)
 	auto overload = _cunit->overload;
 	auto lenv = LocEnv::make();
 
+	unify(mainSubs, overload->signature->tyList(), sig->tyList());
+
 	// construct environment for arguments
 	for (size_t len = sig->args.size(), i = 0; i < len; i++)
 	{
@@ -304,6 +306,11 @@ TyPtr Infer::infer (ExpPtr exp, LocEnvPtr lenv)
 		return inferBlock(exp, lenv);
 	case eLet:
 		return inferLet(exp, lenv);
+
+	case eiMake:
+	case eiGet:
+	case eiPut:
+		return mainSubs(exp->getType());
 
 	default:
 		throw exp->span.die("cannot infer this kind of expression");

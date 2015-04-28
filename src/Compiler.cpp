@@ -381,6 +381,10 @@ std::string CompileUnit::compile (ExpPtr e, EnvPtr env, bool retain)
 	case eLet:    return compileLet(e, env);
 	case eBlock:  return compileBlock(e, env);
 	case eCond:   return compileCond(e, env);
+	case eiGet:   return compileiGet(e, env);
+
+	case eiMake:
+		throw e->span.die("^make expression must be called as function"); 
 
 	default:
 		throw e->span.die("cannot compile expression: " + e->string());
@@ -468,7 +472,16 @@ std::string CompileUnit::compileCall (ExpPtr e, EnvPtr env)
 	std::ostringstream args;
 	auto fn = e->subexps.front();
 
-	if (fn->kind == eVar && fn->get<bool>()) ;
+	if (fn->kind == eVar && fn->get<bool>())
+	{
+		args << "call i8* @" << special[fn] << " (";
+	}
+	else if (fn->kind == eiMake)
+	{
+		args << "call i8* (i32, i32, i32, ...)* @ju_make_buf (i32 "
+		     << fn->get<int_t>() << ", i32 0, i32 "
+		     << (e->subexps.size() - 1) << ", ";
+	}
 	else
 		throw fn->span.die("cannot call non-global");
 
@@ -483,9 +496,7 @@ std::string CompileUnit::compileCall (ExpPtr e, EnvPtr env)
 	popLifetime();
 
 	auto res = makeUnique(".r");
-
-	ssBody << res << " = call i8* @"
-	       << special[fn] << " (" << args.str() << ")" << std::endl;
+	ssBody << res << " = " << args.str() << ")" << std::endl;
 
 	return "i8* " + res;
 }
@@ -554,5 +565,16 @@ std::string CompileUnit::compileCond (ExpPtr e, EnvPtr env)
 	auto res = makeUnique(".r");
 	ssBody << res << " = load i8** " << temp << std::endl;
 
+	return "i8* " + res;
+}
+
+std::string CompileUnit::compileiGet (ExpPtr e, EnvPtr env)
+{
+	auto res = makeUnique(".get");
+	auto inp = compile(e->subexps[0], env, true);
+
+	ssBody << res << " = call i8* @ju_get (" << inp
+		   << ", i32 " << e->get<int_t>() << ")" << std::endl;
+	
 	return "i8* " + res;
 }

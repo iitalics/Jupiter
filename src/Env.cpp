@@ -97,7 +97,6 @@ FuncInstance Overload::inst (OverloadPtr over, SigPtr sig, Compiler* compiler)
 			return inst;
 
 	std::cerr << "instancing '" << over->name << "' with: " << sig->string() << std::endl;
-
 	auto cunit = compiler->compile(over, sig);
 	over->instances.push_back(cunit->funcInst);
 	cunit->compile();

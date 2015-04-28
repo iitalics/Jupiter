@@ -45,6 +45,9 @@ enum ExpKind
 	eLambda,		// 	Sig*
 	eBlock,
 	eLet,			// 	std::string, int
+	eiMake,
+	eiGet,
+	eiPut,
 };
 
 class Exp
@@ -201,6 +204,9 @@ ExpPtr parseCond (Lexer& lex);
 ExpPtr parseBlock (Lexer& lex);
 void parseBlockExp (Lexer& lex, ExpList& list);
 ExpPtr parseLet (Lexer& lex);
+ExpPtr parseiMake (Lexer& lex);
+ExpPtr parseiGet (Lexer& lex);
+ExpPtr parseiPut (Lexer& lex);
 
 TyPtr parseType (Lexer& lex);
 TyPtr parseTypePoly (Lexer& lex);

@@ -24,6 +24,8 @@ enum
 	tFor,
 	tTrue,
 	tFalse,
+	
+	tiMake, tiGet, tiPut,
 
 	tEqual,         // =
 	tWildcard,		// _
