@@ -54,9 +54,6 @@ static int Main (std::vector<std::string>&& args)
 	env.bake(&compiler, "juStd_printInt",     "print", { Int }, Unit);
 	env.bake(&compiler, "juStd_printReal",    "print", { Real }, Unit);
 	env.bake(&compiler, "juStd_println",      "println", { }, Unit);
-	env.bake(&compiler, "juStd_nil",          "nil", { }, polyList);
-	env.bake(&compiler, "juStd_hd",           "hd", { polyList }, polyA);
-	env.bake(&compiler, "juStd_tl",           "tl", { polyList }, polyList);
 
 	try
 	{
