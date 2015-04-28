@@ -81,7 +81,7 @@ void GlobEnv::bake (Compiler* comp, const std::string& intName,
 	auto cu = comp->bake(overload, sig, ret, intName);
 
 	addFunc(name)->overloads.push_back(overload);
-	overload->instances.push_back(FuncInstance(cu, sig, ret));
+	overload->instances.push_back(cu);
 }
 
 OverloadPtr Overload::make (GlobEnv& env, const std::string& name,
@@ -92,13 +92,13 @@ OverloadPtr Overload::make (GlobEnv& env, const std::string& name,
 
 FuncInstance Overload::inst (OverloadPtr over, SigPtr sig, Compiler* compiler)
 {
-	for (auto& inst : over->instances)
-		if (inst.signature->aEquiv(sig))
-			return inst;
+	for (auto cu : over->instances)
+		if (cu->funcInst.signature->aEquiv(sig))
+			return cu->funcInst;
 
 	std::cerr << "instancing '" << over->name << "' with: " << sig->string() << std::endl;
 	auto cunit = compiler->compile(over, sig);
-	over->instances.push_back(cunit->funcInst);
+	over->instances.push_back(cunit);
 	cunit->compile();
 	return cunit->funcInst;
 }

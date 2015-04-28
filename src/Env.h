@@ -22,7 +22,7 @@ public:
 	std::string name;
 	SigPtr signature;
 	ExpPtr body;
-	std::vector<FuncInstance> instances;
+	std::vector<CompileUnit*> instances;
 
 	static OverloadPtr make (GlobEnv& env, const std::string& name,
 	                           SigPtr sig, ExpPtr body);
