@@ -455,10 +455,14 @@ TyPtr parseTypeTuple (Lexer& lex)
 TyPtr parseTypeConcrete (Lexer& lex)
 {
 	std::vector<TyPtr> sub;
+	auto sp = lex.current().span;
 	auto kind = lex.eat(tIdent).str;
 
 	if (lex.current() == tLParen)
 		parseTypeTupleRaw(lex, sub);
+
+	if (kind == "Fn" && sub.empty())
+		throw sp.die("malformed function type");
 
 	return Ty::makeConcrete(kind, sub);
 }
