@@ -35,7 +35,7 @@ ExpPtr Desugar::desugar (ExpPtr exp, LocEnvPtr lenv)
 }
 ExpPtr Desugar::desugarSubexps (ExpPtr e, LocEnvPtr lenv)
 {
-	if (e->subexps.size() == 0)
+	if (e->subexps.size() == 0 && e->getType() == nullptr)
 		return e;
 	else
 	{
