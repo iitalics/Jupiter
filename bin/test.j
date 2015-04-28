@@ -1,6 +1,7 @@
 # simple recursion example
 
 func println (x) { print(x); println(); }
+func println (x, y) { print(x); print(y); println(); }
 func - (x, y) { x + -(y) }
 
 func sum (n) {
@@ -11,5 +12,6 @@ func sum (n) {
 }
 
 func main () {
-	println(sum(10)) # -> 55
+	println("please don't free ", "me!");
+	println("phew, they're gone!");
 }

@@ -102,7 +102,7 @@ void Compiler::output (std::ostream& os)
 void Compiler::outputRuntimeHeader (std::ostream& os)
 {
 	os
-		<< "; jupiter runtime header for version 0.0.1" << std::endl
+		<< "; jupiter runtime header for version 0.0.2" << std::endl
 		<< "declare void @ju_init ()" << std::endl
 		<< "declare void @ju_destroy ()" << std::endl
 		<< "declare void @juGC_root (i8**)" << std::endl

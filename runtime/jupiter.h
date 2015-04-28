@@ -3,15 +3,23 @@
 #include <stdbool.h>
 #include <stdlib.h>
 
+// VERSION  0.0.2
+
 typedef    void* juc;
 typedef int32_t  ju_int;
 typedef  double  ju_real;
 
-typedef struct {
+struct ju_obj;
+
+typedef struct ju_obj {
 
 	ju_int nmems;
 	ju_int tag;
-	struct { } gc_info;
+	struct {
+		int color;
+		struct ju_obj* prev;
+		struct ju_obj* next;
+	} gc_info;
 	juc mems[0];
 
 } ju_obj;
@@ -28,10 +36,17 @@ typedef struct {
 void   ju_init ();
 void   ju_destroy ();
 
+void   juGC_init ();
+void   juGC_destroy ();
+void   juGC_sweep ();
+void   juGC_begin ();
+void   juGC_step ();
+void   juGC_end ();
 void   juGC_root (juc* root);
 void   juGC_unroot (int n);
 void   juGC_store (juc* root, juc value);
 
+bool   ju_is_gc (juc cell);
 bool   ju_is_int (juc cell);
 #define ju_is_obj(_c) !ju_is_int(_c)
 
