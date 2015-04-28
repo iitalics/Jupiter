@@ -1,4 +1,4 @@
-CC     = mingw32-gcc
+CC     = clang
 CFLAGS = -Wall -O2 -g
 
 
