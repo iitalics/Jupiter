@@ -228,6 +228,9 @@ bool Infer::unifyOverload (Subs& out,
 	{
 		std::ostringstream ss;
 		ss << "ambiguous arguments to function '" << globfn->name << "'";
+		ss << "\n  given: " << t2->string();
+		for (auto& v : valid)
+			ss << "\n    candidate: " << std::get<1>(v)->string();
 		throw t1->srcExp->span.die(ss.str());
 	}
 
