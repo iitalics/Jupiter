@@ -103,6 +103,8 @@ void Compiler::outputRuntimeHeader (std::ostream& os)
 {
 	os
 		<< "; jupiter runtime header for version 0.0.1" << std::endl
+		<< "declare void @ju_init ()" << std::endl
+		<< "declare void @ju_destroy ()" << std::endl
 		<< "declare void @juGC_root (i8**)" << std::endl
 		<< "declare void @juGC_unroot (i32)" << std::endl
 		<< "declare void @juGC_store (i8**, i8*)" << std::endl
@@ -123,7 +125,9 @@ void Compiler::outputEntryPoint (std::ostream& os)
 	os << std::endl
 	   << ";;;   jupiter entry point -> main()" << std::endl
 	   << "define ccc i32 @main (i32 %argc, i8** %argv)" << std::endl << "{" << std::endl
+	   << "call void @ju_init ()" << std::endl
 	   << "call i8* @" << entry->internalName << " ()" << std::endl
+	   << "call void @ju_destroy ()" << std::endl
 	   << "ret i32 0" << std::endl
 	   << "}" << std::endl;
 }

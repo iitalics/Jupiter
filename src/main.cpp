@@ -92,7 +92,7 @@ static int Main (std::vector<std::string>&& args)
 	}
 	catch (std::exception& err)
 	{
-		std::cout << "error: " << err.what() << std::endl;
+		std::cerr << "error: " << err.what() << std::endl;
 		return 1;
 	}
 }
