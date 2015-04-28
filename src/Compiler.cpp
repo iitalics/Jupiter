@@ -288,9 +288,10 @@ void CompileUnit::compile ()
 
 	auto res = compile(overload->body, env, false);
 
-	ssBody << "call void @juGC_unroot (i32 "
-		   << tempLifetimes.size() << ")" << std::endl
-           << "ret " << res << std::endl;
+	if (!tempLifetimes.empty())
+		ssBody << "call void @juGC_unroot (i32 "
+		       << tempLifetimes.size() << ")" << std::endl;
+	ssBody << "ret " << res << std::endl;
 }
 
 
@@ -382,6 +383,8 @@ std::string CompileUnit::compile (ExpPtr e, EnvPtr env, bool retain)
 	case eBlock:  return compileBlock(e, env);
 	case eCond:   return compileCond(e, env);
 	case eiGet:   return compileiGet(e, env);
+	case eTuple:
+		return "i8* null";
 
 	case eiMake:
 		throw e->span.die("^make expression must be called as function"); 
