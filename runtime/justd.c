@@ -61,10 +61,10 @@ juc juStd_printReal (juc ca)
 }
 juc juStd_printBool (juc cell)
 {
-	if (cell == NULL)
-		printf("true");
-	else
+	if (cell == ju_false)
 		printf("false");
+	else
+		printf("true");
 
 	return ju_unit;
 }

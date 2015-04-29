@@ -371,9 +371,9 @@ std::string CompileUnit::compile (ExpPtr e, EnvPtr env, bool retain)
 
 	case eBool:
 		if (e->get<bool>())
-			return "i8* null";
-		else
 			return "i8* inttoptr (i32 1 to i8*)";
+		else
+			return "i8* null";
 
 	case eVar:    return compileVar(e, env);
 	case eString: return compileString(e, env);
@@ -546,8 +546,8 @@ std::string CompileUnit::compileCond (ExpPtr e, EnvPtr env)
 	ssBody << cmp << " = icmp eq "
 	       << cond << ", null" << std::endl
 	       << "br i1 " << cmp
-	       << ", label " << lthen
-	       << ", label " << lelse << std::endl
+	       << ", label " << lelse
+	       << ", label " << lthen << std::endl
 	       << std::endl
 	       << lthen.substr(1) << ":" << std::endl;
 
