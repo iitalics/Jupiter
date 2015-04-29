@@ -1,21 +1,40 @@
 # uses internal operations ^make and ^get 
-#  to artificially create tuples
-
+#  to artificially create lists
 
 func println (x) { print(x); println() }
 func println (x, y) { print(x); print(y); println() }
 
-func pair (x : \a, y : \b) {
-	^make (\a, \b) -> (\a, \b) "pair"
-		(x, y)
+func :: (hd : \t, tl : List(\t)) {
+	^make (Bool, \t, List(\t)) -> List(\t) "::"
+		(true, hd, tl)
 }
-func fst (x : (\a, \b)) { ^get \a 0 x }
-func snd (x : (\a, \b)) { ^get \b 1 x }
+func nil () {
+	^make (Bool) -> List(_) "nil"
+		(false)
+}
+func ::? (x : List(\t)) { ^get Bool 0 x }
+func hd (x : List(\t))  { ^get \t 1 x }
+func tl (x : List(\t))  { ^get List(\t) 2 x }
 
+
+func print (a : List(\t)) {
+	print("[");
+	if ::?(a) {
+		print(hd(a));
+		printList(tl(a));
+	};
+	print("]");
+}
+func printList (a) {
+	if ::?(a) {
+		print(", ");
+		print(hd(a));
+		printList(tl(a));
+	}
+}
 
 func main () {
-	let obj = pair(3, "Hello");
+	let lst = { 1 :: 2 :: 3 :: 4 :: nil() };
 
-	println(fst(obj));
-	println(snd(obj));
+	println("test list: ", lst);
 }
