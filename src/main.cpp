@@ -81,16 +81,14 @@ static int Main (std::vector<std::string>&& args)
 		compiler.entryPoint(cunit);
 		cunit->compile();
 
-		std::ostringstream ss;
-		compiler.output(ss);
-		std::cout << ss.str() << std::endl;
+		compiler.output(std::cout);
 
 
 		return 0;
 	}
-	catch (std::exception& err)
+	catch (Span::Error& err)
 	{
-		std::cerr << "error: " << err.what() << std::endl;
+		std::cerr << err.what();
 		return 1;
 	}
 }

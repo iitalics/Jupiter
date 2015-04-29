@@ -1,40 +1,23 @@
-# uses internal operations ^make and ^get 
-#  to artificially create lists
+# showcases different places that errors occur
 
 func println (x) { print(x); println() }
 func println (x, y) { print(x); print(y); println() }
 
-func :: (hd : \t, tl : List(\t)) {
-	^make (Bool, \t, List(\t)) -> List(\t) "::"
-		(true, hd, tl)
-}
-func nil () {
-	^make (Bool) -> List(_) "nil"
-		(false)
-}
-func ::? (x : List(\t)) { ^get Bool 0 x }
-func hd (x : List(\t))  { ^get \t 1 x }
-func tl (x : List(\t))  { ^get List(\t) 2 x }
-
-
-func print (a : List(\t)) {
-	print("[");
-	if ::?(a) {
-		print(hd(a));
-		printList(tl(a));
-	};
-	print("]");
-}
-func printList (a) {
-	if ::?(a) {
-		print(", ");
-		print(hd(a));
-		printList(tl(a));
-	}
-}
-
 func main () {
-	let lst = { 1 :: 2 :: 3 :: 4 :: nil() };
+	# uncomment and compile
 
-	println("test list: ", lst);
+	#	let f : Fn = 4;
+	# 	let x = 0; let x = 1;
+	# 	foo bar baz;
+	#	5 % 2;
+	#	2.3 + 0;
+	#	println(print);
+	#	(^make (Int) -> () "foo");
+	# 	if true 1 else 2
+	#	if (32) then 0 else 1;
+	#	if true then 32 else 32.5;
 }
+
+# func () bad
+# func bad (x, ) {}
+# func bad () x

@@ -83,6 +83,8 @@ struct Span
 	LexFile::ptr file;
 	size_t start, end;
 
+	using Error = std::runtime_error;
+
 	inline explicit
 	Span (const LexFile::ptr& _file,
 					size_t _start, size_t _end)
@@ -122,7 +124,8 @@ struct Span
 			return file->get(start, end);
 	}
 
-	std::runtime_error die (const std::string& msg) const;
+	Error die (const std::string& msg,
+	              const std::vector<std::string>& extra = {}) const;
 };
 
 struct Token

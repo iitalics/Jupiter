@@ -432,19 +432,6 @@ Token Lexer::eat (int tok1, int tok2)
 
 
 
-
-std::runtime_error Span::die (const std::string& msg) const
-{
-	std::ostringstream ss;
-
-	if (file != nullptr)
-		ss << file->filename() << ": ";
-
-	ss << msg;
-
-	return std::runtime_error(ss.str());
-}
-
 Span Span::operator+ (const Span& other) const
 {
 	if (invalid()) return other;
@@ -537,6 +524,76 @@ std::string Token::string () const
 	default:
 		return string(tok);
 	}
+}
+
+
+
+
+Span::Error Span::die (const std::string& msg,
+                       const std::vector<std::string>& extra) const
+{
+	std::ostringstream ss;
+
+	size_t bol = 0, line = 0, len = 0;
+
+	if (file != nullptr)
+	{
+		for (size_t i = 0; i < start; i++)
+			if (file->get(i) == '\n')
+			{
+				bol = i + 1;
+				line++;
+			}
+		
+		for (size_t i = bol; file->get(i) && file->get(i) != '\n'; i++)
+			len++;
+	}
+
+	if (file != nullptr)
+	{
+		/*
+			test.j:1:4: error: asdf
+		*/
+		ss << "\x1b[1m" << file->filename() << ":"
+		   << (line + 1) << ":"
+		   << (start - bol + 1) << ": \x1b[0m";
+	}
+
+	ss << "\x1b[1;31merror:\x1b[0m " << msg << std::endl;
+
+	if (!extra.empty())
+	{
+		for (auto& x : extra)
+			ss << "  " << x << std::endl;
+		ss << std::endl;
+	}
+
+	if (file != nullptr)
+	{
+		char buffer[len];
+		for (size_t i = 0; i < len; i++)
+		{
+			auto c = file->get(bol + i);
+			if (is_space(c))
+				buffer[i] = ' ';
+			else
+				buffer[i] = c;
+		}
+
+		ss << std::string(buffer, len) << std::endl;
+
+		for (size_t i = bol; i < start; i++)
+			ss << ' ';
+
+		ss << "\x1b[36;1m";
+
+		for (size_t i = start; i < end && i < (bol + len); i++)
+			ss << '~';
+
+		ss << "\x1b[0m" << std::endl;
+	}
+
+	return Error(ss.str());
 }
 
 
