@@ -543,7 +543,7 @@ std::string CompileUnit::compileCond (ExpPtr e, EnvPtr env)
 	auto lend = makeUnique("Lend");
 
 	auto cond = compile(e->subexps[0], env, false);
-	ssBody << cmp << " = icmp ne "
+	ssBody << cmp << " = icmp eq "
 	       << cond << ", null" << std::endl
 	       << "br i1 " << cmp
 	       << ", label " << lthen
