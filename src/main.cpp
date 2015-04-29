@@ -53,6 +53,7 @@ static int Main (std::vector<std::string>&& args)
 	env.bake(&compiler, "juStd_printString",  "print", { String }, Unit);
 	env.bake(&compiler, "juStd_printInt",     "print", { Int }, Unit);
 	env.bake(&compiler, "juStd_printReal",    "print", { Real }, Unit);
+	env.bake(&compiler, "juStd_printBool",    "print", { Bool }, Unit);
 	env.bake(&compiler, "juStd_println",      "println", { }, Unit);
 
 	try

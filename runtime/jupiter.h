@@ -25,10 +25,10 @@ typedef struct ju_obj {
 } ju_obj;
 
 
-#define ju_null   ((juc) NULL)
+#define ju_null   ((juc) 0x0)
 #define ju_zero   ((juc) 0x1)
 #define ju_one    ((juc) 0x3)
-#define ju_true   ju_one
+#define ju_true   ju_zero
 #define ju_false  ju_null
 #define ju_unit   ju_null
 
