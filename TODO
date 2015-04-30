@@ -29,8 +29,8 @@ VERSION         GOAL
                 infer - circular
                 codegen - ^make/^get
                 parser - pretty error messages
-TODO
                 main - better build system
+TODO
                 main - easy CLI tool
                 cleanliness - better github
 0.0.2 dev       checkpoint - jupc hello.j

@@ -26,6 +26,12 @@ static int Main (std::vector<std::string>&& args)
 		return 0;
 	}
 
+	if (args.size() == 1)
+	{
+		std::cout << "Usage: jup file1 [, file2...]" << std::endl;
+		return 1;
+	}
+
 	GlobEnv env;
 	Compiler compiler;
 	using Op = GlobEnv::OpPrecedence;
@@ -58,11 +64,13 @@ static int Main (std::vector<std::string>&& args)
 
 	try
 	{
-		Lexer lex;
-		lex.openFile("test.j");
-		
-		env.loadToplevel(Parse::parseToplevel(lex));
-		lex.expect(tEOF);
+		for (size_t i = 1, len = args.size(); i < len; i++)
+		{
+			Lexer lex;
+			lex.openFile(args[i]);
+			env.loadToplevel(Parse::parseToplevel(lex));
+			lex.expect(tEOF);
+		}
 
 		auto entrySpan = Span();
 		auto entrySig = Sig::make();
@@ -89,6 +97,6 @@ static int Main (std::vector<std::string>&& args)
 	catch (Span::Error& err)
 	{
 		std::cerr << err.what();
-		return 1;
+		return -1;
 	}
 }
