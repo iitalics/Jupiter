@@ -1,0 +1,69 @@
+
+CATEGORIES
+    checkpoint      proof of success at each new release
+    main            More general goals
+    parser          Converts text into Abstract Syntax Tree
+    desugar         Reduces sugar expressions + correctness checks
+    infer           Types and inference system
+    codegen         Code generator (to LLVM IR)
+    runtime         Runtime to link with compiled code
+    stdline         Standard library
+    cleanliness     Refactor/documentation of working source code
+
+VERSION         GOAL
+
+0.0.0 dev       checkpoint - what's a jupiter
+                parser - lexer
+                parser - general
+                main - global env
+                infer/desugar - types
+                desugar - infix
+                infer - subs
+                infer - general
+                infer - overloads
+                codegen - basic
+                runtime - basic
+0.0.1 dev       checkpoint - hello, jupiter?
+                codegen - roots
+                runtime - gc
+                infer - circular
+                codegen - ^make/^get
+                parser - pretty error messages
+TODO
+                main - better build system
+                main - easy CLI tool
+                cleanliness - better github
+0.0.2 dev       checkpoint - jupc hello.j
+                parser - user types
+                desugar - type validity
+                codegen - user types
+                codegen - ^call
+                main - organized standard library
+                stdlib - list type, maybe type
+                stdlib - print(), string()
+0.0.3 dev       checkpoint - hellojupiter.j
+                parser/desugar - member expression
+                parser - lambda
+                desugar - lambda
+                infer - lambda
+                codegen - lambda
+                runtime - lambda
+0.0.4 dev       checkpoint - The Ultimate
+                parser/desugar - mutable state
+                codegen - mutable state (boxed values)
+                parser/codegen - loops
+                desugar - sugar loops
+                codegen - tail calls?
+                stdlib - more complete primitive functions
+0.0.5 dev       checkpoint - fizzbuzz!
+                main - modules (namespaces?)
+                stdlib - move/break into modules
+                cleanliness - document header files
+                cleanliness - reorganize source
+                cleanliness - tests?
+                runtime - interleave GC
+                codegen - ^ccall
+0.1.0 alpha     checkpoint - Hello, Jupiter!
+                cleanliness - standardization document
+                cleanliness - tutorial
+                cleanliness - fancy github
