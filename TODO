@@ -1,13 +1,13 @@
 
 CATEGORIES
-    checkpoint      proof of success at each new release
+    checkpoint      Proof of success at each new release
     main            More general goals
     parser          Converts text into Abstract Syntax Tree
     desugar         Reduces sugar expressions + correctness checks
     infer           Types and inference system
     codegen         Code generator (to LLVM IR)
     runtime         Runtime to link with compiled code
-    stdline         Standard library
+    stdlib          Standard library
     cleanliness     Refactor/documentation of working source code
 
 VERSION         GOAL
