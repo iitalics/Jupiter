@@ -207,7 +207,11 @@ void Lexer::openFile (const std::string& filename)
 	_file = LexFile::make(filename, fs);
 
 	if (_file->badfile())
-		throw Span(_file).die("cannot open file");
+	{
+		std::ostringstream ss;
+		ss << "cannot open file '" << filename << "'";
+		throw Span(_file).die(ss.str());
+	}
 	else
 		_open();
 }
@@ -536,7 +540,7 @@ Span::Error Span::die (const std::string& msg,
 
 	size_t bol = 0, line = 0, len = 0;
 
-	if (file != nullptr)
+	if (file != nullptr && !file->badfile())
 	{
 		for (size_t i = 0; i < start; i++)
 			if (file->get(i) == '\n')
@@ -554,9 +558,13 @@ Span::Error Span::die (const std::string& msg,
 		/*
 			test.j:1:4: error: asdf
 		*/
-		ss << "\x1b[1m" << file->filename() << ":"
-		   << (line + 1) << ":"
-		   << (start - bol + 1) << ": \x1b[0m";
+		ss << "\x1b[1m" << file->filename() << ":";
+
+		if (len > 0)
+			ss << (line + 1) << ":"
+			   << (start - bol + 1) << ":\x1b[0m";
+
+		ss << " ";
 	}
 
 	ss << "\x1b[1;31merror:\x1b[0m " << msg << std::endl;
@@ -568,7 +576,7 @@ Span::Error Span::die (const std::string& msg,
 		ss << std::endl;
 	}
 
-	if (file != nullptr)
+	if (bol > 0)
 	{
 		char buffer[len];
 		for (size_t i = 0; i < len; i++)
