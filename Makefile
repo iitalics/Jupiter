@@ -6,6 +6,9 @@
 # to make the compiler (located in src/) use
 #    make jup
 #
+# to make the toolchain (located in src/jupc/) use
+#    make jupc
+#
 # to make the example programs (located in bin/) use
 #    make tests
 

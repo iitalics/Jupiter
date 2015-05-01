@@ -30,9 +30,9 @@ VERSION         GOAL
                 codegen - ^make/^get
                 parser - pretty error messages
                 main - better build system
+                cleanliness - better github
 TODO
                 main - easy CLI tool
-                cleanliness - better github
 0.0.2 dev       checkpoint - jupc hello.j
                 parser - user types
                 desugar - type validity
