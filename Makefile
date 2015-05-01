@@ -9,7 +9,7 @@
 # to make the toolchain (located in src/jupc/) use
 #    make jupc
 #
-# to make the example programs (located in bin/) use
+# to make the example programs (located in examples/) use
 #    make tests
 
 
@@ -28,16 +28,16 @@ RUNTIME    = runtime/runtime.a
 SRCS       = $(wildcard src/*.cpp) $(wildcard src/*.c)
 OBJS       = $(SRCS:src/%=obj/%.o)
 
-TEST_SRCS  = $(wildcard bin/*.j)
+TEST_SRCS  = $(wildcard examples/*.j)
 JUPC_SRCS  = $(wildcard src/jupc/jupc.cpp)
 JUPC_OBJS  = $(JUPC_SRCS:src/jupc/%=obj/jupc/%.o)
 
 ifeq ($(OS), Windows_NT)
-TESTS      = $(TEST_SRCS:bin/%.j=./jup-%.exe)
+TESTS      = $(TEST_SRCS:examples/%.j=./jup-%.exe)
 JUP        = ./jup.exe
 JUPC       = ./jupc.exe
 else
-TESTS      = $(TEST_SRCS:bin/%.j=./jup-%)
+TESTS      = $(TEST_SRCS:examples/%.j=./jup-%)
 JUP        = ./jup
 JUPC       = ./jupc
 endif
@@ -100,7 +100,7 @@ rebuild: clean all
 
 # --- tests ---
 
-./jup-%.exe: bin/%.j
+./jup-%.exe: examples/%.j
 	$(JUPC) $< -C$(JUP) -o $@
 
 clean-tests:
