@@ -17,44 +17,57 @@ CXX        = clang++
 endif
 CC         = clang
 OPTFLAGS   = -O0 -g
-CXXFLAGS   = $(OPTFLAGS) $(EXTFLAGS) -Wall -std=c++11
+CXXFLAGS   = $(OPTFLAGS) -Ilib $(EXTFLAGS) -Wall -std=c++11
+LINKFLAGS  = -O2 -g 
 LINK       = $(OPTFLAGS)
 
 RUNTIME    = runtime/runtime.a
 SRCS       = $(wildcard src/*.cpp) $(wildcard src/*.c)
-SRCOBJS    = $(SRCS:src/%=obj/%.o)
-OBJS       = $(SRCOBJS) $(wildcard obj/*.a)
+OBJS       = $(SRCS:src/%=obj/%.o)
 
 TEST_SRCS  = $(wildcard bin/*.j)
+JUPC_SRCS  = $(wildcard src/jupc/jupc.cpp)
+JUPC_OBJS  = $(JUPC_SRCS:src/jupc/%=obj/jupc/%.o)
 
 ifeq ($(OS), Windows_NT)
 TESTS      = $(TEST_SRCS:bin/%.j=./jup-%.exe)
 OUT        = ./jup.exe
+JUPC       = ./jupc.exe
 else
 TESTS      = $(TEST_SRCS:bin/%.j=./jup-%)
 OUT        = ./jup
+JUPC       = ./jupc
 endif
 
 
-all: runtimelib jup tests
+all: runtimelib jup jupc tests
 
 jup: $(OUT)
+jupc: $(JUPC)
 tests: $(TESTS)
 runtimelib:	
 	make -C runtime/ $(RUNTIME:runtime/%=%)
+
+obj:
+ifdef VERBOSE
+	mkdir -p ./obj/jupc
+else
+	@printf " MKDIR\n"
+	@mkdir -p ./obj/jupc
+endif
 
 
 # --- compiler ---
 
 $(OUT): $(OBJS)
 ifdef VERBOSE
-	$(CXX) $(CFLAGS) -o $(OUT) $(OBJS) $(LINK) 
+	$(CXX) $(LINKFLAGS) -o $(OUT) $(OBJS) $(LINK) 
 else
 	@printf " LINK   $@\n"
-	@$(CXX) $(CFLAGS) -o $(OUT) $(OBJS) $(LINK) 
+	@$(CXX) $(LINKFLAGS) -o $(OUT) $(OBJS) $(LINK) 
 endif
 
-obj/%.cpp.o: src/%.cpp
+obj/%.cpp.o: src/%.cpp obj
 ifdef VERBOSE
 	$(CXX) $(CXXFLAGS) -c -o $@ $<
 else
@@ -62,12 +75,21 @@ else
 	@$(CXX) $(CXXFLAGS) -c -o $@ $<
 endif
 
+$(JUPC): $(JUPC_OBJS)
+ifdef VERBOSE
+	$(CXX) $(LINKFLAGS) -o $@ $(JUPC_OBJS) $(LINK) 
+else
+	@printf " LINK   $@\n"
+	@$(CXX) $(LINKFLAGS) -o $@ $(JUPC_OBJS) $(LINK) 
+endif
+
+
 clean: clean-tests
 ifdef VERBOSE
-	rm -f $(OUT) $(SRCOBJS)
+	rm -f $(OUT) $(JUPC) $(SRCOBJS)
 else
 	@printf " CLEAN COMPILER\n"
-	@rm -f $(OUT) $(SRCOBJS)
+	@rm -f $(OUT) $(SRCOBJS) $(JUPC) $(JUPC_OBJS)
 endif
 
 rebuild: clean all
