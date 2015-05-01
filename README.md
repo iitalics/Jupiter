@@ -21,7 +21,6 @@ Required to build and use the Jupiter compiler:
 * Unix-like environment (Unix or Cygwin)
 * Clang (currently being developed with `clang++` version 3.4.2)
 * LLVM toolchain (`llc` version 3.4.2)
-* Boost.Program_options (only build if you want to use `jupc`)
 
 How to Build Jupiter
 -----

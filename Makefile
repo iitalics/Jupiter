@@ -34,20 +34,20 @@ JUPC_OBJS  = $(JUPC_SRCS:src/jupc/%=obj/jupc/%.o)
 
 ifeq ($(OS), Windows_NT)
 TESTS      = $(TEST_SRCS:bin/%.j=./jup-%.exe)
-OUT        = ./jup.exe
+JUP        = ./jup.exe
 JUPC       = ./jupc.exe
 else
 TESTS      = $(TEST_SRCS:bin/%.j=./jup-%)
-OUT        = ./jup
+JUP        = ./jup
 JUPC       = ./jupc
 endif
 
 
 all: runtimelib jup jupc tests
 
-jup: $(OUT)
+jup: $(JUP)
 jupc: $(JUPC)
-tests: $(TESTS)
+tests: $(JUPC) $(TESTS)
 runtimelib:	
 	make -C runtime/ $(RUNTIME:runtime/%=%)
 
@@ -62,15 +62,15 @@ endif
 
 # --- compiler ---
 
-$(OUT): $(OBJS)
+$(JUP): obj $(OBJS)
 ifdef VERBOSE
-	$(CXX) $(LINKFLAGS) -o $(OUT) $(OBJS) $(LINK) 
+	$(CXX) $(LINKFLAGS) -o $(JUP) $(OBJS) $(LINK) 
 else
 	@printf " LINK   $@\n"
-	@$(CXX) $(LINKFLAGS) -o $(OUT) $(OBJS) $(LINK) 
+	@$(CXX) $(LINKFLAGS) -o $(JUP) $(OBJS) $(LINK) 
 endif
 
-obj/%.cpp.o: src/%.cpp obj
+obj/%.cpp.o: src/%.cpp
 ifdef VERBOSE
 	$(CXX) $(CXXFLAGS) -c -o $@ $<
 else
@@ -89,10 +89,10 @@ endif
 
 clean: clean-tests
 ifdef VERBOSE
-	rm -f $(OUT) $(JUPC) $(SRCOBJS)
+	rm -f $(JUP) $(JUPC) $(SRCOBJS)
 else
 	@printf " CLEAN COMPILER\n"
-	@rm -f $(OUT) $(SRCOBJS) $(JUPC) $(JUPC_OBJS)
+	@rm -f $(JUP) $(SRCOBJS) $(JUPC) $(JUPC_OBJS)
 endif
 
 rebuild: clean all
@@ -100,31 +100,8 @@ rebuild: clean all
 
 # --- tests ---
 
-bin/%.ll: $(OUT) bin/%.j
-ifdef VERBOSE
-	$(OUT) $(@:bin/%.ll=bin/%.j) > $@
-else
-	@printf " JUP    $@\n"
-	@$(OUT) $(@:bin/%.ll=bin/%.j) > $@
-endif
-
-bin/%.s: bin/%.ll
-	@llc -o $@ $<
-
-./jup-%: bin/%.s
-ifdef VERBOSE
-	$(CC) -o $@ $< $(RUNTIME)
-else
-	@printf " CC     $@\n"
-	@$(CC) -o $@ $< $(RUNTIME)
-endif
-./jup-%.exe: bin/%.s
-ifdef VERBOSE
-	$(CC) -o $@ $< $(RUNTIME)
-else
-	@printf " CC     $@\n"
-	@$(CC) -o $@ $< $(RUNTIME)
-endif
+./jup-%.exe: bin/%.j
+	$(JUPC) $< -C$(JUP) -o $@
 
 clean-tests:
 ifdef VERBOSE

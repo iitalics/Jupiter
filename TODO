@@ -31,9 +31,9 @@ VERSION         GOAL
                 parser - pretty error messages
                 main - better build system
                 cleanliness - better github
-TODO
                 main - easy CLI tool
 0.0.2 dev       checkpoint - jupc hello.j
+TODO
                 parser - user types
                 desugar - type validity
                 codegen - user types
