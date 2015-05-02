@@ -8,7 +8,7 @@ It uses a unique variation on the Hindley-Milner type inference system, with ful
 The compiler targets the LLVM IR, for maximum speed and portability.  
 
 Primary Aims
-=====
+-----
 * Simple yet powerful syntax and features for easy and rapid development
 * Full type safety without verbose type annotations
 * Expressivity through rich operator overloading
@@ -30,6 +30,6 @@ How to Build Jupiter
 
 `make runtimelib` builds the runtime library
 
-`make tests` builds Jupiter programs location in `bin/`
+`make tests` builds Jupiter programs location in `examples/`
 
 Running `make all` will build all of the above.
