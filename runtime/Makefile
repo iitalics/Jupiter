@@ -10,7 +10,10 @@ OBJS   = $(SRCS:%=obj/%.o)
 
 all: $(OUT)
 
-$(OUT): $(OBJS)
+obj:
+	mkdir obj
+
+$(OUT): obj $(OBJS)
 	ar rcs $(OUT) $(OBJS)
 
 obj/%.o: ./%
