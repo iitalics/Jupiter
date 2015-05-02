@@ -13,6 +13,22 @@ juc juStd_addInt (juc ca, juc cb)
 	return (juc)
 		(a + b - 1); // hacky things
 }
+juc juStd_mulInt (juc ca, juc cb)
+{
+	const ju_int a = ju_to_int(ca);
+	const ju_int b = ju_to_int(cb);
+
+	return ju_from_int(a * b);
+}
+juc juStd_divInt (juc ca, juc cb)
+{
+	const ju_int a = ju_to_int(ca);
+	const ju_int b = ju_to_int(cb);
+
+	// if (b == 0) ?
+
+	return ju_from_int(a / b);
+}
 juc juStd_negInt (juc ca)
 {
 	const ju_int a = (ju_int) ca;
