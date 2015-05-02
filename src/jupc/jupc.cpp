@@ -5,7 +5,11 @@
 #include <vector>
 #include <cstdio>
 #include <cstdlib>
-#include <sys/wait.h>
+#ifdef _WIN32
+# define WEXITSTATUS(x) x
+#else
+# include <sys/wait.h>
+#endif
 
 // Let the spahgetti C begin
 
@@ -31,7 +35,7 @@ struct Result
 
 
 CompileMode getMode (const std::string& str);
-bool parse (Result& result, int argc, char** argv);
+bool parse (Result& result, size_t argc, char** argv);
 bool doSomething (char flag);
 void usage ();
 void version ();
@@ -68,7 +72,18 @@ static inline std::runtime_error die
 static char flagNames[] = "ocCALR";
 static const char* defaults[] = 
 {
-	"a.out", "bin", "./jup", "llc", "clang", "runtime/runtime.a"
+#ifdef _WIN32
+	"a.exe",
+	"bin",
+	"jup.exe",
+#else
+	"a.out",
+	"bin",
+	"./jup",
+#endif
+	"llc",
+	"clang",
+	"runtime/runtime.a"
 };
 
 
@@ -133,7 +148,7 @@ CompileMode getMode (const std::string& str)
 	throw die("invalid compile mode '", str, "'");
 }
 
-bool parse (Result& result, int argc, char** argv)
+bool parse (Result& result, size_t argc, char** argv)
 {
 	std::string values[NumOps];
 	size_t i, j;
@@ -238,6 +253,7 @@ static std::string temporary (const std::string& ext = "")
 {
 	char buf[L_tmpnam];
 	tmpnam(buf);
+	if (buf[0] == '\\') buf[0] = 't';
 	return std::string(buf) + ext;
 }
 

@@ -89,10 +89,10 @@ endif
 
 clean: clean-tests
 ifdef VERBOSE
-	rm -f $(JUP) $(JUPC) $(SRCOBJS)
+	rm -f $(JUP) $(OBJS) $(JUPC) $(JUPC_OBJS)
 else
 	@printf " CLEAN COMPILER\n"
-	@rm -f $(JUP) $(SRCOBJS) $(JUPC) $(JUPC_OBJS)
+	@rm -f $(JUP) $(OBJS) $(JUPC) $(JUPC_OBJS)
 endif
 
 rebuild: clean all
@@ -101,7 +101,7 @@ rebuild: clean all
 # --- tests ---
 
 ./jup-%.exe: examples/%.j
-	$(JUPC) $< -C$(JUP) -o $@
+	$(JUPC) $< -o $@
 
 clean-tests:
 ifdef VERBOSE
