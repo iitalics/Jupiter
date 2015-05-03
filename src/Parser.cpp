@@ -5,20 +5,20 @@ namespace Parse
 
 void parseVar (Lexer& lex, std::string& name, TyPtr& ty, Span& sp)
 {
+	sp = lex.current().span;
 	name = lex.eat(tIdent).str;
 
 	if (lex.current() == tColon)
 	{
+		Span spEnd;
+
 		lex.advance();
-		ty = parseType(lex);
+		ty = parseType(lex, spEnd);
+
+		sp = sp + spEnd;
 	}
 	else
 		ty = Ty::makeWildcard();
-}
-void parseVar (Lexer& lex, std::string& name, TyPtr& ty)
-{
-	Span dummmy;
-	parseVar(lex, name, ty, dummmy);
 }
 static void parseVar (Lexer& lex, SigPtr sig)
 {
@@ -374,7 +374,7 @@ ExpPtr parseLet (Lexer& lex)
 	// 'let' <var> '=' <exp> ';'
 
 	spStart = lex.eat(tLet).span;
-	parseVar(lex, name, ty);
+	parseVar(lex, name, ty, spEnd);
 	lex.eat(tEqual);
 	init = parseExp(lex);
 	spEnd = init->span;
@@ -387,15 +387,15 @@ ExpPtr parseLet (Lexer& lex)
 ExpPtr parseiMake (Lexer& lex)
 {
 	// ^make <ty>
-	Span spStart, spEnd;
+	Span spStart, spEnd, spType;
 
 	spStart = lex.eat(tiMake).span;
-	auto ty = parseType(lex);
+	auto ty = parseType(lex, spType);
 	spEnd = lex.current().span;
 	auto tag = lex.eat(tString).valueInt;
 
 	if (ty->kind != tyConcrete || ty->name != "Fn")
-		throw spStart.die("^make expects function type");
+		throw spType.die("^make expects function type");
 
 	// TODO: hash 'tag' into a unique integer
 	auto e = Exp::make(eiMake, int_t(0), {}, spStart + spEnd);
@@ -407,10 +407,10 @@ ExpPtr parseiGet (Lexer& lex)
 {
 	// ^get <ty> <idx> <term>
 
-	Span spStart, spEnd;
+	Span spStart, spEnd, spType;
 
 	spStart = lex.eat(tiGet).span;
-	auto ty = parseType(lex);
+	auto ty = parseType(lex, spType);
 	auto idx = lex.eat(tNumberInt).valueInt;
 	auto body = parseTerm(lex);
 	spEnd = body->span;
@@ -429,21 +429,21 @@ ExpPtr parseiPut (Lexer& lex)
 
 
 
-
-TyPtr parseType (Lexer& lex)
+TyPtr parseType (Lexer& lex, Span& sp)
 {
 	switch (lex.current().tok)
 	{
 	case tLambda:
-		return parseTypePoly(lex);
+		return parseTypePoly(lex, sp);
 	case tLBrack:
-		return parseTypeList(lex);
+		return parseTypeList(lex, sp);
 	case tLParen:
-		return parseTypeTuple(lex);
+		return parseTypeTuple(lex, sp);
 	case tIdent:
-		return parseTypeConcrete(lex);
+		return parseTypeConcrete(lex, sp);
 
 	case tWildcard:
+		sp = lex.current().span;
 		lex.advance();
 		return Ty::makeWildcard();
 
@@ -452,61 +452,81 @@ TyPtr parseType (Lexer& lex)
 		return nullptr;
 	}
 }
-TyPtr parseTypePoly (Lexer& lex)
+TyPtr parseTypePoly (Lexer& lex, Span& sp)
 {
-	lex.eat(tLambda);
+	Span spStart, spEnd;
+
+	spStart = lex.eat(tLambda).span;
+	spEnd = lex.current().span;
 	auto name = lex.eat(tIdent).str;
 
+	sp = spStart + spEnd;
 	return Ty::makePoly(name);
 }
-TyPtr parseTypeList (Lexer& lex)
+TyPtr parseTypeList (Lexer& lex, Span& sp)
 {
-	lex.eat(tLBrack);
-	auto inner = parseType(lex);
-	lex.eat(tRBrack);
+	Span spStart, spEnd;
 
+	spStart = lex.eat(tLBrack).span;
+	auto inner = parseType(lex, spEnd);
+	spEnd = lex.eat(tRBrack).span;
+
+	sp = spStart + spEnd;
 	return Ty::makeConcrete("List", { inner });
 }
-static void parseTypeTupleRaw (Lexer& lex, std::vector<TyPtr>& out)
+static void parseTypeTupleRaw (Lexer& lex, std::vector<TyPtr>& out, Span& sp)
 {
-	lex.eat(tLParen);
+	Span spStart, spEnd;
+
+	spStart = lex.eat(tLParen).span;
 	while (lex.current() != tRParen)
 	{
-		out.push_back(parseType(lex));
+		out.push_back(parseType(lex, spEnd));
 
 		if (lex.current() == tComma)
 			lex.advance();
 		else
 			break;
 	}
-	lex.eat(tRParen);
+	spEnd = lex.eat(tRParen).span;
+
+	sp = spStart + spEnd;
 }
-TyPtr parseTypeTuple (Lexer& lex)
+TyPtr parseTypeTuple (Lexer& lex, Span& sp)
 {
+	Span spStart, spEnd;
+
 	std::vector<TyPtr> inners;
-	parseTypeTupleRaw(lex, inners);
+	parseTypeTupleRaw(lex, inners, spStart);
 
 	if (lex.current() == tArrow)
 	{
 		lex.advance();
-		inners.push_back(parseType(lex));
+		inners.push_back(parseType(lex, spEnd));
 
+		sp = spStart + spEnd;
 		return Ty::makeFn(inners);
 	}
+
+	sp = spStart;
 
 	if (inners.size() == 1)
 		return inners[0];
 
 	return Ty::makeConcrete("Tuple", inners);
 }
-TyPtr parseTypeConcrete (Lexer& lex)
+TyPtr parseTypeConcrete (Lexer& lex, Span& sp)
 {
+	Span spStart, spEnd;
+
 	std::vector<TyPtr> sub;
-	auto sp = lex.current().span;
+	spStart = lex.current().span;
 	auto kind = lex.eat(tIdent).str;
 
 	if (lex.current() == tLParen)
-		parseTypeTupleRaw(lex, sub);
+		parseTypeTupleRaw(lex, sub, spEnd);
+
+	sp = spStart + spEnd;
 
 	if (kind == "Fn" && sub.empty())
 		throw sp.die("malformed function type");

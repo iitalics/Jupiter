@@ -172,7 +172,13 @@ struct FuncDecl
 	Span span;
 };
 
-struct TypeDecl {};
+struct TypeDecl
+{
+	std::string name;
+	TyList polytypes;
+	std::vector<FuncDecl> ctors;
+	Span span;
+};
 
 struct GlobProto
 {
@@ -190,7 +196,6 @@ bool parseToplevel (Lexer& lex, GlobProto& proto);
 GlobProto parseToplevel (Lexer& lex);
 
 void parseVar (Lexer& lex, std::string& name, TyPtr& ty, Span&);
-void parseVar (Lexer& lex, std::string& name, TyPtr& ty);
 SigPtr parseSig (Lexer& lex, bool requireAnything = true);
 SigPtr parseSigParens (Lexer& lex);
 
@@ -208,10 +213,11 @@ ExpPtr parseiMake (Lexer& lex);
 ExpPtr parseiGet (Lexer& lex);
 ExpPtr parseiPut (Lexer& lex);
 
-TyPtr parseType (Lexer& lex);
-TyPtr parseTypePoly (Lexer& lex);
-TyPtr parseTypeList (Lexer& lex);
-TyPtr parseTypeTuple (Lexer& lex);
-TyPtr parseTypeConcrete (Lexer& lex);
+//TyPtr parseType (Lexer& lex);
+TyPtr parseType (Lexer& lex, Span& sp);
+TyPtr parseTypePoly (Lexer& lex, Span& sp);
+TyPtr parseTypeList (Lexer& lex, Span& sp);
+TyPtr parseTypeTuple (Lexer& lex, Span& sp);
+TyPtr parseTypeConcrete (Lexer& lex, Span& sp);
 
 };
