@@ -88,6 +88,7 @@ std::vector<std::pair<std::string, int>> Lexer::keywords {
 	{ "then",  tThen },
 	{ "else",  tElse },
 	{ "func",  tFunc },
+	{ "type",  tType },
 	{ "let",   tLet },
 	{ "loop",  tLoop },
 	{ "for",   tFor },
@@ -576,7 +577,7 @@ Span::Error Span::die (const std::string& msg,
 		ss << std::endl;
 	}
 
-	if (bol > 0)
+	if (len > 0)
 	{
 		char buffer[len];
 		for (size_t i = 0; i < len; i++)
