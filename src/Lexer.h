@@ -19,6 +19,7 @@ enum
 	tThen,
 	tElse,
 	tFunc,
+	tType,
 	tLet,
 	tLoop,
 	tFor,

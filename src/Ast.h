@@ -183,6 +183,7 @@ struct TypeDecl
 struct GlobProto
 {
 	std::vector<FuncDecl> funcs;
+	std::vector<TypeDecl> types;
 };
 
 

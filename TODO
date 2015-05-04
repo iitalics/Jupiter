@@ -33,8 +33,8 @@ VERSION         GOAL
                 cleanliness - better github
                 main - easy CLI tool
 0.0.2 dev       checkpoint - jupc hello.j
-TODO
                 parser - user types
+TODO
                 desugar - type validity
                 codegen - user types
                 codegen - ^call

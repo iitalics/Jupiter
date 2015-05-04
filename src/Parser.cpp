@@ -1,4 +1,5 @@
 #include "Ast.h"
+#include "Desugar.h"
 
 namespace Parse
 {
@@ -106,12 +107,78 @@ FuncDecl parseFuncDecl (Lexer& lex)
 		};
 }
 
+static FuncDecl parseConstructor (Lexer& lex)
+{
+	static auto expInvalid = Exp::make(eInvalid);
+	Span spStart, spEnd;
+	FuncDecl result;
+
+	result.name = lex.current().str;
+	spStart = lex.eat(tIdent).span;
+	result.signature = parseSigParens(lex);
+	spEnd = result.signature->span;
+	result.span = spStart + spEnd;
+	result.body = expInvalid;
+	return result;
+}
+TypeDecl parseTypeDecl (Lexer& lex)
+{
+	Span spStart, spEnd, spType;
+	std::vector<FuncDecl> ctors;
+
+	spStart = lex.eat(tType).span;
+
+	auto ty = parseType(lex, spType);
+
+	if (ty->kind != tyConcrete)
+		throw spType.die("invalid form of type in declaration");
+
+	for (auto sub = ty->subtypes; !sub.nil(); ++sub)
+	{
+		auto sty = sub.head();
+
+		if (sty->kind != tyPoly)
+			throw spType.die("arguments to type must be polytypes");
+
+		for (auto sty2 : sub.tail())
+			if (sty2->kind == tyPoly &&
+					sty->name == sty2->name)
+				throw spType.die("identical polytypes in declaration");
+	}
+
+	lex.eat(tEqual);
+	for (;;)
+	{
+		auto ctor = parseConstructor(lex);
+		spEnd = ctor.span;
+		ctors.push_back(ctor);
+
+		if (lex.current() == tComma)
+			lex.advance();
+		else
+			break;
+	}
+
+	return TypeDecl
+		{
+			ty->name,
+			ty->subtypes,
+			std::move(ctors),
+			spStart + spEnd
+		};
+}
+
+
 bool parseToplevel (Lexer& lex, GlobProto& proto)
 {
 	switch (lex.current().tok)
 	{
 	case tFunc:
 		proto.funcs.push_back(parseFuncDecl(lex));
+		return true;
+
+	case tType:
+		proto.types.push_back(parseTypeDecl(lex));
 		return true;
 
 	default:
@@ -314,7 +381,9 @@ ExpPtr parseCond (Lexer& lex)
 		lex.expect(tElse);
 	else
 	{
-		expElse = Exp::make(eTuple, {}, spStart); // no else => unit (zero tuple)
+		auto expUnit = Exp::make(eTuple, {}, spStart);
+		expThen->subexps.push_back(expUnit);
+		expElse = expUnit; // no else => unit (zero tuple)
 		spEnd = expThen->span;
 	}
 
@@ -392,7 +461,7 @@ ExpPtr parseiMake (Lexer& lex)
 	spStart = lex.eat(tiMake).span;
 	auto ty = parseType(lex, spType);
 	spEnd = lex.current().span;
-	auto tag = lex.eat(tString).valueInt;
+	auto tag = lex.eat(tString).str;
 
 	if (ty->kind != tyConcrete || ty->name != "Fn")
 		throw spType.die("^make expects function type");
