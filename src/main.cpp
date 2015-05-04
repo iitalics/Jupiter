@@ -80,6 +80,16 @@ static int Main (std::vector<std::string>&& args)
 			Exp::make(eCall,
 				{ Exp::make(eVar, "main", int(-1), {}, entrySpan) },
 				entrySpan);
+		try
+		{
+			Desugar entryDesugar(env);
+			entryBody = entryDesugar.desugar(entryBody, LocEnv::make());
+		}
+		catch (Span::Error& err)
+		{
+			throw entrySpan.die("no entry point function 'main' defined");
+		}
+
 		auto entryOverload =
 			Overload::make(
 				env,
