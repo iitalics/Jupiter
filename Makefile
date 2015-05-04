@@ -49,7 +49,7 @@ jup: $(JUP)
 jupc: $(JUPC)
 tests: $(JUPC) $(TESTS)
 runtimelib:	
-	make -C runtime/ $(RUNTIME:runtime/%=%)
+	@make -C runtime/ $(RUNTIME:runtime/%=%)
 
 obj:
 ifdef VERBOSE
