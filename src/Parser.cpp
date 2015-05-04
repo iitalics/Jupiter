@@ -109,7 +109,6 @@ FuncDecl parseFuncDecl (Lexer& lex)
 
 static FuncDecl parseConstructor (Lexer& lex)
 {
-	static auto expInvalid = Exp::make(eInvalid);
 	Span spStart, spEnd;
 	FuncDecl result;
 
@@ -118,7 +117,7 @@ static FuncDecl parseConstructor (Lexer& lex)
 	result.signature = parseSigParens(lex);
 	spEnd = result.signature->span;
 	result.span = spStart + spEnd;
-	result.body = expInvalid;
+	result.body = nullptr;
 	return result;
 }
 TypeDecl parseTypeDecl (Lexer& lex)
