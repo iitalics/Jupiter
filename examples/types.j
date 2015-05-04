@@ -1,4 +1,5 @@
 # type declaration
+func main () {}
 
 # simple type
 type Point =
