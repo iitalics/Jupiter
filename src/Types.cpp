@@ -49,6 +49,27 @@ TyPtr Ty::makeUnit ()
 }
 
 
+
+TypeInfo::TypeInfo (const std::string& n, int args, bool gc)
+	: name(n), numArgs(args), needsGC(gc) {}
+
+bool TypeInfo::isType (TyPtr ty) const
+{
+	if (ty->kind != tyConcrete || ty->name != name)
+		return false;
+
+	if (numArgs == ZeroOrMore)
+		return true;
+	if (numArgs == OneOrMore)
+		return !ty->subtypes.nil();
+
+	return ty->subtypes.size() == size_t(numArgs);
+}
+
+
+
+
+
 bool Ty::aEquiv (TyPtr other) const
 {
 	if (kind != other->kind)

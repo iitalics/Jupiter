@@ -65,15 +65,19 @@ public:
 
 	std::vector<OpPrecedence> operators;
 	std::vector<GlobFuncPtr> functions;
+	std::vector<TypeInfo*> types;
 	// type declarations
 	// modules
 	// utility functions
 
+	GlobEnv ();
 	~GlobEnv ();
 
 	OpPrecedence getPrecedence (const std::string& oper) const;
 	GlobFuncPtr getFunc (const std::string& name) const;
 	GlobFuncPtr addFunc (const std::string& name);
+	void addType (const TypeInfo& tyi);
+	TypeInfo* getType (const std::string& name) const;
 
 	// creates a function and an instance
 	void bake (Compiler* comp,

@@ -10,6 +10,19 @@
 
 // ------------------------------------- GlobEnv -------------------------------------//
 
+GlobEnv::GlobEnv ()
+{
+	// create some primitive types that are required for basic
+	//  operations to work
+	addType(TypeInfo("Fn", TypeInfo::OneOrMore));
+	addType(TypeInfo("Tuple", TypeInfo::ZeroOrMore));
+	addType(TypeInfo("Int"));
+	addType(TypeInfo("Bool"));
+	addType(TypeInfo("Char"));
+	addType(TypeInfo("Real"));
+	addType(TypeInfo("String"));
+}
+
 GlobEnv::~GlobEnv ()
 {
 	for (auto f : functions)
@@ -44,6 +57,18 @@ GlobFuncPtr GlobEnv::addFunc (const std::string& name)
 	}
 
 	return f;
+}
+
+void GlobEnv::addType (const TypeInfo& tyi)
+{
+	types.push_back(new TypeInfo(tyi));
+}
+TypeInfo* GlobEnv::getType (const std::string& name) const
+{
+	for (auto& tyi : types)
+		if (tyi->name == name)
+			return tyi;
+	return nullptr;
 }
 
 void GlobEnv::loadToplevel (const GlobProto& proto)

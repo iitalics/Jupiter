@@ -70,3 +70,23 @@ private:
 
 	static TyPtr newPoly (TyPtr ty, Subs& subs);
 };
+
+
+struct TypeInfo
+{
+	enum Args
+	{
+		OneOrMore = -2,
+		ZeroOrMore = -1,
+	};
+
+	std::string name;
+	int numArgs;
+	bool needsGC;
+
+	explicit TypeInfo (const std::string& name,
+						int args = 0,
+						bool gc = true);
+
+	bool isType (TyPtr ty) const;
+};
