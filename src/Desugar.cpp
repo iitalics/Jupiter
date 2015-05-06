@@ -45,7 +45,7 @@ ExpPtr Desugar::desugarSubexps (ExpPtr e, LocEnvPtr lenv)
 		});
 
 		if (e2->getType() != nullptr)
-			e2->setType(desugar(e2->getType()));
+			e2->setType(desugar(e2->getType(), e2->span));
 
 		return e2;
 	}
@@ -132,7 +132,7 @@ ExpPtr Desugar::desugarLet (ExpPtr e, LocEnvPtr lenv)
 
 
 
-TyPtr Desugar::desugar (TyPtr ty)
+TyPtr Desugar::desugar (TyPtr ty, const Span& span)
 {
 	switch (ty->kind)
 	{
@@ -140,11 +140,27 @@ TyPtr Desugar::desugar (TyPtr ty)
 		return Ty::makePoly();
 
 	case tyConcrete:
-		if (!ty->subtypes.nil())
-			return Ty::makeConcrete(ty->name,
-					ty->subtypes.map([&] (TyPtr t2) { return desugar(t2); }));
-		else
-			return ty;
+		{
+			auto tyi = global.getType(ty->name);
+			if (tyi == nullptr)
+			{
+				std::ostringstream ss;
+				ss << "undefined type '" << ty->name << "'";
+				throw span.die(ss.str());
+			}
+			else if (!tyi->isType(ty))
+			{
+				std::ostringstream ss;
+				ss << "malformed number of arguments for '" << ty->name << "'";
+				throw span.die(ss.str());
+			}
+
+			if (!ty->subtypes.nil())
+				return Ty::makeConcrete(ty->name,
+						ty->subtypes.map([&] (TyPtr t2) { return desugar(t2, span); }));
+			else
+				return ty;
+		}
 
 	case tyPoly:
 		if (!ty->name.empty())
@@ -172,7 +188,7 @@ SigPtr Desugar::desugar (SigPtr sig)
 
 	for (size_t i = 0, len = sig->args.size(); i < len; i++)
 		args.push_back(Sig::Arg(sig->args[i].first, 
-							desugar(sig->args[i].second)));
+							desugar(sig->args[i].second, sig->span)));
 
 	return Sig::make(args, sig->span);
 }

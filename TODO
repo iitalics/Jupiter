@@ -34,8 +34,8 @@ VERSION         GOAL
                 main - easy CLI tool
 0.0.2 dev       checkpoint - jupc hello.j
                 parser - user types
-TODO
                 desugar - type validity
+TODO
                 codegen - user types
                 codegen - ^call
                 main - organized standard library

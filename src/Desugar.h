@@ -27,5 +27,5 @@ struct Desugar
 	ExpPtr desugarLet (ExpPtr e, LocEnvPtr lenv);
 	ExpPtr desugarGlobal (ExpPtr e);
 
-	TyPtr desugar (TyPtr ty);
+	TyPtr desugar (TyPtr ty, const Span& span);
 };

@@ -596,9 +596,6 @@ TyPtr parseTypeConcrete (Lexer& lex, Span& sp)
 
 	sp = spStart + spEnd;
 
-	if (kind == "Fn" && sub.empty())
-		throw sp.die("malformed function type");
-
 	return Ty::makeConcrete(kind, sub);
 }
 
