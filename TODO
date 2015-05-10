@@ -35,7 +35,9 @@ VERSION         GOAL
 0.0.2 dev       checkpoint - jupc hello.j
                 parser - user types
                 desugar - type validity
+		parser - user types constructor
 TODO
+		parser - user types accesors
                 codegen - user types
                 codegen - ^call
                 main - organized standard library

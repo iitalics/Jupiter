@@ -70,7 +70,8 @@ static int Main (std::vector<std::string>&& args)
 		{
 			Lexer lex;
 			lex.openFile(args[i]);
-			env.loadToplevel(Parse::parseToplevel(lex));
+			auto toplevel = Parse::parseToplevel(lex);
+			env.loadToplevel(toplevel);
 			lex.expect(tEOF);
 		}
 

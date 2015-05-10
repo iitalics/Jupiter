@@ -1,5 +1,4 @@
 # type declaration
-func main () {}
 
 # simple type
 type Point =
@@ -26,3 +25,6 @@ type List(\a) =
 #	tl : (List(\a)) -> List(\a)
 
 
+func main () {
+	let pt = point(4, 5);
+}

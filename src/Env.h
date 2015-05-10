@@ -86,7 +86,8 @@ public:
 	            const std::vector<TyPtr>& args,
 	            TyPtr ret);
 
-	void loadToplevel (const GlobProto& proto);
+	void loadToplevel (GlobProto& proto);
+	void generateType (TypeDecl& tydecl, GlobProto& proto);
 };
 
 

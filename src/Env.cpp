@@ -71,13 +71,34 @@ TypeInfo* GlobEnv::getType (const std::string& name) const
 	return nullptr;
 }
 
-void GlobEnv::loadToplevel (const GlobProto& proto)
+void GlobEnv::loadToplevel (GlobProto& proto)
 {
-	for (const auto& fn : proto.funcs)
-		addFunc(fn.name);
-
-	for (const auto& fn : proto.funcs)
+	// each loop is two-pass so thatt declaration order doesn't matter
+	for (auto& tydecl : proto.types)
 	{
+		// add type
+		if (getType(tydecl.name) != nullptr)
+			throw tydecl.span.die("redeclaration of existing type");
+
+		addType(TypeInfo(tydecl.name, tydecl.polytypes.size(), true));
+	}
+
+	for (auto& tydecl : proto.types)
+	{
+		// generate type
+		generateType(tydecl, proto);
+	}
+
+
+	for (auto& fn : proto.funcs)
+	{
+		// add function
+		addFunc(fn.name);
+	}
+
+	for (auto& fn : proto.funcs)
+	{
+		// generate function
 		auto globfn = getFunc(fn.name);
 
 		Desugar des(*this);
