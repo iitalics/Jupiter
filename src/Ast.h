@@ -31,24 +31,25 @@ struct Sig
 
 enum ExpKind
 {
-	// KIND        	//	INTERNAL
+	// KIND         //  DATA
 	eInvalid = 0,
-	eInt,			//	int_t
-	eReal,			//	real_t
-	eString,		//  std::string
-	eBool,			// 	bool
-	eVar,			//	std::string
+	eInt,           //  int_t
+	eReal,          //  real_t
+	eString,        //  string
+	eBool,          //  bool
+	eVar,           //  string, bool
 	eTuple,
 	eCall,
 	eInfix,
 	eCond,
-	eLambda,		// 	Sig*
+	eLambda,
 	eBlock,
-	eLet,			// 	std::string, int
-	eiMake,
-	eiGet,
-	eiPut,
-	eiTag,
+	eLet,           //  string
+	eiMake,         //  string, int_t, type
+	eiGet,          //  int_t, type
+	eiPut,          //  int_t
+	eiTag,          //  string
+	eiCall          //  string, type
 };
 
 class Exp
