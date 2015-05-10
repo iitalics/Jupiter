@@ -62,6 +62,8 @@ struct CompileUnit
 
 	EnvPtr makeEnv (EnvPtr parent = nullptr);
 	std::string makeUnique (const std::string& str);
+	std::string makeGlobalString (const std::string& str,
+	                                bool nullterm = false);
 
 	std::string getTemp ();
 	void pushLifetime ();

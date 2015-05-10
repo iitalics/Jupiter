@@ -102,7 +102,7 @@ void Compiler::output (std::ostream& os)
 void Compiler::outputRuntimeHeader (std::ostream& os)
 {
 	os
-		<< "; jupiter runtime header for version 0.0.3" << std::endl
+		<< "; jupiter runtime header for version 0.0.4" << std::endl
 		<< "declare void @ju_init ()" << std::endl
 		<< "declare void @ju_destroy ()" << std::endl
 		<< "declare void @juGC_root (i8**)" << std::endl
@@ -117,6 +117,7 @@ void Compiler::outputRuntimeHeader (std::ostream& os)
 		<< "declare i8* @ju_make_str (i8*, i32)" << std::endl
 		<< "declare i8* @ju_make_real (double)" << std::endl
 		<< "declare i8* @ju_get (i8*, i32)" << std::endl
+		<< "declare i8* @ju_safe_get (i8*, i8*, i32, i32)" << std::endl
 		<< "declare i32 @ju_get_tag (i8*)" << std::endl
 
 		<< std::endl;
@@ -408,14 +409,12 @@ static char hex_char (int k)
 		return char('a' + k - 10);
 }
 
-std::string CompileUnit::compileString (ExpPtr e, EnvPtr env)
+std::string CompileUnit::makeGlobalString (const std::string& str, bool nullterm)
 {
-	auto str = e->getString();
-	std::ostringstream strType;
-	strType << "[" << str.size() << " x i8]";
-
 	auto strConst = compiler->genUniqueName("string");
-	auto res = makeUnique(".str");
+
+	std::ostringstream strType;
+	strType << "[" << (str.size() + (nullterm ? 1 : 0)) << " x i8]";
 
 	ssEnd << "@" << strConst
 	      << " = private unnamed_addr constant "
@@ -429,11 +428,26 @@ std::string CompileUnit::compileString (ExpPtr e, EnvPtr env)
 		else
 			ssEnd << str[i];
 
+	if (nullterm)
+		ssEnd << "\\00";
+
 	ssEnd << "\"" << std::endl;
 
+	std::ostringstream ss;
+	ss << "i8* getelementptr (" << strType.str() << "* @" << strConst
+	   << ", i32 0, i32 0)";
+	
+	return ss.str();
+}
+
+std::string CompileUnit::compileString (ExpPtr e, EnvPtr env)
+{
+	auto str = makeGlobalString(e->getString());
+	auto res = makeUnique(".str");
+
 	ssBody << res << " = call i8* @ju_make_str ("
-		   << "i8* getelementptr (" << strType.str() << "* @" << strConst
-		   << ", i32 0, i32 0), i32 " << str.size() << ")" << std::endl;
+	       << str << ", i32 " << e->getString().size()
+	       << ")" << std::endl;
 	
 	return "i8* " + res;
 }
@@ -604,8 +618,18 @@ std::string CompileUnit::compileiGet (ExpPtr e, EnvPtr env)
 	auto res = makeUnique(".get");
 	auto inp = compile(e->subexps[0], env, true);
 
-	ssBody << res << " = call i8* @ju_get (" << inp
-		   << ", i32 " << e->get<int_t>() << ")" << std::endl;
+	if (e->getString() == "")
+		ssBody << res << " = call i8* @ju_get (" << inp
+		       << ", i32 " << e->get<int_t>() << ")" << std::endl;
+	else
+	{
+		auto tag = GlobEnv::getTag(e->getString());
+		auto str = makeGlobalString(e->getString(), true);
+
+		ssBody << res << " = call i8* @ju_safe_get ("
+			   << inp << ", " << str << ", i32 " << tag
+			   << ", i32 " << e->get<int_t>() << ")" << std::endl;
+	}
 	
 	return "i8* " + res;
 }

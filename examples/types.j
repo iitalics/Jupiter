@@ -1,34 +1,28 @@
 # type declaration examples
 
-# simple type
-type Point =
-	point(x : Int, y : Int)
-
-# generates functions
-#	point : (Int, Int) -> Point
-#	point? : (Point) -> Bool
-#	x : (Point) -> Int
-#	y : (Point) -> Int
-
-
-# generic type
-type List(\a) =
+type [\a] =
 	cons(hd : \a, tl : List(\a)),
 	nil()
 
-# generates functions
-#	cons : (\a, List(\a)) -> List(\a)
-#	nil : () -> List(\a)
-#	cons? : (List(\a)) -> Bool
-#	nil? : (List(\a)) -> Bool
-#	hd : (List(\a)) -> \a
-#	tl : (List(\a)) -> List(\a)
+func print (lst : [\a]) {
+	if cons?(lst) {
+		let x = hd(lst);
+		let xs = tl(lst);
 
+		print(x);
+		if cons?(xs) {
+			print(", ");
+			print(xs);
+		}
+	}
+}
 
-func println (x) { print(x); println() }
+func :: (x : \a, xs : [\a]) { cons(x, xs) }
+func println (x) { print(x); println(); }
+
 
 func main () {
-	let lst = cons(3, nil());
+	let lst = 1 :: 2 :: 3 :: 4 :: nil();
 
-	println(hd(lst));
+	println(lst);
 }

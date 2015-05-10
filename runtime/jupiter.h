@@ -3,7 +3,7 @@
 #include <stdbool.h>
 #include <stdlib.h>
 
-// VERSION  0.0.3
+// VERSION  0.0.4
 
 typedef    void* juc;
 typedef int32_t  ju_int;
@@ -62,6 +62,7 @@ juc    ju_make_str (const char* buf, size_t size);
 juc    ju_make_real (ju_real r);
 
 juc    ju_get (juc obj, ju_int i);
+juc    ju_safe_get (juc obj, char* tagname, ju_int tag, ju_int i);
 char*  ju_get_buffer (juc obj);
 size_t ju_get_length (juc obj);
 ju_real ju_get_real (juc obj);

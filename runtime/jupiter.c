@@ -300,6 +300,16 @@ juc ju_get (juc cell, ju_int i)
 
 	return obj->mems[i];
 }
+juc ju_safe_get (juc cell, char* tagname, ju_int tag, ju_int i)
+{
+	if (ju_get_tag(cell) != tag)
+	{
+		fprintf(stderr, "RUNTIME ERROR: expected object tag \"%s\"\n", tagname);
+		exit(1);
+	}
+
+	return ju_get(cell, i);
+}
 
 char* ju_get_buffer (juc cell)
 {

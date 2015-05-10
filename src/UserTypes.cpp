@@ -1,4 +1,5 @@
 #include "Env.h"
+#include "Compiler.h"
 #include <sstream>
 #include <iostream>
 #include <functional>
@@ -90,11 +91,7 @@ static void generateCtor (GlobProto& proto,
 
 		auto exp_get = Exp::make(eiGet, int_t(i), { util_var }, span);
 		exp_get->setType(sig->args[i].second);
-
-		/* TODO: ensure object has correct tag
-		         create ju_die()
-		auto exp_cond = Exp::make(eCond, { exp_cmd, exp_get, exp_die }, span);
-		*/
+		exp_get->setString(ctorname); // ju_safe_get  instead of  ju_get
 
 		proto.funcs.push_back({
 			field,
