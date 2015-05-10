@@ -2,6 +2,7 @@
 #include <sstream>
 #include <iostream>
 #include <functional>
+#include <set>
 
 int_t GlobEnv::getTag (const std::string& ident)
 {
@@ -41,20 +42,11 @@ static TyPtr fillTypes (TyPtr ty, const TyList& pool, const Span& span)
 	}
 }
 
-static void generateCtor (GlobProto& proto, TyPtr conty, const std::string& ctorname,
+static void generateCtor (GlobProto& proto,
+	                        std::set<std::string>& fields,
+                            TyPtr mainty, const std::string& ctorname,
                             const SigPtr& sig, const Span& span)
 {
-	/*
-		type Ty = ctor1(...)
-
-		func ctor1 (a : T1, b : T2, ...) {
-			(^make (T1, T2, ...) -> Ty  "ctor1")
-				(a, b, ...)
-		}
-		func ctor1? (a : Ty) {
-			^tag? "ctor1" a
-		}
-	*/
 	ExpList callArgs;
 	auto exp_make = Exp::make(eiMake, ctorname, {}, span);
 	callArgs.push_back(exp_make);
@@ -62,35 +54,63 @@ static void generateCtor (GlobProto& proto, TyPtr conty, const std::string& ctor
 	for (auto& arg : sig->args)
 		callArgs.push_back(Exp::make(eVar, arg.first, {}, span));
 
-	auto fnty = Ty::makeFn(sig->tyList(conty));
+	auto fnty = Ty::makeFn(sig->tyList(mainty));
 	exp_make->setType(fnty);
-
-	auto exp_body = Exp::make(eCall, callArgs, span);
 
 	proto.funcs.push_back({
 		ctorname,
 		sig,
-		exp_body,
+		Exp::make(eCall, callArgs, span),
 		span
 	});
 
 
-	auto cmp_exp = Exp::make(eiTag, ctorname,
-		{ Exp::make(eVar, std::string("a"), {}, span) }, span);
-	auto cmp_sig = Sig::make({ { "a", conty } }, span);
+	auto util_sig = Sig::make({ { "a", mainty } }, span);
+	auto util_var = Exp::make(eVar, std::string("a"), {}, span);
+
+	auto exp_cmp = Exp::make(eiTag, ctorname, { util_var }, span);
 
 	proto.funcs.push_back({
 		ctorname + "?",
-		cmp_sig,
-		cmp_exp,
+		util_sig,
+		exp_cmp,
 		span
 	});
+
+	for (size_t i = 0, len = sig->args.size(); i < len; i++)
+	{
+		auto field = sig->args[i].first;
+
+		if (!fields.insert(field).second)
+		{
+			std::ostringstream ss;
+			ss << "duplicate field '" << field << "'";
+			throw sig->span.die(ss.str());
+		}
+
+		auto exp_get = Exp::make(eiGet, int_t(i), { util_var }, span);
+		exp_get->setType(sig->args[i].second);
+
+		/* TODO: ensure object has correct tag
+		         create ju_die()
+		auto exp_cond = Exp::make(eCond, { exp_cmd, exp_get, exp_die }, span);
+		*/
+
+		proto.funcs.push_back({
+			field,
+			util_sig,
+			exp_get,
+			span
+		});
+	}
 }
 
 void GlobEnv::generateType (TypeDecl& tydecl, GlobProto& proto)
 {
 //	auto tyi = getType(tydecl.name);
-	auto conty = Ty::makeConcrete(tydecl.name, tydecl.polytypes);
+	auto mainty = Ty::makeConcrete(tydecl.name, tydecl.polytypes);
+
+	std::set<std::string> fields;
 
 	for (auto& ctor : tydecl.ctors)
 	{
@@ -103,6 +123,6 @@ void GlobEnv::generateType (TypeDecl& tydecl, GlobProto& proto)
 				fillTypes(arg.second, tydecl.polytypes, span)
 			});
 
-		generateCtor(proto, conty, ctor.name, sig, span);
+		generateCtor(proto, fields, mainty, ctor.name, sig, span);
 	}
 }

@@ -30,5 +30,5 @@ func println (x) { print(x); println() }
 func main () {
 	let lst = cons(3, nil());
 
-	println(nil?(lst));
+	println(hd(lst));
 }

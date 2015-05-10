@@ -36,8 +36,8 @@ VERSION         GOAL
                 parser - user types
                 desugar - type validity
 		parser - user types constructor
-TODO
 		parser - user types accesors
+TODO
                 codegen - user types
                 codegen - ^call
                 main - organized standard library
