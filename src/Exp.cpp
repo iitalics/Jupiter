@@ -223,7 +223,8 @@ void Exp::_string (std::ostringstream& ss, bool tag, int increase, int ind) cons
 		break;
 
 	case eiMake:
-		ss << "(^make " << getType()->string() << ")";
+		ss << "(^make " << getType()->string() << " "
+		   << "\"" << getString() << "\")";
 		break;
 
 	case eiGet:

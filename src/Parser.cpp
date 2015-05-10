@@ -465,8 +465,7 @@ ExpPtr parseiMake (Lexer& lex)
 	if (ty->kind != tyConcrete || ty->name != "Fn")
 		throw spType.die("^make expects function type");
 
-	// TODO: hash 'tag' into a unique integer
-	auto e = Exp::make(eiMake, int_t(0), {}, spStart + spEnd);
+	auto e = Exp::make(eiMake, tag, {}, spStart + spEnd);
 	e->setType(ty);
 
 	return e;

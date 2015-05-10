@@ -481,8 +481,10 @@ std::string CompileUnit::compileCall (ExpPtr e, EnvPtr env)
 	}
 	else if (fn->kind == eiMake)
 	{
+		auto tag = GlobEnv::getTag(fn->getString());
+
 		args << "call i8* (i32, i32, i32, ...)* @ju_make_buf (i32 "
-		     << fn->get<int_t>() << ", i32 0, i32 "
+		     << tag << ", i32 0, i32 "
 		     << (e->subexps.size() - 1);
 
 		if (e->subexps.size() > 1)

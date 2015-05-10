@@ -66,9 +66,9 @@ public:
 	std::vector<OpPrecedence> operators;
 	std::vector<GlobFuncPtr> functions;
 	std::vector<TypeInfo*> types;
-	// type declarations
 	// modules
-	// utility functions
+
+	static int_t getTag (const std::string& ident);
 
 	GlobEnv ();
 	~GlobEnv ();
