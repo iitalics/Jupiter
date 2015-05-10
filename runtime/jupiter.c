@@ -28,6 +28,13 @@ juc ju_from_bool (bool b)
 {
 	return b ? ju_true : ju_false;
 }
+ju_int ju_get_tag (juc cell)
+{
+	if (ju_is_int(cell) || cell == NULL)
+		return ju_to_int(cell);
+	else
+		return ((ju_obj*) cell)->tag;
+}
 
 
 // global runtime management
@@ -245,6 +252,10 @@ void juGC_end ()
 // object management
 juc ju_make_buf (ju_int tag, size_t aug, ju_int nmems, ...)
 {
+	// very small objects are represented as just their tags
+	if (aug == 0 && nmems == 0)
+		return ju_from_int(tag);
+
 	ju_obj* obj = malloc(sizeof(ju_obj) + nmems * sizeof(juc) + aug);
 
 	obj->nmems = nmems;

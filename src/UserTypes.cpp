@@ -51,6 +51,9 @@ static void generateCtor (GlobProto& proto, TyPtr conty, const std::string& ctor
 			(^make (T1, T2, ...) -> Ty  "ctor1")
 				(a, b, ...)
 		}
+		func ctor1? (a : Ty) {
+			^tag? "ctor1" a
+		}
 	*/
 	ExpList callArgs;
 	auto exp_make = Exp::make(eiMake, ctorname, {}, span);
@@ -68,6 +71,18 @@ static void generateCtor (GlobProto& proto, TyPtr conty, const std::string& ctor
 		ctorname,
 		sig,
 		exp_body,
+		span
+	});
+
+
+	auto cmp_exp = Exp::make(eiTag, ctorname,
+		{ Exp::make(eVar, std::string("a"), {}, span) }, span);
+	auto cmp_sig = Sig::make({ { "a", conty } }, span);
+
+	proto.funcs.push_back({
+		ctorname + "?",
+		cmp_sig,
+		cmp_exp,
 		span
 	});
 }

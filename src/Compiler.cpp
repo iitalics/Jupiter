@@ -102,7 +102,7 @@ void Compiler::output (std::ostream& os)
 void Compiler::outputRuntimeHeader (std::ostream& os)
 {
 	os
-		<< "; jupiter runtime header for version 0.0.2" << std::endl
+		<< "; jupiter runtime header for version 0.0.3" << std::endl
 		<< "declare void @ju_init ()" << std::endl
 		<< "declare void @ju_destroy ()" << std::endl
 		<< "declare void @juGC_root (i8**)" << std::endl
@@ -117,13 +117,14 @@ void Compiler::outputRuntimeHeader (std::ostream& os)
 		<< "declare i8* @ju_make_str (i8*, i32)" << std::endl
 		<< "declare i8* @ju_make_real (double)" << std::endl
 		<< "declare i8* @ju_get (i8*, i32)" << std::endl
+		<< "declare i32 @ju_get_tag (i8*)" << std::endl
 
 		;
 }
 void Compiler::outputEntryPoint (std::ostream& os)
 {
 	os << std::endl
-	   << ";;;   jupiter entry point -> main()" << std::endl
+	   << ";;;   < jupiter entry point >" << std::endl
 	   << "define ccc i32 @main (i32 %argc, i8** %argv)" << std::endl << "{" << std::endl
 	   << "call void @ju_init ()" << std::endl
 	   << "call i8* @" << entry->internalName << " ()" << std::endl
@@ -383,6 +384,7 @@ std::string CompileUnit::compile (ExpPtr e, EnvPtr env, bool retain)
 	case eBlock:  return compileBlock(e, env);
 	case eCond:   return compileCond(e, env);
 	case eiGet:   return compileiGet(e, env);
+	case eiTag:   return compileiTag(e, env);
 	case eTuple:
 		return "i8* null";
 
@@ -584,5 +586,20 @@ std::string CompileUnit::compileiGet (ExpPtr e, EnvPtr env)
 	ssBody << res << " = call i8* @ju_get (" << inp
 		   << ", i32 " << e->get<int_t>() << ")" << std::endl;
 	
+	return "i8* " + res;
+}
+
+std::string CompileUnit::compileiTag (ExpPtr e, EnvPtr env)
+{
+	auto tag = makeUnique(".tag");
+	auto cmp = makeUnique(".cmp");
+	auto res = makeUnique(".r");
+	auto inp = compile(e->subexps[0], env, true);
+
+	ssBody << tag << " = call i32 @ju_get_tag (" << inp << ")" << std::endl
+	       << cmp << " = icmp eq i32 " << tag << ", "
+	       << GlobEnv::getTag(e->getString()) << std::endl
+	       << res << " = inttoptr i1 " << cmp << " to i8* " << std::endl;
+
 	return "i8* " + res;
 }

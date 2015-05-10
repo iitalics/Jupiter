@@ -62,9 +62,6 @@ Exp::Exp (ExpKind _kind, std::string data,
 
 Exp::~Exp ()
 {
-	// yuck
-	if (kind == eLambda)
-		delete get<Sig*>();
 }
 
 
@@ -102,7 +99,8 @@ void Exp::_string (std::ostringstream& ss, bool tag, int increase, int ind) cons
 		"string", "bool", "var",
 		"tuple", "call", "infix",
 		"cond", "lambda", "block",
-		"let", "^make", "^get", "^put"
+		"let",
+		"^make", "^get", "^put", "^tag?"
 	};
 
 	if (tag)
@@ -230,6 +228,11 @@ void Exp::_string (std::ostringstream& ss, bool tag, int increase, int ind) cons
 	case eiGet:
 		ss << "^get " << getType()->string() << " "
 		   << get<int_t>() << " ";
+		subexps[0]->_string(ss, tag, increase, ind);
+		break;
+
+	case eiTag:
+		ss << "^tag? \"" << getString() << "\" ";
 		subexps[0]->_string(ss, tag, increase, ind);
 		break;
 

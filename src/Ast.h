@@ -48,6 +48,7 @@ enum ExpKind
 	eiMake,
 	eiGet,
 	eiPut,
+	eiTag,
 };
 
 class Exp

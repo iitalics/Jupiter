@@ -1,4 +1,4 @@
-# type declaration
+# type declaration examples
 
 # simple type
 type Point =
@@ -25,6 +25,10 @@ type List(\a) =
 #	tl : (List(\a)) -> List(\a)
 
 
+func println (x) { print(x); println() }
+
 func main () {
 	let lst = cons(3, nil());
+
+	println(nil?(lst));
 }

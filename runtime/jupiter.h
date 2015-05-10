@@ -3,7 +3,7 @@
 #include <stdbool.h>
 #include <stdlib.h>
 
-// VERSION  0.0.2
+// VERSION  0.0.3
 
 typedef    void* juc;
 typedef int32_t  ju_int;
@@ -46,6 +46,7 @@ void   juGC_root (juc* root);
 void   juGC_unroot (int n);
 void   juGC_store (juc* root, juc value);
 
+ju_int ju_get_tag (juc cell);
 bool   ju_is_gc (juc cell);
 bool   ju_is_int (juc cell);
 #define ju_is_obj(_c) !ju_is_int(_c)

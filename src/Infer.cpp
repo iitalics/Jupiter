@@ -316,8 +316,11 @@ TyPtr Infer::infer (ExpPtr exp, LocEnvPtr lenv)
 
 	case eiMake:
 	case eiGet:
-	case eiPut:
 		return mainSubs(exp->getType());
+	case eiPut:
+		return Ty::makeUnit();
+	case eiTag:
+		return tyBool;
 
 	default:
 		throw exp->span.die("cannot infer this kind of expression");
