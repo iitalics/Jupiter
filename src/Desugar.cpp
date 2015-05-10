@@ -121,7 +121,6 @@ ExpPtr Desugar::desugarLet (ExpPtr e, LocEnvPtr lenv)
 	
 	// letrec?
 	lenv->newVar(e->getString());
-	res->set<bool>(false);
 	return res;
 }
 

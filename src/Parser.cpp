@@ -448,7 +448,6 @@ ExpPtr parseLet (Lexer& lex)
 	spEnd = init->span;
 
 	auto e = Exp::make(eLet, ty, name, { init }, spStart + spEnd);
-	e->set<int>(-1);
 	return e;
 }
 
