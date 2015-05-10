@@ -29,6 +29,7 @@ struct CompileUnit
 	std::vector<std::string> nonUnique;
 	std::vector<int> tempLifetimes;
 	int lifetime;
+	size_t nroots;
 
 	struct Var
 	{

@@ -30,11 +30,31 @@ juc ju_from_bool (bool b)
 }
 ju_int ju_get_tag (juc cell)
 {
-	if (ju_is_int(cell) || cell == NULL)
+	if (ju_is_int(cell) || cell == ju_null)
 		return ju_to_int(cell);
 	else
 		return ((ju_obj*) cell)->tag;
 }
+char* ju_get_buffer (juc cell)
+{
+	if (cell == ju_null || ju_is_int(cell))
+		return NULL;
+
+	ju_obj* const obj = cell;
+
+	// memory located after sub-members
+	return (char*)(obj->mems + obj->nmems);
+}
+size_t ju_get_length (juc obj)
+{
+	return ju_to_int(ju_get(obj, 0));
+}
+
+ju_real ju_get_real (juc obj)
+{
+	return *((ju_real*) ju_get_buffer(obj));
+}
+
 
 
 // global runtime management
@@ -166,6 +186,7 @@ void juGC_root (juc* root)
 	}
 
 	gc_roots.list[gc_roots.size++] = root;
+	*root = ju_null;
 }
 void juGC_unroot (int n)
 {
@@ -289,7 +310,7 @@ juc ju_make_real (ju_real r)
 
 juc ju_get (juc cell, ju_int i)
 {
-	if (cell == NULL || ju_is_int(cell))
+	if (cell == ju_null || ju_is_int(cell))
 		// TODO: die here instead?
 		return ju_null;
 
@@ -309,25 +330,4 @@ juc ju_safe_get (juc cell, char* tagname, ju_int tag, ju_int i)
 	}
 
 	return ju_get(cell, i);
-}
-
-char* ju_get_buffer (juc cell)
-{
-	if (cell == NULL || ju_is_int(cell))
-		return NULL;
-
-	ju_obj* const obj = cell;
-
-	// memory located after sub-members
-	return (char*)(obj->mems + obj->nmems);
-}
-
-size_t ju_get_length (juc obj)
-{
-	return ju_to_int(ju_get(obj, 0));
-}
-
-ju_real ju_get_real (juc obj)
-{
-	return *((ju_real*) ju_get_buffer(obj));
 }

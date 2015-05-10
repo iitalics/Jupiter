@@ -189,7 +189,8 @@ CompileUnit::CompileUnit (Compiler* comp, OverloadPtr overload, SigPtr sig)
 	  funcInst(this, sig),
 	  finishedInfer(false),
 
-	  lifetime(0)
+	  lifetime(0),
+	  nroots(0)
 {}
 
 
@@ -293,9 +294,9 @@ void CompileUnit::compile ()
 
 	auto res = compile(overload->body, env, false);
 
-	if (!tempLifetimes.empty())
+	if (nroots > 0)
 		ssBody << "call void @juGC_unroot (i32 "
-		       << tempLifetimes.size() << ")" << std::endl;
+		       << nroots << ")" << std::endl;
 	ssBody << "ret " << res << std::endl;
 }
 
@@ -329,8 +330,9 @@ void CompileUnit::writeEnd ()
 void CompileUnit::stackAlloc (const std::string& name)
 {
 	ssPrefix << name << " = alloca i8*" << std::endl
-	         << "store i8* null, i8** " << name << std::endl
 	         << "call void @juGC_root (i8** " << name << ")" << std::endl;
+
+	nroots++;
 }
 void CompileUnit::stackStore (const std::string& name, 
                                 const std::string& value)
