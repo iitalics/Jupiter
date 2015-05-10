@@ -1,7 +1,7 @@
 # type declaration examples
 
 type [\a] =
-	cons(hd : \a, tl : List(\a)),
+	cons(hd : \a, tl : [\a]),
 	nil()
 
 func print (lst : [\a]) {
