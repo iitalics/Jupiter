@@ -1,6 +1,15 @@
 #include "Env.h"
 #include <sstream>
 #include <iostream>
+#include <functional>
+
+int_t GlobEnv::getTag (const std::string& ident)
+{
+	// PLEASE NO HASH COLLISIONS THANK YOU
+	std::hash<std::string> hash;
+	return int_t(hash(ident) & 0x7fffffff);
+}
+
 
 static TyPtr fillTypes (TyPtr ty, const TyList& pool, const Span& span)
 {
@@ -32,53 +41,53 @@ static TyPtr fillTypes (TyPtr ty, const TyList& pool, const Span& span)
 	}
 }
 
+static void generateCtor (GlobProto& proto, TyPtr conty, const std::string& ctorname,
+                            const SigPtr& sig, const Span& span)
+{
+	/*
+		type Ty = ctor1(...)
+
+		func ctor1 (a : T1, b : T2, ...) {
+			(^make (T1, T2, ...) -> Ty  "ctor1")
+				(a, b, ...)
+		}
+	*/
+	ExpList callArgs;
+	auto exp_make = Exp::make(eiMake, ctorname, {}, span);
+	callArgs.push_back(exp_make);
+
+	for (auto& arg : sig->args)
+		callArgs.push_back(Exp::make(eVar, arg.first, {}, span));
+
+	auto fnty = Ty::makeFn(sig->tyList(conty));
+	exp_make->setType(fnty);
+
+	auto exp_body = Exp::make(eCall, callArgs, span);
+
+	proto.funcs.push_back({
+		ctorname,
+		sig,
+		exp_body,
+		span
+	});
+}
+
 void GlobEnv::generateType (TypeDecl& tydecl, GlobProto& proto)
 {
 //	auto tyi = getType(tydecl.name);
 	auto conty = Ty::makeConcrete(tydecl.name, tydecl.polytypes);
 
-	int_t tag = 0;
 	for (auto& ctor : tydecl.ctors)
 	{
-		/*
-			type Ty = ctor1(...)
-
-			func ctor1 (a : T1, b : T2, ...) {
-				(^make (T1, T2, ...) -> Ty  "ctor1")
-					(a, b, ...)
-			}
-		*/
 		auto span = ctor.signature->span;
-
-		Sig::ArgList sigArgs;
-		ExpList callArgs;
-
-		auto exp_make = Exp::make(eiMake, tag, {}, span);
-		callArgs.push_back(exp_make);
+		auto sig = Sig::make({}, span);
 
 		for (auto& arg : ctor.signature->args)
-		{
-			sigArgs.push_back({
+			sig->args.push_back({
 				arg.first,
 				fillTypes(arg.second, tydecl.polytypes, span)
 			});
 
-			callArgs.push_back(Exp::make(eVar, arg.first, {}, span));
-		}
-
-		auto sig = Sig::make(sigArgs, span);
-		auto fnty = Ty::makeFn(sig->tyList(conty));
-		exp_make->setType(fnty);
-
-		auto exp_body = Exp::make(eCall, callArgs, span);
-
-		proto.funcs.push_back({
-			ctor.name,
-			sig,
-			exp_body,
-			span
-		});
-
-		tag++;
+		generateCtor(proto, conty, ctor.name, sig, span);
 	}
 }
