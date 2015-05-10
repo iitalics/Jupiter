@@ -26,5 +26,5 @@ type List(\a) =
 
 
 func main () {
-	let pt = point(4, 5);
+	let lst = cons(3, nil());
 }

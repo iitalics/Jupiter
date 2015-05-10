@@ -483,7 +483,10 @@ std::string CompileUnit::compileCall (ExpPtr e, EnvPtr env)
 	{
 		args << "call i8* (i32, i32, i32, ...)* @ju_make_buf (i32 "
 		     << fn->get<int_t>() << ", i32 0, i32 "
-		     << (e->subexps.size() - 1) << ", ";
+		     << (e->subexps.size() - 1);
+
+		if (e->subexps.size() > 1)
+			args << ", ";
 	}
 	else
 		throw fn->span.die("cannot call non-global");
