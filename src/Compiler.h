@@ -3,6 +3,7 @@
 #include "Infer.h"
 #include <sstream>
 #include <map>
+#include <set>
 
 class Compiler;
 
@@ -101,6 +102,10 @@ public:
 	void entryPoint (CompileUnit* cunit);
 
 	void output (std::ostream& os);
+protected:
+	friend struct CompileUnit;
+
+	std::set<std::string> declares;
 private:
 	std::vector<CompileUnit*> units;
 	int nameId;

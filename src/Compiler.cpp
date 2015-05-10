@@ -119,7 +119,10 @@ void Compiler::outputRuntimeHeader (std::ostream& os)
 		<< "declare i8* @ju_get (i8*, i32)" << std::endl
 		<< "declare i32 @ju_get_tag (i8*)" << std::endl
 
-		;
+		<< std::endl;
+
+	for (auto& name : declares)
+		os << "declare i8* @" << name << " (...)" << std::endl;
 }
 void Compiler::outputEntryPoint (std::ostream& os)
 {
@@ -389,7 +392,8 @@ std::string CompileUnit::compile (ExpPtr e, EnvPtr env, bool retain)
 		return "i8* null";
 
 	case eiMake:
-		throw e->span.die("^make expression must be called as function"); 
+	case eiCall:
+		throw e->span.die("expression must be called as function"); 
 
 	default:
 		throw e->span.die("cannot compile expression: " + e->string());
@@ -491,6 +495,23 @@ std::string CompileUnit::compileCall (ExpPtr e, EnvPtr env)
 
 		if (e->subexps.size() > 1)
 			args << ", ";
+	}
+	else if (fn->kind == eiCall)
+	{
+		args << "call i8* bitcast (i8* (...)* @" << fn->getString()
+			 << " to i8* (";
+
+		for (size_t i = 1, len = e->subexps.size(); i < len; i++)
+		{
+			if (i > 1)
+				args << ", ";
+
+			args << "i8*";
+		}
+
+		args << ")*) (";
+
+		compiler->declares.insert(fn->getString());
 	}
 	else
 		throw fn->span.die("cannot call non-global");

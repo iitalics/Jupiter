@@ -37,9 +37,9 @@ VERSION         GOAL
                 desugar - type validity
 		parser - user types constructor
 		parser - user types accesors
+                codegen - ^call
 TODO
                 codegen - user types
-                codegen - ^call
                 main - organized standard library
                 stdlib - list type, maybe type
                 stdlib - print(), string()
