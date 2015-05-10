@@ -112,10 +112,16 @@ void GlobEnv::generateType (TypeDecl& tydecl, GlobProto& proto)
 
 	std::set<std::string> fields;
 
+	size_t i = 0;
 	for (auto& ctor : tydecl.ctors)
 	{
 		auto span = ctor.signature->span;
 		auto sig = Sig::make({}, span);
+
+		for (size_t j = 0; j < i; j++)
+			if (tydecl.ctors[j].name == ctor.name)
+				throw span.die("constructors must have distinct names");
+		i++;
 
 		for (auto& arg : ctor.signature->args)
 			sig->args.push_back({
