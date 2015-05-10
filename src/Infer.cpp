@@ -316,6 +316,7 @@ TyPtr Infer::infer (ExpPtr exp, LocEnvPtr lenv)
 
 	case eiMake:
 	case eiGet:
+	case eiCall:
 		return mainSubs(exp->getType());
 	case eiPut:
 		return Ty::makeUnit();

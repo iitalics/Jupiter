@@ -97,6 +97,8 @@ std::vector<std::pair<std::string, int>> Lexer::keywords {
 	{ "^make", tiMake },
 	{ "^get",  tiGet },
 	{ "^put",  tiPut },
+	{ "^tag?", tiTag },
+	{ "^call", tiCall },
 	{ "=",     tEqual },
 	{ "_",     tWildcard },
 	{ ":",     tColon },

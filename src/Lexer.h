@@ -26,7 +26,7 @@ enum
 	tTrue,
 	tFalse,
 	
-	tiMake, tiGet, tiPut,
+	tiMake, tiGet, tiPut, tiTag, tiCall,
 
 	tEqual,         // =
 	tWildcard,		// _

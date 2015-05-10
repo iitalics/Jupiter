@@ -215,6 +215,7 @@ ExpPtr parseLet (Lexer& lex);
 ExpPtr parseiMake (Lexer& lex);
 ExpPtr parseiGet (Lexer& lex);
 ExpPtr parseiPut (Lexer& lex);
+ExpPtr parseiCall (Lexer& lex);
 
 //TyPtr parseType (Lexer& lex);
 TyPtr parseType (Lexer& lex, Span& sp);

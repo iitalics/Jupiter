@@ -270,12 +270,10 @@ ExpPtr parseTermPrefix (Lexer& lex)
 	case tLCurl:
 		return parseBlock(lex);
 
-	case tiMake:
-		return parseiMake(lex);
-	case tiGet:
-		return parseiGet(lex);
-	case tiPut:
-		return parseiPut(lex);
+	case tiMake:  return parseiMake(lex);
+	case tiGet:   return parseiGet(lex);
+	case tiPut:   return parseiPut(lex);
+	case tiCall:  return parseiCall(lex);
 
 	default:
 		//lex.expect("term");
@@ -453,7 +451,7 @@ ExpPtr parseLet (Lexer& lex)
 
 ExpPtr parseiMake (Lexer& lex)
 {
-	// ^make <ty>
+	// ^make <ty> <tag>
 	Span spStart, spEnd, spType;
 
 	spStart = lex.eat(tiMake).span;
@@ -489,6 +487,24 @@ ExpPtr parseiGet (Lexer& lex)
 ExpPtr parseiPut (Lexer& lex)
 {
 	throw lex.current().span.die("^put unimplemented");
+}
+ExpPtr parseiCall (Lexer& lex)
+{
+	// ^call <ty> <name>
+	Span spStart, spEnd, spType;
+
+	spStart = lex.eat(tiCall).span;
+	auto ty = parseType(lex, spType);
+	spEnd = lex.current().span;
+	auto tag = lex.eat(tString).str;
+
+	if (ty->kind != tyConcrete || ty->name != "Fn")
+		throw spType.die("^call expects function type");
+
+	auto e = Exp::make(eiCall, tag, {}, spStart + spEnd);
+	e->setType(ty);
+
+	return e;
 }
 
 

@@ -225,6 +225,11 @@ void Exp::_string (std::ostringstream& ss, bool tag, int increase, int ind) cons
 		   << "\"" << getString() << "\")";
 		break;
 
+	case eiCall:
+		ss << "^call " << getType()->string() << " "
+		   << "\"" << getString() << "\" ";
+		break;
+
 	case eiGet:
 		ss << "^get " << getType()->string() << " "
 		   << get<int_t>() << " ";
