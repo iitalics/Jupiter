@@ -46,6 +46,10 @@ juc juStd_eqInt (juc a, juc b)
 {
 	return (a == b) ? ju_true : ju_false;
 }
+juc juStd_notBool (juc a)
+{
+	return a ? ju_false : ju_true;
+}
 juc juStd_println ()
 {
 	putchar('\n');
