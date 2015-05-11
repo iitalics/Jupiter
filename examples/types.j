@@ -1,9 +1,5 @@
 # type declaration examples
 
-type [\a] =
-	cons(hd : \a, tl : [\a]),
-	nil()
-
 func print (lst : [\a]) {
 	if cons?(lst) {
 		let x = hd(lst);
