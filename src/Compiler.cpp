@@ -111,7 +111,7 @@ void Compiler::outputRuntimeHeader (std::ostream& os)
 	os << libfs.rdbuf();
 
 	for (auto& name : declares)
-		os << "declare i8* @" << name << " (...)" << std::endl;
+		os << "declare ccc i8* @" << name << " (...)" << std::endl;
 }
 void Compiler::outputEntryPoint (std::ostream& os)
 {
@@ -119,7 +119,7 @@ void Compiler::outputEntryPoint (std::ostream& os)
 	   << ";;;   < jupiter entry point >" << std::endl
 	   << "define ccc i32 @main (i32 %argc, i8** %argv)" << std::endl << "{" << std::endl
 	   << "call void @ju_init ()" << std::endl
-	   << "call i8* @" << entry->internalName << " ()" << std::endl
+	   << "call fastcc i8* @" << entry->internalName << " ()" << std::endl
 	   << "call void @ju_destroy ()" << std::endl
 	   << "ret i32 0" << std::endl
 	   << "}" << std::endl;
@@ -155,7 +155,7 @@ CompileUnit::CompileUnit (Compiler* comp, OverloadPtr over,
 	  finishedInfer(true)
 {
 	// declare baked signature
-	ssPrefix << "declare i8* @" << intName
+	ssPrefix << "declare fastcc i8* @" << intName
 	         << " (";
 
 	for (size_t i = 0, len = sig->args.size(); i < len; i++)
@@ -298,7 +298,7 @@ void CompileUnit::writePrefix (EnvPtr env)
 	ssPrefix << std::endl << std::endl << std::endl
 	         << ";;;   " << funcInst.name << " "
 	         << funcInst.type()->string() << std::endl
-	         << "define i8* @"
+	         << "define fastcc i8* @"
 	         << internalName << " (";
 
 	for (size_t i = 0, len = env->vars.size(); i < len; i++)
@@ -487,7 +487,7 @@ std::string CompileUnit::compileCall (ExpPtr e, EnvPtr env)
 
 	if (fn->kind == eVar && fn->get<bool>())
 	{
-		args << "call i8* @" << special[fn] << " (";
+		args << "call fastcc i8* @" << special[fn] << " (";
 	}
 	else if (fn->kind == eiMake)
 	{
@@ -502,7 +502,7 @@ std::string CompileUnit::compileCall (ExpPtr e, EnvPtr env)
 	}
 	else if (fn->kind == eiCall)
 	{
-		args << "call i8* bitcast (i8* (...)* @" << fn->getString()
+		args << "call ccc i8* bitcast (i8* (...)* @" << fn->getString()
 			 << " to i8* (";
 
 		for (size_t i = 1, len = e->subexps.size(); i < len; i++)
