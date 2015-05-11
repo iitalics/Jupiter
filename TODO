@@ -40,8 +40,8 @@ VERSION         GOAL
                 codegen - ^call
                 codegen - user types
                 main - organized standard library
-TODO
                 stdlib - list type, maybe type
+TODO
                 stdlib - print(), string()
 0.0.3 dev       checkpoint - hellojupiter.j
                 parser/desugar - member expression
