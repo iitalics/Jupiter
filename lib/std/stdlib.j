@@ -24,6 +24,13 @@ func print (x : Bool)   { ^call (Bool) -> ()   "juStd_printBool"   (x) }
 
 ## generic utilities
 
+# types
+type [\a] =
+	cons(hd : \a, tl : [\a]), nil()
+type ?(\a) =
+	some(val : \a), none()
+
+
 # io
 func print (x, y)      { print(x); print(y); }
 func print (x, y, z)   { print(x); print(y); print(z); }
