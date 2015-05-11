@@ -1,6 +1,6 @@
 # Welcome to the jupiter source!
 #
-# to make the runtime library (located in runtime/) use
+# to make the runtime library (located in lib/) use
 #    make runtime
 #
 # to make the compiler (located in src/) use
@@ -20,11 +20,11 @@ CXX        = clang++
 endif
 CC         = clang
 OPTFLAGS   = -O0 -g
-CXXFLAGS   = $(OPTFLAGS) -Ilib $(EXTFLAGS) -Wall -std=c++11
+CXXFLAGS   = $(OPTFLAGS) $(EXTFLAGS) -Wall -std=c++11
 LINKFLAGS  = -O2 -g 
 LINK       = $(OPTFLAGS)
 
-RUNTIME    = runtime/runtime.a
+RUNTIME    = lib/runtime.a
 SRCS       = $(wildcard src/*.cpp) $(wildcard src/*.c)
 OBJS       = $(SRCS:src/%=obj/%.o)
 
@@ -43,13 +43,13 @@ JUPC       = ./jupc
 endif
 
 
-all: runtimelib jup jupc tests
+all: runtime jup jupc tests
 
 jup: $(JUP)
 jupc: $(JUPC)
 tests: $(JUPC) $(TESTS)
-runtimelib:	
-	@make -C runtime/ $(RUNTIME:runtime/%=%)
+runtime:	
+	@make -C lib/ $(RUNTIME:lib/%=%)
 
 obj:
 ifdef VERBOSE

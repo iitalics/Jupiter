@@ -28,7 +28,7 @@ How to Build Jupiter
 
 `make jupc` builds the toolchain for automating the build process
 
-`make runtimelib` builds the runtime library
+`make runtime` builds the runtime library
 
 `make tests` builds Jupiter programs location in `examples/`
 

@@ -83,7 +83,7 @@ static const char* defaults[] =
 #endif
 	"llc",
 	"clang",
-	"runtime/runtime.a"
+	"lib/runtime.a"
 };
 
 
