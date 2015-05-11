@@ -39,8 +39,8 @@ VERSION         GOAL
 		parser - user types accesors
                 codegen - ^call
                 codegen - user types
-TODO
                 main - organized standard library
+TODO
                 stdlib - list type, maybe type
                 stdlib - print(), string()
 0.0.3 dev       checkpoint - hellojupiter.j

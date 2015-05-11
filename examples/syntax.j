@@ -4,10 +4,10 @@
 #           / : (Int, Int) -> Int       divide
 #           - : (Int) -> Int            negate
 #          == : (Int, Int) -> Bool      test equality
-#       print : (String) -> ()          print out
+#     println : () -> ()                print a line break
+#       print : (String) -> ()          print the argument
 #       print : (Int) -> ()             ...
 #       print : (Bool) -> ()            ...
-#     println : () -> ()                print a line break
 
 
 # functions are declared with 'func'
@@ -32,14 +32,6 @@ func foo (x) {
 		println("x isn't zero.");
 	}
 }
-
-
-# it doesn't matter the order that you declare functions
-
-func println (x) { print(x); println(); }
-func println (x, y) { print(x); print(y); println(); }
-func - (x, y) { x + -(y) }
-
 
 # declare local variables with 'let'
 

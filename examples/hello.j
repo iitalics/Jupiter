@@ -1,6 +1,9 @@
-func println (x) { print(x); println(); }
-func println (x, y) { print(x); print(y); println(); }
+# hello world!
 
 func main () {
-	println("hello, ", "jupiter?");
+	let a = "hello";
+	let b = ", ";
+	let c = "jupiter?";
+
+	println(a, b, c);
 }

@@ -71,6 +71,16 @@ TypeInfo* GlobEnv::getType (const std::string& name) const
 	return nullptr;
 }
 
+void GlobEnv::loadToplevel (const std::string& filename)
+{
+	Lexer lex;
+	lex.openFile(filename);
+	auto toplevel = Parse::parseToplevel(lex);
+	lex.expect(tEOF);
+	
+	loadToplevel(toplevel);
+}
+
 void GlobEnv::loadToplevel (GlobProto& proto)
 {
 	// each loop is two-pass so thatt declaration order doesn't matter

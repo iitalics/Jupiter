@@ -3,6 +3,7 @@
 #include <iomanip>
 #include <ctime>
 #include <cctype>
+#include <fstream>
 
 
 Compiler::Compiler ()
@@ -101,26 +102,13 @@ void Compiler::output (std::ostream& os)
 }
 void Compiler::outputRuntimeHeader (std::ostream& os)
 {
-	os
-		<< "; jupiter runtime header for version 0.0.4" << std::endl
-		<< "declare void @ju_init ()" << std::endl
-		<< "declare void @ju_destroy ()" << std::endl
-		<< "declare void @juGC_root (i8**)" << std::endl
-		<< "declare void @juGC_unroot (i32)" << std::endl
-		<< "declare void @juGC_store (i8**, i8*)" << std::endl
-		<< "declare i32 @ju_to_int (i8*)" << std::endl
-		<< "declare i1  @ju_to_bool (i8*)" << std::endl
-		<< "declare i8* @ju_from_int (i32)" << std::endl
-		<< "declare i8* @ju_from_bool (i1)" << std::endl
-		<< "declare i1  @ju_is_int (i8*)" << std::endl
-		<< "declare i8* @ju_make_buf (i32, i32, i32, ...)" << std::endl
-		<< "declare i8* @ju_make_str (i8*, i32)" << std::endl
-		<< "declare i8* @ju_make_real (double)" << std::endl
-		<< "declare i8* @ju_get (i8*, i32)" << std::endl
-		<< "declare i8* @ju_safe_get (i8*, i8*, i32, i32)" << std::endl
-		<< "declare i32 @ju_get_tag (i8*)" << std::endl
+	std::ifstream libfs(JUP_LIB_PATH("runtime.ll"));
 
-		<< std::endl;
+	if (!libfs)
+		throw Span().die("fatal: unable to access runtime header '"
+		                   JUP_LIB_PATH("runtime.ll") "'");
+
+	os << libfs.rdbuf();
 
 	for (auto& name : declares)
 		os << "declare i8* @" << name << " (...)" << std::endl;

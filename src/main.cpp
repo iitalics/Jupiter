@@ -36,6 +36,7 @@ static int Main (std::vector<std::string>&& args)
 	Compiler compiler;
 	using Op = GlobEnv::OpPrecedence;
 
+	// TODO: integrate order-of-ops into jupiter syntax
 	env.operators.push_back(Op("::", 80, Assoc::Right));
 	env.operators.push_back(Op("+",  70, Assoc::Left));
 	env.operators.push_back(Op("-",  70, Assoc::Left));
@@ -43,37 +44,12 @@ static int Main (std::vector<std::string>&& args)
 	env.operators.push_back(Op("/",  60, Assoc::Left));
 	env.operators.push_back(Op("^",  50, Assoc::Right));
 
-	auto Int = Ty::makeConcrete("Int");
-	auto Real = Ty::makeConcrete("Real");
-	auto Bool = Ty::makeConcrete("Bool");
-	auto String = Ty::makeConcrete("String");
-	auto Unit = Ty::makeUnit();
-	auto polyA = Ty::makePoly();
-	auto polyB = Ty::makePoly();
-	auto polyList = Ty::makeConcrete("List", { polyA });
-
-	env.bake(&compiler, "juStd_addInt",       "+", { Int, Int }, Int);
-	env.bake(&compiler, "juStd_mulInt",       "*", { Int, Int }, Int);
-	env.bake(&compiler, "juStd_divInt",       "/", { Int, Int }, Int);
-	env.bake(&compiler, "juStd_negInt",       "-", { Int }, Int);
-	env.bake(&compiler, "juStd_ltInt",        "<", { Int, Int }, Bool);
-	env.bake(&compiler, "juStd_eqInt",        "==", { Int, Int }, Bool);
-	env.bake(&compiler, "juStd_printString",  "print", { String }, Unit);
-	env.bake(&compiler, "juStd_printInt",     "print", { Int }, Unit);
-	env.bake(&compiler, "juStd_printReal",    "print", { Real }, Unit);
-	env.bake(&compiler, "juStd_printBool",    "print", { Bool }, Unit);
-	env.bake(&compiler, "juStd_println",      "println", { }, Unit);
+	env.loadStdlib();
 
 	try
 	{
 		for (size_t i = 1, len = args.size(); i < len; i++)
-		{
-			Lexer lex;
-			lex.openFile(args[i]);
-			auto toplevel = Parse::parseToplevel(lex);
-			env.loadToplevel(toplevel);
-			lex.expect(tEOF);
-		}
+			env.loadToplevel(args[i]);
 
 		auto entrySpan = Span();
 		auto entrySig = Sig::make();

@@ -18,8 +18,6 @@ func print (lst : [\a]) {
 }
 
 func :: (x : \a, xs : [\a]) { cons(x, xs) }
-func println (x) { print(x); println(); }
-
 
 func main () {
 	let lst = 1 :: 2 :: 3 :: 4 :: nil();

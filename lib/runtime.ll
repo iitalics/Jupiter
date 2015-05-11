@@ -1,0 +1,18 @@
+; jupiter runtime header for version 0.0.6
+
+declare ccc void @ju_init ()
+declare ccc void @ju_destroy ()
+declare ccc void @juGC_root (i8**)
+declare ccc void @juGC_unroot (i32)
+declare ccc void @juGC_store (i8**, i8*)
+declare ccc i32 @ju_to_int (i8*)
+declare ccc i1  @ju_to_bool (i8*)
+declare ccc i8* @ju_from_int (i32)
+declare ccc i8* @ju_from_bool (i1)
+declare ccc i1  @ju_is_int (i8*)
+declare ccc i8* @ju_make_buf (i32, i32, i32, ...)
+declare ccc i8* @ju_make_str (i8*, i32)
+declare ccc i8* @ju_make_real (double)
+declare ccc i8* @ju_get (i8*, i32)
+declare ccc i8* @ju_safe_get (i8*, i8*, i32, i32)
+declare ccc i32 @ju_get_tag (i8*)

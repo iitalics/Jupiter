@@ -86,8 +86,16 @@ public:
 	            const std::vector<TyPtr>& args,
 	            TyPtr ret);
 
+	// TODO: replace with 'import'
+	void loadToplevel (const std::string& filename);
 	void loadToplevel (GlobProto& proto);
 	void generateType (TypeDecl& tydecl, GlobProto& proto);
+
+
+	inline void loadStdlib ()
+	{
+		loadToplevel(JUP_LIB_PATH("std/stdlib.j"));
+	}
 };
 
 
