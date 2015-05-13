@@ -42,8 +42,8 @@ VERSION         GOAL
                 main - organized standard library
                 stdlib - list type, maybe type
                 stdlib - print(), str()
-TODO
 0.0.3 dev       checkpoint - hellojupiter.j
+TODO
                 parser/desugar - member expression
                 parser - lambda
                 desugar - lambda
