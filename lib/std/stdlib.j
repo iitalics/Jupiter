@@ -12,6 +12,11 @@ func /  (x : Int, y : Int) { ^call (Int, Int) -> Int  "juStd_divInt"  (x, y) }
 func <  (x : Int, y : Int) { ^call (Int, Int) -> Bool "juStd_ltInt"   (x, y) }
 func == (x : Int, y : Int) { ^call (Int, Int) -> Bool "juStd_eqInt"   (x, y) }
 
+# string functions
+func string (x : Int)  { ^call (Int) -> String  "juStd_stringInt" (x) }
+func string (x : Bool) { ^call (Bool) -> String "juStd_stringBool" (x) }
+func string (x : Real) { ^call (Real) -> String "juStd_stringReal" (x) }
+
 # io functions
 func println ()         { ^call () -> ()       "juStd_println"     () }
 func print (x : String) { ^call (String) -> () "juStd_printString" (x) }

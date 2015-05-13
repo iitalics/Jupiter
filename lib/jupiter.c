@@ -297,7 +297,10 @@ juc ju_make_buf (ju_int tag, size_t aug, ju_int nmems, ...)
 juc ju_make_str (const char* buf, size_t size)
 {
 	juc obj = ju_make_buf(0, size, 1, ju_from_int((ju_int) size));
-	memcpy(ju_get_buffer(obj), buf, size);
+
+	if (buf != NULL)
+		memcpy(ju_get_buffer(obj), buf, size);
+	
 	return obj;
 }
 
