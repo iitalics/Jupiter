@@ -4,7 +4,7 @@
 #include <stdio.h>
 
 #define die_unimpl(s) \
-	fprintf(stderr, "RUNTIME ERROR: unimplemented: \"" s "\"\n"), \ 
+	fprintf(stderr, "RUNTIME ERROR: unimplemented: \"" s "\"\n"), \
 	exit(-1), ju_null
 
 
@@ -120,10 +120,17 @@ juc juStd_strReal (juc ca)
 {
 	return die_unimpl("str(Real) -> Str");	
 }
-juc juStd_strStrStr (juc a, juc b)
+juc juStd_lenStr (juc a)
+{
+	return
+		ju_from_int((ju_int)
+			ju_get_length(a));
+}
+juc juStd_appStrStr (juc a, juc b)
 {
 	size_t la, lb;
 	char* ba, *bb, *buf;
+	juc res;
 
 	la = ju_get_length(a);
 	lb = ju_get_length(b);

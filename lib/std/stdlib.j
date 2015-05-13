@@ -13,9 +13,11 @@ func <  (x : Int, y : Int) { ^call (Int, Int) -> Bool "juStd_ltInt"   (x, y) }
 func == (x : Int, y : Int) { ^call (Int, Int) -> Bool "juStd_eqInt"   (x, y) }
 
 # string functions
-func str (x : Int)  { ^call (Int) -> Str  "juStd_strInt" (x) }
+func str (x : Int)  { ^call (Int) -> Str  "juStd_strInt"  (x) }
 func str (x : Bool) { ^call (Bool) -> Str "juStd_strBool" (x) }
 func str (x : Real) { ^call (Real) -> Str "juStd_strReal" (x) }
+func len (x : Str)  { ^call (Str) -> Int  "juStd_lenStr"  (x) }
+func ++ (x : Str, y : Str) { ^call (Str, Str) -> Str "juStd_appStrStr" (x, y) }
 
 # io functions
 func println ()         { ^call () -> ()       "juStd_println"     () }
@@ -35,6 +37,18 @@ type [\a] =
 type ?(\a) =
 	some(val : \a), none()
 
+# list
+func len (x : [_]) {
+	# TODO: tail calls
+	if nil?(x) then
+		0
+	else
+		1 + len(tl(x))
+}
+
+# string
+func str (x : Str) { x }
+func str (x, y) { str(x) ++ str(y) }
 
 # io
 func print (x, y)      { print(x); print(y); }

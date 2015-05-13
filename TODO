@@ -41,8 +41,8 @@ VERSION         GOAL
                 codegen - user types
                 main - organized standard library
                 stdlib - list type, maybe type
+                stdlib - print(), str()
 TODO
-                stdlib - print(), string()
 0.0.3 dev       checkpoint - hellojupiter.j
                 parser/desugar - member expression
                 parser - lambda
