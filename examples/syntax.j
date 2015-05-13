@@ -5,7 +5,7 @@
 #           - : (Int) -> Int            negate
 #          == : (Int, Int) -> Bool      test equality
 #     println : () -> ()                print a line break
-#       print : (String) -> ()          print the argument
+#       print : (Str) -> ()             print the argument
 #       print : (Int) -> ()             ...
 #       print : (Bool) -> ()            ...
 

@@ -13,13 +13,13 @@ func <  (x : Int, y : Int) { ^call (Int, Int) -> Bool "juStd_ltInt"   (x, y) }
 func == (x : Int, y : Int) { ^call (Int, Int) -> Bool "juStd_eqInt"   (x, y) }
 
 # string functions
-func string (x : Int)  { ^call (Int) -> String  "juStd_stringInt" (x) }
-func string (x : Bool) { ^call (Bool) -> String "juStd_stringBool" (x) }
-func string (x : Real) { ^call (Real) -> String "juStd_stringReal" (x) }
+func str (x : Int)  { ^call (Int) -> Str  "juStd_strInt" (x) }
+func str (x : Bool) { ^call (Bool) -> Str "juStd_strBool" (x) }
+func str (x : Real) { ^call (Real) -> Str "juStd_strReal" (x) }
 
 # io functions
 func println ()         { ^call () -> ()       "juStd_println"     () }
-func print (x : String) { ^call (String) -> () "juStd_printString" (x) }
+func print (x : Str)    { ^call (Str) -> ()    "juStd_printStr" (x) }
 func print (x : Int)    { ^call (Int) -> ()    "juStd_printInt"    (x) }
 func print (x : Real)   { ^call (Real) -> ()   "juStd_printReal"   (x) }
 func print (x : Bool)   { ^call (Bool) -> ()   "juStd_printBool"   (x) }

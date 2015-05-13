@@ -61,7 +61,7 @@ juc juStd_println ()
 
 	return ju_unit;
 }
-juc juStd_printString (juc a)
+juc juStd_printStr (juc a)
 {
 	fwrite(ju_get_buffer(a),
 			1,
@@ -95,7 +95,7 @@ juc juStd_printBool (juc cell)
 
 
 
-juc juStd_stringInt (juc ca)
+juc juStd_strInt (juc ca)
 {
 	const size_t BUF_SIZE = 16;
 	char buf[BUF_SIZE];
@@ -110,17 +110,17 @@ juc juStd_stringInt (juc ca)
 
 	return ju_make_str(buf + BUF_SIZE - len - 1, len);
 }
-juc juStd_stringBool (juc ca)
+juc juStd_strBool (juc ca)
 {
 	return (ca == ju_false) ?
 		ju_make_str("false", 5) :
 		ju_make_str("true", 4);
 }
-juc juStd_stringReal (juc ca)
+juc juStd_strReal (juc ca)
 {
-	return die_unimpl("string (Real) -> String");	
+	return die_unimpl("str(Real) -> Str");	
 }
-juc juStd_stringStringString (juc a, juc b)
+juc juStd_strStrStr (juc a, juc b)
 {
 	size_t la, lb;
 	char* ba, *bb, *buf;

@@ -285,7 +285,7 @@ TyPtr Infer::infer (ExpPtr exp, LocEnvPtr lenv)
 {
 	static auto tyInt = Ty::makeConcrete("Int");
 	static auto tyReal = Ty::makeConcrete("Real");
-	static auto tyString = Ty::makeConcrete("String");
+	static auto tyStr = Ty::makeConcrete("Str");
 	static auto tyBool = Ty::makeConcrete("Bool");
 
 	switch (exp->kind)
@@ -295,7 +295,7 @@ TyPtr Infer::infer (ExpPtr exp, LocEnvPtr lenv)
 	case eReal:
 		return tyReal;
 	case eString:
-		return tyString;
+		return tyStr;
 	case eBool:
 		return tyBool;
 

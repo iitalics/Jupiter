@@ -20,7 +20,7 @@ GlobEnv::GlobEnv ()
 	addType(TypeInfo("Bool"));
 	addType(TypeInfo("Char"));
 	addType(TypeInfo("Real"));
-	addType(TypeInfo("String"));
+	addType(TypeInfo("Str"));
 }
 
 GlobEnv::~GlobEnv ()
