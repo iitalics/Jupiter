@@ -1,4 +1,4 @@
-### jupiter standard library for version 0.0.5
+### jupiter standard library for version 0.0.7
 
 
 ## standard library internal calls
