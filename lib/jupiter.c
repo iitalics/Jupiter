@@ -3,6 +3,11 @@
 #include <stdarg.h>
 #include <stdio.h>
 
+// TODO: hash function in compiler AND runtime
+#define JU_TAG_STR   0x1
+#define JU_TAG_REAL  0x2
+
+
 // utilities
 bool ju_is_gc (juc cell)
 {
@@ -296,7 +301,7 @@ juc ju_make_buf (ju_int tag, size_t aug, ju_int nmems, ...)
 
 juc ju_make_str (const char* buf, size_t size)
 {
-	juc obj = ju_make_buf(0, size, 1, ju_from_int((ju_int) size));
+	juc obj = ju_make_buf(JU_TAG_STR, size, 1, ju_from_int((ju_int) size));
 
 	if (buf != NULL)
 		memcpy(ju_get_buffer(obj), buf, size);
@@ -306,7 +311,7 @@ juc ju_make_str (const char* buf, size_t size)
 
 juc ju_make_real (ju_real r)
 {
-	juc obj = ju_make_buf(0, sizeof(ju_real), 0);
+	juc obj = ju_make_buf(JU_TAG_REAL, sizeof(ju_real), 0);
 	*((ju_real*) ju_get_buffer(obj)) = r;
 	return obj;
 }
