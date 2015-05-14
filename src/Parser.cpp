@@ -290,6 +290,10 @@ ExpPtr parseTermPostfix (Lexer& lex, ExpPtr in)
 			in = parseCall(lex, in);
 			break;
 
+		case tDot:
+			in = parseMem(lex, in);
+			break;
+
 		default:
 			return in;
 		}
@@ -304,6 +308,15 @@ ExpPtr parseCall (Lexer& lex, ExpPtr in)
 	exps.insert(exps.end(), args->subexps.begin(), args->subexps.end());
 
 	return Exp::make(eCall, exps, in->span + args->span);
+}
+ExpPtr parseMem (Lexer& lex, ExpPtr in)
+{
+	lex.eat(tDot);
+
+	auto mem = lex.eat(tIdent);
+
+	return Exp::make(eMem, mem.str, { in }, 
+			in->span + mem.span);
 }
 
 //		()          OK

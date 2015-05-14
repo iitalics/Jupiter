@@ -43,8 +43,9 @@ VERSION         GOAL
                 stdlib - list type, maybe type
                 stdlib - print(), str()
 0.0.3 dev       checkpoint - hellojupiter.j
+                parser - member expression
 TODO
-                parser/desugar - member expression
+                desugar - member expression
                 parser - lambda
                 desugar - lambda
                 infer - lambda

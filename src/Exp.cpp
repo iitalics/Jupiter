@@ -97,10 +97,10 @@ void Exp::_string (std::ostringstream& ss, bool tag, int increase, int ind) cons
 	static std::vector<std::string> kinds = {
 		"invalid", "int", "real",
 		"string", "bool", "var",
-		"tuple", "call", "infix",
-		"cond", "lambda", "block",
-		"let",
-		"^make", "^get", "^put", "^tag?"
+		"tuple", "call", "member",
+		"infix", "cond", "lambda",
+		"block", "let",
+		"^make", "^get", "^put", "^tag?", "^call"
 	};
 
 	if (tag)
@@ -209,6 +209,11 @@ void Exp::_string (std::ostringstream& ss, bool tag, int increase, int ind) cons
 			subexps[i]->_string(ss, tag, increase, ind + increase);
 		}
 		ss << ')';
+		break;
+
+	case eMem:
+		subexps[0]->_string(ss, tag, increase, ind);
+		ss << '.' << _strData;
 		break;
 
 	case eInfix:

@@ -37,9 +37,10 @@ enum ExpKind
 	eReal,          //  real_t
 	eString,        //  string
 	eBool,          //  bool
-	eVar,           //  string, bool
+	eVar,           //  string
 	eTuple,
 	eCall,
+	eMem,           // string
 	eInfix,
 	eCond,
 	eLambda,
@@ -207,6 +208,7 @@ ExpPtr parseTerm (Lexer& lex);
 ExpPtr parseTermPrefix (Lexer& lex);
 ExpPtr parseTermPostfix (Lexer& lex, ExpPtr in);
 ExpPtr parseCall (Lexer& lex, ExpPtr in);
+ExpPtr parseMem (Lexer& lex, ExpPtr in);
 ExpPtr parseTuple (Lexer& lex);
 ExpPtr parseCond (Lexer& lex);
 ExpPtr parseBlock (Lexer& lex);
