@@ -37,7 +37,7 @@ enum ExpKind
 	eReal,          //  real_t
 	eString,        //  string
 	eBool,          //  bool
-	eVar,           //  string
+	eVar,           //  string, bool
 	eTuple,
 	eCall,
 	eMem,           // string

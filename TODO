@@ -44,8 +44,8 @@ VERSION         GOAL
                 stdlib - print(), str()
 0.0.3 dev       checkpoint - hellojupiter.j
                 parser - member expression
-TODO
                 desugar - member expression
+TODO
                 parser - lambda
                 desugar - lambda
                 infer - lambda

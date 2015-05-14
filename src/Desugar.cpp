@@ -15,6 +15,8 @@ ExpPtr Desugar::desugar (ExpPtr exp, LocEnvPtr lenv)
 		return desugarTuple(exp, lenv);
 	case eCall:
 		return desugarCall(exp, lenv);
+	case eMem:
+		return desugarMem(exp, lenv);
 	case eInfix:
 		return desugarInfix(exp, lenv);
 	case eCond:
@@ -80,6 +82,7 @@ ExpPtr Desugar::desugarTuple (ExpPtr e, LocEnvPtr lenv)
 {
 	// if (e->subexps.size() == 0) // TODO: unit?
 
+	// break out single-tuple
 	if (e->subexps.size() == 1)
 		return desugar(e->subexps[0], lenv);
 	else
@@ -87,7 +90,40 @@ ExpPtr Desugar::desugarTuple (ExpPtr e, LocEnvPtr lenv)
 }
 ExpPtr Desugar::desugarCall (ExpPtr e, LocEnvPtr lenv)
 {
-	return desugarSubexps(e, lenv);
+	if (e->subexps[0]->kind == eMem)
+	{
+		// e1.f(e2, e3, ...)  =>  f(e1, e2, e3, ...)
+
+		auto mem = e->subexps[0];
+		auto memVar = Exp::make(eVar, mem->getString(), mem->span);
+		memVar = desugarGlobal(memVar);
+
+		ExpList args;
+		args.push_back(memVar);
+		for (size_t i = 0, len = e->subexps.size(); i < len; i++)
+		{
+			auto a = (i == 0) ? mem->subexps[0] : e->subexps[i];
+
+			args.push_back(desugar(a, lenv));
+		}
+
+		return Exp::make(eCall, args, e->span);
+	}
+	else
+		return desugarSubexps(e, lenv);
+}
+ExpPtr Desugar::desugarMem (ExpPtr e, LocEnvPtr lenv)
+{
+	// (e1.f)  =>  f(e1)
+	
+	auto memVar = Exp::make(eVar, e->getString(), e->span);
+	memVar = desugarGlobal(memVar);
+
+	return Exp::make(eCall,
+		{
+			memVar,
+			desugar(e->subexps[0], lenv),
+		}, e->span);
 }
 ExpPtr Desugar::desugarCond (ExpPtr e, LocEnvPtr lenv)
 {

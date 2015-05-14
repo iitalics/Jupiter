@@ -21,6 +21,7 @@ struct Desugar
 	ExpPtr desugarVar (ExpPtr e, LocEnvPtr lenv);
 	ExpPtr desugarTuple (ExpPtr e, LocEnvPtr lenv);
 	ExpPtr desugarCall (ExpPtr e, LocEnvPtr lenv);
+	ExpPtr desugarMem (ExpPtr e, LocEnvPtr lenv);
 	ExpPtr desugarInfix (ExpPtr e, LocEnvPtr lenv);
 	ExpPtr desugarCond (ExpPtr e, LocEnvPtr lenv);
 	ExpPtr desugarBlock (ExpPtr e, LocEnvPtr lenv);

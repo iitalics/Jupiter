@@ -1,14 +1,13 @@
 # type declaration examples
 
 func print (lst : [\a]) {
-	if cons?(lst) {
-		let x = hd(lst);
-		let xs = tl(lst);
+	if lst.cons? {
+		let x = lst.hd;
+		let xs = lst.tl;
 
 		print(x);
-		if cons?(xs) {
-			print(", ");
-			print(xs);
+		if xs.cons? {
+			print(", ", xs);
 		}
 	}
 }
