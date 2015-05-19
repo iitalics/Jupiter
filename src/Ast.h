@@ -24,7 +24,13 @@ struct Sig
 	bool aEquiv (SigPtr other) const;
 
 	TyList tyList (TyPtr ret = nullptr) const;
-	std::string string () const;
+	std::string string (bool paren = true) const;
+
+	/* (x : A, y : B) -> Sig(x, A, y, B) */
+
+	TyPtr toSigType () const;
+	static SigPtr fromSigType (TyPtr ty,
+	                 const Span& sp = Span());
 };
 
 
@@ -211,6 +217,7 @@ ExpPtr parseCall (Lexer& lex, ExpPtr in);
 ExpPtr parseMem (Lexer& lex, ExpPtr in);
 ExpPtr parseTuple (Lexer& lex);
 ExpPtr parseCond (Lexer& lex);
+ExpPtr parseLambda (Lexer& lex);
 ExpPtr parseBlock (Lexer& lex);
 void parseBlockExp (Lexer& lex, ExpList& list);
 ExpPtr parseLet (Lexer& lex);

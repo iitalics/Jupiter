@@ -270,6 +270,9 @@ ExpPtr parseTermPrefix (Lexer& lex)
 	case tLCurl:
 		return parseBlock(lex);
 
+	case tFunc: case tLambda:
+		return parseLambda(lex);
+
 	case tiMake:  return parseiMake(lex);
 	case tiGet:   return parseiGet(lex);
 	case tiPut:   return parseiPut(lex);
@@ -398,6 +401,31 @@ ExpPtr parseCond (Lexer& lex)
 	}
 
 	return Exp::make(eCond, { expCond, expThen, expElse }, spStart + spEnd);
+}
+ExpPtr parseLambda (Lexer& lex)
+{
+	Span spStart, spEnd;
+	SigPtr sig;
+	ExpPtr body;
+
+	spStart = lex.current().span;
+
+	if (lex.current() == tFunc)
+	{
+		lex.advance();
+		sig = parseSigParens(lex);
+		body = parseBlock(lex);
+	}
+	else
+	{
+		lex.eat(tLambda);
+		sig = parseSig(lex, true);
+		lex.eat(tArrow);
+		body = parseExp(lex);
+	}
+	spEnd = body->span;
+
+	return Exp::make(eLambda, sig->toSigType(), "", { body }, spStart + spEnd);
 }
 
 ExpPtr parseBlock (Lexer& lex)

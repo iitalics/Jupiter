@@ -45,8 +45,8 @@ VERSION         GOAL
 0.0.3 dev       checkpoint - hellojupiter.j
                 parser - member expression
                 desugar - member expression
-TODO
                 parser - lambda
+TODO
                 desugar - lambda
                 infer - lambda
                 codegen - lambda

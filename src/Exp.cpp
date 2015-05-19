@@ -24,11 +24,12 @@ TyList Sig::tyList (TyPtr ret) const
 		res = TyList(it->second, res);
 	return res;
 }
-std::string Sig::string () const
+std::string Sig::string (bool paren) const
 {
 	std::ostringstream ss;
 
-	ss << "(";
+	if (paren)
+		ss << "(";
 
 	size_t i, len = args.size();
 	auto strs = Ty::stringAll(tyList());
@@ -39,12 +40,46 @@ std::string Sig::string () const
 			ss << ", ";
 		ss << args[i].first << " : " << strs[i];
 	}
-	ss << ")";
+
+	if (paren)
+		ss << ")";
 
 	return ss.str();
 }
 
+TyPtr Sig::toSigType () const
+{
+	std::vector<TyPtr> tyArgs;
+	tyArgs.reserve(args.size() * 2);
 
+	for (auto& arg : args)
+	{
+		tyArgs.push_back(Ty::makeConcrete(arg.first));
+		tyArgs.push_back(arg.second);
+	}
+
+	return Ty::makeConcrete("Sig", TyList(tyArgs));
+}
+SigPtr Sig::fromSigType (TyPtr ty, const Span& span)
+{
+	if (ty->kind != tyConcrete || ty->name != "Sig")
+		return nullptr;
+
+	auto sig = Sig::make({}, span);
+
+	auto tys = ty->subtypes;
+	while (!tys.nil() && !tys.tail().nil())
+	{
+		auto k = tys.head();
+		++tys;
+		auto v = tys.head();
+		++tys;
+
+		sig->args.push_back({ k->name, v });
+	}
+
+	return sig;
+}
 
 
 Exp::Exp (ExpKind _kind, cExpList sub, const Span& sp)
@@ -161,6 +196,15 @@ void Exp::_string (std::ostringstream& ss, bool tag, int increase, int ind) cons
 		_indent(ss, ind);
 		subexps[2]->_string(ss, tag, increase, ind);
 		break;
+
+	case eLambda:
+		ss << "\\" << Sig::fromSigType(getType())->string(false)
+		   << " -> " << std::endl;
+		ind += increase;
+		_indent(ss, ind);
+		subexps[0]->_string(ss, tag, increase, ind);
+		ind -= increase;
+		break;
 	
 	case eLet:
 		ss << "let " << _strData;
@@ -246,7 +290,6 @@ void Exp::_string (std::ostringstream& ss, bool tag, int increase, int ind) cons
 		subexps[0]->_string(ss, tag, increase, ind);
 		break;
 
-	case eLambda:
 	default:
 		ss << "< ?? >";
 		return;
