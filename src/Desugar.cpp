@@ -21,6 +21,8 @@ ExpPtr Desugar::desugar (ExpPtr exp, LocEnvPtr lenv)
 		return desugarInfix(exp, lenv);
 	case eCond:
 		return desugarCond(exp, lenv);
+	case eLambda:
+		return desugarLambda(exp, lenv);
 	case eBlock:
 		return desugarBlock(exp, lenv);
 
@@ -55,13 +57,23 @@ ExpPtr Desugar::desugarSubexps (ExpPtr e, LocEnvPtr lenv)
 
 ExpPtr Desugar::desugarVar (ExpPtr e, LocEnvPtr lenv)
 {
-	auto var = lenv->get(e->getString());
+	auto name = e->getString();
+	auto var = lenv->get(name);
 
 	if (var == nullptr)
 		return desugarGlobal(e);
 	else
 	{
 		e->set<bool>(false);
+
+		for (auto le = lenv; ; le = le->parent)
+		{
+			if (le->has(name))
+				break;
+			else if (le->uses != nullptr)
+				le->uses->insert(name);
+		}
+
 		return e;
 	}
 }
@@ -129,18 +141,41 @@ ExpPtr Desugar::desugarCond (ExpPtr e, LocEnvPtr lenv)
 {
 	return desugarSubexps(e, lenv);
 }
-ExpPtr Desugar::desugarBlock (ExpPtr e, LocEnvPtr lenv)
+ExpPtr Desugar::desugarLambda (ExpPtr e, LocEnvPtr lenvp)
 {
-	auto newenv = LocEnv::make(lenv);
+	auto sig = desugar(Sig::fromSigType(e->getType()));
+	auto lenv = LocEnv::make(lenvp);
+	// keep track of which local variables this lambda uses
+	LocEnv::UseSet uses;
+
+	for (auto& arg : sig->args)
+		lenv->newVar(arg.first, arg.second);
+
+	lenv->uses = &uses;
+	auto body = desugar(e->subexps[0], lenv);
+
+	// list used variables in resulting lambda expression
+	ExpList exps;
+	exps.reserve(1 + uses.size());
+
+	exps.push_back(body);
+	for (auto& var : uses)
+		exps.push_back(Exp::make(eVar, var));
+
+	return Exp::make(eLambda, sig->toSigType(), "", std::move(exps), e->span);
+}
+ExpPtr Desugar::desugarBlock (ExpPtr e, LocEnvPtr lenvp)
+{
+	auto lenv = LocEnv::make(lenvp);
 
 	return e->mapSubexps([=] (ExpPtr e2)
 	{
 		ExpPtr res;
 
 		if (e2->kind == eLet)
-			res = desugarLet(e2, newenv);
+			res = desugarLet(e2, lenv);
 		else
-			res = desugar(e2, newenv);
+			res = desugar(e2, lenv);
 
 		return res;
 	});

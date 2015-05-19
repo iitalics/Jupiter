@@ -46,8 +46,8 @@ VERSION         GOAL
                 parser - member expression
                 desugar - member expression
                 parser - lambda
-TODO
                 desugar - lambda
+TODO
                 infer - lambda
                 codegen - lambda
                 runtime - lambda

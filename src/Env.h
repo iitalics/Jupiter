@@ -2,6 +2,7 @@
 #include "Jupiter.h"
 #include "Ast.h"
 #include <tuple>
+#include <set>
 
 class Compiler;
 class Overload;
@@ -105,6 +106,8 @@ class LocEnv
 {
 public:
 	using Counter = std::shared_ptr<int>;
+	using UseSet = std::set<std::string>;
+	using UseSetPtr = UseSet*;
 
 	static LocEnvPtr make ();
 	static LocEnvPtr make (LocEnvPtr parent);
@@ -120,6 +123,7 @@ public:
 
 	LocEnvPtr parent;
 	std::vector<VarPtr> vars;
+	UseSetPtr uses;
 
 	VarPtr newVar (TyPtr ty = nullptr);
 	VarPtr newVar (const std::string& name, TyPtr ty = nullptr);

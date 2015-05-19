@@ -187,7 +187,7 @@ LocEnvPtr LocEnv::make (LocEnvPtr parent)
 }
 
 LocEnv::LocEnv (LocEnvPtr _parent, Counter _c)
-	: parent(_parent), _count(_c) {}
+	: parent(_parent), uses(nullptr), _count(_c) {}
 
 LocEnv::~LocEnv ()
 {
