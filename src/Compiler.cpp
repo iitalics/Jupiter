@@ -695,13 +695,13 @@ std::string CompileUnit::compileLambda (ExpPtr e, EnvPtr env)
 	{
 		auto var = e->subexps[i]->getString();
 		auto tmp = makeUnique(".v");
-		args << ", " << tmp;
+		args << ", i8* " << tmp;
 
 		ssBody << tmp << " = load i8** " << env->get(var).internal << std::endl;
 	}
 
 	ssBody << res << " = call i8* (i8*, i32, ...)* @ju_closure ("
-		   << "i8* ()* bitcast (i8* ("
+		   << "i8* bitcast (i8* ("
 		   << joinCommas(cunit->overload->signature->args.size() + 1, "i8*")
 		   << ")* @" << cunit->internalName
 		   << " to i8*), i32 " << (e->subexps.size() - 1) << args.str() << ")" << std::endl;

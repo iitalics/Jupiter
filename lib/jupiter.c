@@ -4,8 +4,9 @@
 #include <stdio.h>
 
 // TODO: hash function in compiler AND runtime
-#define JU_TAG_STR   0x1
-#define JU_TAG_REAL  0x2
+#define JU_TAG_STR     0x1
+#define JU_TAG_REAL    0x2
+#define JU_TAG_CLOSURE 0x3
 
 
 // utilities
@@ -59,6 +60,10 @@ ju_real ju_get_real (juc obj)
 {
 	return *((ju_real*) ju_get_buffer(obj));
 }
+ju_fnp ju_get_fn (juc obj)
+{
+	return *((ju_fnp*) ju_get_buffer(obj));
+}
 
 
 
@@ -79,12 +84,9 @@ void ju_destroy ()
 
 
 // object management
-juc ju_make_buf (ju_int tag, size_t aug, ju_int nmems, ...)
-{
-	// very small objects are represented as just their tags
-	if (aug == 0 && nmems == 0)
-		return ju_from_int(tag);
 
+static juc ju_vmake (ju_int tag, size_t aug, ju_int nmems, va_list vl)
+{
 	ju_obj* obj = malloc(sizeof(ju_obj) + nmems * sizeof(juc) + aug);
 
 	obj->nmems = nmems;
@@ -92,14 +94,26 @@ juc ju_make_buf (ju_int tag, size_t aug, ju_int nmems, ...)
 	juGC_init_obj(obj);
 
 	ju_int i;
-	va_list vl;
-	
-	va_start(vl, nmems);
 	for (i = 0; i < nmems; i++)
 		obj->mems[i] = va_arg(vl, juc);
-	va_end(vl);
 
 	return (juc) obj;
+}
+
+juc ju_make_buf (ju_int tag, size_t aug, ju_int nmems, ...)
+{
+	// very small objects are represented as just their tags
+	if (aug == 0 && nmems == 0)
+		return ju_from_int(tag);
+
+	va_list vl;
+	juc res;
+
+	va_start(vl, nmems);
+	res = ju_vmake(tag, aug, nmems, vl);
+	va_end(vl);
+
+	return res;
 }
 
 juc ju_make_str (const char* buf, size_t size)
@@ -118,6 +132,24 @@ juc ju_make_real (ju_real r)
 	*((ju_real*) ju_get_buffer(obj)) = r;
 	return obj;
 }
+
+juc ju_closure (ju_fnp fn, ju_int nmems, ...)
+{
+	va_list vl;
+	juc obj;
+
+	va_start(vl, nmems);
+	obj = ju_vmake(JU_TAG_CLOSURE, sizeof(ju_fnp), nmems, vl);
+	va_end(vl);
+
+	*((ju_fnp*) ju_get_buffer(obj)) = fn;
+	return obj;
+}
+
+
+
+
+
 
 juc ju_get (juc cell, ju_int i)
 {

@@ -69,7 +69,7 @@ static void make_black (ju_obj* obj)
 }
 
 
-static void juGC_init_obj (ju_obj* obj)
+void juGC_init_obj (ju_obj* obj)
 {
 	juGC_sweep();
 

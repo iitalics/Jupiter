@@ -3,11 +3,12 @@
 #include <stdbool.h>
 #include <stdlib.h>
 
-// VERSION  0.0.7
+// VERSION  0.0.8
 
 typedef    void* juc;
 typedef int32_t  ju_int;
 typedef  double  ju_real;
+typedef    juc (*ju_fnp) ();
 
 struct ju_obj;
 
@@ -42,6 +43,7 @@ void   juGC_sweep ();
 void   juGC_begin ();
 void   juGC_step ();
 void   juGC_end ();
+void   juGC_init_obj (ju_obj* obj);
 void   juGC_root (juc* root);
 void   juGC_unroot (int n);
 void   juGC_store (juc* root, juc value);
@@ -60,10 +62,11 @@ juc    ju_make_buf (ju_int tag, size_t aug, ju_int nmems, ...);
 #define ju_make(tag, ...) ju_make_buf(tag, 0, __VA_ARGS__)
 juc    ju_make_str (const char* buf, size_t size);
 juc    ju_make_real (ju_real r);
+juc    ju_closure (ju_fnp fn, ju_int nmems, ...);
 
 juc    ju_get (juc obj, ju_int i);
 juc    ju_safe_get (juc obj, char* tagname, ju_int tag, ju_int i);
 char*  ju_get_buffer (juc obj);
 size_t ju_get_length (juc obj);
+ju_fnp ju_get_fn (juc obj);
 ju_real ju_get_real (juc obj);
-
