@@ -455,10 +455,11 @@ void parseBlockExp (Lexer& lex, ExpList& list)
 		lex.eat(tSemicolon);
 		break;
 
-	// these expression don't proceeding require semicolons
 	case tLCurl:
+		list.push_back(parseBlock(lex));
+		break;
 	case tIf:
-		list.push_back(parseExp(lex));
+		list.push_back(parseCond(lex));
 		break;
 
 	// everthing else does
