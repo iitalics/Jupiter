@@ -47,8 +47,8 @@ VERSION         GOAL
                 desugar - member expression
                 parser - lambda
                 desugar - lambda
-TODO
                 codegen - lambda
+TODO
                 runtime - lambda
 0.0.4 dev       checkpoint - The Ultimate
                 parser/desugar - mutable state

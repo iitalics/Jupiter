@@ -5,6 +5,8 @@
 #include <cctype>
 #include <fstream>
 
+#define ENV_VAR   "%.env"
+#define JUP_CCONV "fastcc"
 
 Compiler::Compiler ()
 	: nameId(0), entry(nullptr) {}
@@ -27,6 +29,18 @@ static bool needs_escape (char c)
 		if (list[i] == c)
 			return false;
 	return true;
+}
+
+static std::string joinCommas (int n, const std::string& str)
+{
+	std::ostringstream ss;
+	for (int i = 0; i < n; i++)
+	{
+		if (i > 0)
+			ss << ", ";
+		ss << str;
+	}
+	return ss.str();
 }
 
 std::string Compiler::mangle (const std::string& ident)
@@ -108,7 +122,7 @@ void Compiler::outputRuntimeHeader (std::ostream& os)
 		throw Span().die("fatal: unable to access runtime header '"
 		                   JUP_LIB_PATH("runtime.ll") "'");
 
-	os << libfs.rdbuf();
+	os << libfs.rdbuf() << std::endl;
 
 	for (auto& name : declares)
 		os << "declare ccc i8* @" << name << " (...)" << std::endl;
@@ -119,7 +133,7 @@ void Compiler::outputEntryPoint (std::ostream& os)
 	   << ";;;   < jupiter entry point >" << std::endl
 	   << "define ccc i32 @main (i32 %argc, i8** %argv)" << std::endl << "{" << std::endl
 	   << "call void @ju_init ()" << std::endl
-	   << "call fastcc i8* @" << entry->internalName << " ()" << std::endl
+	   << "call " JUP_CCONV " i8* @" << entry->internalName << " ()" << std::endl
 	   << "call void @ju_destroy ()" << std::endl
 	   << "ret i32 0" << std::endl
 	   << "}" << std::endl;
@@ -155,17 +169,8 @@ CompileUnit::CompileUnit (Compiler* comp, OverloadPtr over,
 	  finishedInfer(true)
 {
 	// declare baked signature
-	ssPrefix << "declare fastcc i8* @" << intName
-	         << " (";
-
-	for (size_t i = 0, len = sig->args.size(); i < len; i++)
-	{
-		if (i > 0)
-			ssPrefix << ", ";
-
-		ssPrefix << "i8*";
-	}
-	ssPrefix << ")" << std::endl;
+	ssPrefix << "declare " JUP_CCONV " i8* @" << intName
+	         << " (" << joinCommas(sig->args.size(), "i8*") << ")";
 }
 
 // normal
@@ -298,7 +303,7 @@ void CompileUnit::writePrefix (EnvPtr env)
 	ssPrefix << std::endl << std::endl << std::endl
 	         << ";;;   " << funcInst.name << " "
 	         << funcInst.type()->string() << std::endl
-	         << "define fastcc i8* @"
+	         << "define " JUP_CCONV " i8* @"
 	         << internalName << " (";
 
 	for (size_t i = 0, len = env->vars.size(); i < len; i++)
@@ -308,6 +313,14 @@ void CompileUnit::writePrefix (EnvPtr env)
 
 		ssPrefix << "i8* " << env->vars[i].internal;
 	}
+
+	if (overload->hasEnv)
+	{
+		if (env->vars.size() > 0)
+			ssPrefix << ", ";
+		ssPrefix << "i8* " ENV_VAR;
+	}
+
 	ssPrefix << ") unnamed_addr" << std::endl
 	         << "{" << std::endl;
 }
@@ -333,9 +346,13 @@ bool CompileUnit::needsRetain (ExpPtr exp)
 	{
 	case eInt:
 	case eBool:
-	case eVar:
 	case eCond:
+	case eiEnv:
 		return false;
+
+	case eVar:
+		// access to global functions needs to be retained
+		return exp->get<bool>();
 
 	default: return true;
 	}
@@ -379,12 +396,15 @@ std::string CompileUnit::compile (ExpPtr e, EnvPtr env, bool retain)
 	case eCond:   return compileCond(e, env);
 	case eiGet:   return compileiGet(e, env);
 	case eiTag:   return compileiTag(e, env);
+	case eLambda: return compileLambda(e, env);
+	case eiEnv:   return "i8* " ENV_VAR;
 	case eTuple:
 		return "i8* null";
 
 	case eiMake:
 	case eiCall:
 		throw e->span.die("expression must be called as function"); 
+
 
 	default:
 		throw e->span.die("cannot compile expression: " + e->string());
@@ -463,7 +483,17 @@ std::string CompileUnit::compileReal (ExpPtr e, EnvPtr env)
 std::string CompileUnit::compileVar (ExpPtr e, EnvPtr env)
 {
 	if (e->get<bool>()) // global
-		throw e->span.die("cannot compile 'naked' globals");
+	{
+		auto val = makeUnique(".g");
+		auto cunit = special[e];
+
+		ssBody << val << " = call i8* (i8*, i32, ...)* @ju_closure ("
+			   << "i8* ()* bitcast (i8* ("
+			   << joinCommas(cunit->overload->signature->args.size(), "i8*")
+			   << ")* @" << cunit->internalName << " to i8*), i32 0)" << std::endl;
+		
+		return "i8* " + val;
+	}
 	else
 	{
 		auto var = env->get(e->getString());
@@ -484,51 +514,65 @@ std::string CompileUnit::compileCall (ExpPtr e, EnvPtr env)
 {
 	std::ostringstream args;
 	auto fn = e->subexps.front();
+	std::string closure = "";
+
+	size_t nargs = e->subexps.size() - 1;
 
 	if (fn->kind == eVar && fn->get<bool>())
 	{
-		args << "call fastcc i8* @" << special[fn] << " (";
+		auto cunit = special[fn];
+		args << "call " JUP_CCONV " i8* @" << cunit->internalName << " (";
 	}
 	else if (fn->kind == eiMake)
 	{
 		auto tag = GlobEnv::getTag(fn->getString());
 
 		args << "call i8* (i32, i32, i32, ...)* @ju_make_buf (i32 "
-		     << tag << ", i32 0, i32 "
-		     << (e->subexps.size() - 1);
+		     << tag << ", i32 0, i32 " << nargs;
 
-		if (e->subexps.size() > 1)
+		if (nargs > 0)
 			args << ", ";
 	}
 	else if (fn->kind == eiCall)
 	{
 		args << "call ccc i8* bitcast (i8* (...)* @" << fn->getString()
-			 << " to i8* (";
-
-		for (size_t i = 1, len = e->subexps.size(); i < len; i++)
-		{
-			if (i > 1)
-				args << ", ";
-
-			args << "i8*";
-		}
-
-		args << ")*) (";
+			 << " to i8* (" << joinCommas(nargs, "i8*") << ")*) (";
 
 		compiler->declares.insert(fn->getString());
 	}
 	else
-		throw fn->span.die("cannot call non-global");
+	{
+		auto data = makeUnique(".d");
+		auto fnp = makeUnique(".fn");
+
+		closure = compile(fn, env, true);
+		std::ostringstream fntype;
+		fntype << "i8* ("
+			   << joinCommas(nargs + 1, "i8*")
+			   << ")*";
+
+		ssBody << data << " = call i8* @ju_get_fn (" << closure << ")" << std::endl
+		       << fnp << " = bitcast i8* " << data << " to " << fntype.str() << std::endl;
+		args << "call " JUP_CCONV " " << fntype.str() << " " << fnp << "(";
+	}
 
 	pushLifetime();
-	for (size_t i = 1, len = e->subexps.size(); i < len; i++)
+	for (size_t i = 0; i < nargs; i++)
 	{
-		if (i > 1)
+		if (i > 0)
 			args << ", ";
 
-		args << compile(e->subexps[i], env, true);
+		args << compile(e->subexps[i + 1], env, true);
 	}
 	popLifetime();
+
+	if (!closure.empty())
+	{
+		if (nargs > 0)
+			args << ", ";
+
+		args << closure;
+	}
 
 	auto res = makeUnique(".r");
 	ssBody << res << " = " << args.str() << ")" << std::endl;
@@ -635,6 +679,32 @@ std::string CompileUnit::compileiTag (ExpPtr e, EnvPtr env)
 	       << cmp << " = icmp eq i32 " << tag << ", "
 	       << GlobEnv::getTag(e->getString()) << std::endl
 	       << res << " = inttoptr i1 " << cmp << " to i8* " << std::endl;
+
+	return "i8* " + res;
+}
+
+std::string CompileUnit::compileLambda (ExpPtr e, EnvPtr env)
+{
+	auto cunit = special[e];
+	auto res = makeUnique(".l");
+
+	std::ostringstream args;
+
+	// make env from variables
+	for (size_t i = 1, len = e->subexps.size(); i < len; i++)
+	{
+		auto var = e->subexps[i]->getString();
+		auto tmp = makeUnique(".v");
+		args << ", " << tmp;
+
+		ssBody << tmp << " = load i8** " << env->get(var).internal << std::endl;
+	}
+
+	ssBody << res << " = call i8* (i8*, i32, ...)* @ju_closure ("
+		   << "i8* ()* bitcast (i8* ("
+		   << joinCommas(cunit->overload->signature->args.size() + 1, "i8*")
+		   << ")* @" << cunit->internalName
+		   << " to i8*), i32 " << (e->subexps.size() - 1) << args.str() << ")" << std::endl;
 
 	return "i8* " + res;
 }

@@ -1,9 +1,14 @@
 # lambdas in action
 
-func twice (fn : () -> _) { fn(); fn(); }
+func twice (fn : () -> _) {
+	fn();
+	fn();
+}
 
 func main () {
-	func () { 
-		println("Hello, world!");
+	let msg = "Foo bar baz.";
+	
+	func () {
+		println(msg);
 	}.twice();
 }

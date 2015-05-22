@@ -25,7 +25,7 @@ struct CompileUnit
 	std::ostringstream ssEnd;
 
 	bool finishedInfer;
-	std::map<ExpPtr, std::string> special;
+	std::map<ExpPtr, CompileUnit*> special;
 	std::vector<std::string> nonUnique;
 	std::vector<int> tempLifetimes;
 	int lifetime;
@@ -82,6 +82,7 @@ struct CompileUnit
 	std::string compileLet (ExpPtr e, EnvPtr env);
 	std::string compileBlock (ExpPtr e, EnvPtr env);
 	std::string compileCond (ExpPtr e, EnvPtr env);
+	std::string compileLambda (ExpPtr e, EnvPtr env);
 	std::string compileiGet (ExpPtr e, EnvPtr env);
 	std::string compileiTag (ExpPtr e, EnvPtr env);
 };

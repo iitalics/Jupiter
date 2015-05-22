@@ -230,7 +230,7 @@ TyPtr Infer::inferLambda (ExpPtr exp, LocEnvPtr lenv)
 
 	auto sig = mainSubs(Sig::fromSigType(exp->getType(), exp->span));
 
-	Expptr body;
+	ExpPtr body;
 
 	if (exp->subexps.size() > 1)
 	{
@@ -244,7 +244,7 @@ TyPtr Infer::inferLambda (ExpPtr exp, LocEnvPtr lenv)
 
 			// retrieve variables from environment
 			body->subexps.push_back(
-				Exp::make(eLet, Ty::makeWildcard(), var, { get }));
+				Exp::make(eLet, get->getType(), var, { get }));
 		}
 		body->subexps.push_back(exp->subexps[0]);
 	}

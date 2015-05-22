@@ -259,8 +259,8 @@ bool Infer::unifyOverload (Subs& out,
 		return false;
 	out += { t1, resty }; /* t1 := rety */
 
-	// push overload instance name for the compiler to use
-	fn.cunit->special[t1->srcExp] = inst.cunit->internalName;
+	// push overload instance for the compiler to use
+	fn.cunit->special[t1->srcExp] = inst.cunit;
 
 	return true;
 }
