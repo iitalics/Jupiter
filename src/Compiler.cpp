@@ -488,7 +488,7 @@ std::string CompileUnit::compileVar (ExpPtr e, EnvPtr env)
 		auto cunit = special[e];
 
 		ssBody << val << " = call i8* (i8*, i32, ...)* @ju_closure ("
-			   << "i8* ()* bitcast (i8* ("
+			   << "i8* bitcast (i8* ("
 			   << joinCommas(cunit->overload->signature->args.size(), "i8*")
 			   << ")* @" << cunit->internalName << " to i8*), i32 0)" << std::endl;
 		
