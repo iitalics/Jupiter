@@ -170,7 +170,10 @@ void Ty::_string (Pretty& pr) const
 		break;
 
 	case tyOverloaded:
-		pr.ss << "<overloaded function \"" << name << "\">";
+		if (name.find("#lambda") == 0)
+			pr.ss << "<lambda function>";
+		else
+			pr.ss << "<overloaded function \"" << name << "\">";
 		break;
 
 	case tyWildcard:

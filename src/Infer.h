@@ -22,6 +22,7 @@ struct Subs
 	Subs (const RuleList& rules = RuleList());
 
 	TyPtr operator() (TyPtr ty) const;
+	SigPtr operator() (SigPtr sig) const;
 	Subs operator+ (const Rule& r) const;
 	Subs& operator+= (const Rule& r);
 
@@ -58,5 +59,5 @@ struct Infer
 	TyPtr inferCond (ExpPtr exp, LocEnvPtr lenv);
 	TyPtr inferBlock (ExpPtr exp, LocEnvPtr lenv);
 	TyPtr inferLet (ExpPtr exp, LocEnvPtr lenv);
-
+	TyPtr inferLambda (ExpPtr exp, LocEnvPtr lenv);
 };

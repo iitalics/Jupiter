@@ -57,6 +57,21 @@ TyPtr Subs::apply (TyPtr ty, const RuleList& ru) const
 		return ty;
 	}
 }
+SigPtr Subs::operator() (SigPtr sig) const
+{
+	auto sig2 = Sig::make({}, sig->span);
+	sig2->args.reserve(sig->args.size());
+
+	auto revRules = rules.reverse();
+
+	for (auto& arg : sig->args)
+		sig2->args.push_back({
+			arg.first,
+			apply(arg.second, revRules)
+		});
+
+	return sig2;
+}
 
 
 
@@ -307,8 +322,8 @@ TyPtr Infer::infer (ExpPtr exp, LocEnvPtr lenv)
 		return inferCall(exp, lenv);
 	case eCond:
 		return inferCond(exp, lenv);
-//	case eLambda:
-//		return inferLambda(exp, lenv);
+	case eLambda:
+		return inferLambda(exp, lenv);
 	case eBlock:
 		return inferBlock(exp, lenv);
 	case eLet:
@@ -464,4 +479,44 @@ TyPtr Infer::inferCond (ExpPtr exp, LocEnvPtr lenv)
 	auto subs = unify(t1, t2, exp->span);
 
 	return subs(t1); // == subs(t2)
+}
+TyPtr Infer::inferLambda (ExpPtr exp, LocEnvPtr lenv)
+{
+	// this special expression retrieves the environment object
+	//  of the current closure
+	static auto envExp = Exp::make(eiEnv);
+
+	auto sig = mainSubs(Sig::fromSigType(exp->getType(), exp->span));
+
+	Expptr body;
+
+	if (exp->subexps.size() > 1)
+	{
+		body = Exp::make(eBlock, {}, exp->span);
+		body->subexps.reserve(exp->subexps.size());
+		for (size_t i = 0, len = exp->subexps.size() - 1; i < len; i++)
+		{
+			auto var = exp->subexps[i + 1]->getString();
+			auto get = Exp::make(eiGet, int_t(i), { envExp });
+			get->setType(lenv->get(var)->ty);
+
+			// retrieve variables from environment
+			body->subexps.push_back(
+				Exp::make(eLet, Ty::makeWildcard(), var, { get }));
+		}
+		body->subexps.push_back(exp->subexps[0]);
+	}
+	else
+	{
+		// no need
+		body = exp->subexps[0];
+	}
+
+	// create seperate function containing lambda
+	auto lamName = fn.cunit->compiler->genUniqueName("#lambda");
+	auto overload = Overload::make(env, lamName, sig, body);
+	overload->hasEnv = true;
+	env.addFunc(lamName)->overloads.push_back(overload);
+
+	return Ty::makeOverloaded(exp, lamName);
 }

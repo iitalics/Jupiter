@@ -48,7 +48,6 @@ VERSION         GOAL
                 parser - lambda
                 desugar - lambda
 TODO
-                infer - lambda
                 codegen - lambda
                 runtime - lambda
 0.0.4 dev       checkpoint - The Ultimate
