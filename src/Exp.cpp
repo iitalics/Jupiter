@@ -290,6 +290,8 @@ void Exp::_string (std::ostringstream& ss, bool tag, int increase, int ind) cons
 		subexps[0]->_string(ss, tag, increase, ind);
 		break;
 
+	case eiEnv: ss << "^env"; break;
+
 	default:
 		ss << "< ?? >";
 		return;

@@ -143,7 +143,7 @@ void GlobEnv::bake (Compiler* comp, const std::string& intName,
 OverloadPtr Overload::make (GlobEnv& env, const std::string& name,
                               SigPtr sig, ExpPtr body)
 {
-	return OverloadPtr(new Overload { env, name, sig, body, {} });
+	return OverloadPtr(new Overload { env, name, sig, body, false, {} });
 }
 
 FuncInstance Overload::inst (OverloadPtr over, SigPtr sig, Compiler* compiler)

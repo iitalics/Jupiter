@@ -51,12 +51,13 @@ enum ExpKind
 	eCond,
 	eLambda,
 	eBlock,
-	eLet,           //  string
+	eLet,           //  string, type
 	eiMake,         //  string, int_t, type
 	eiGet,          //  int_t, type
 	eiPut,          //  int_t
 	eiTag,          //  string
-	eiCall          //  string, type
+	eiCall,         //  string, type
+	eiEnv
 };
 
 class Exp

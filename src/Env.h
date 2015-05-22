@@ -23,6 +23,7 @@ public:
 	std::string name;
 	SigPtr signature;
 	ExpPtr body;
+	bool hasEnv;
 	std::vector<CompileUnit*> instances;
 
 	static OverloadPtr make (GlobEnv& env, const std::string& name,
