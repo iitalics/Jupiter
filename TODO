@@ -49,8 +49,8 @@ VERSION         GOAL
                 desugar - lambda
                 codegen - lambda
                 runtime - lambda
-TODO
 0.0.4 dev       checkpoint - The Ultimate
+TODO
                 parser/desugar - mutable state
                 codegen - mutable state (boxed values)
                 parser/codegen - loops
