@@ -180,3 +180,24 @@ juc ju_safe_get (juc cell, char* tagname, ju_int tag, ju_int i)
 
 	return ju_get(cell, i);
 }
+void ju_put (juc cell, ju_int i, juc val)
+{
+	if (cell == ju_null || ju_is_int(cell))
+		// TODO: die here instead?
+		return;
+
+	ju_obj* obj = cell;
+
+	if (i >= 0 && i < obj->nmems)
+		obj->mems[i] = val;
+}
+void ju_safe_put (juc cell, char* tagname, ju_int tag, ju_int i, juc val)
+{
+	if (ju_get_tag(cell) != tag)
+	{
+		fprintf(stderr, "RUNTIME: expected object tag \"%s\"\n", tagname);
+		exit(1);
+	}
+
+	ju_put(cell, i, val);
+}

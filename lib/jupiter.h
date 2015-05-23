@@ -71,3 +71,6 @@ char*  ju_get_buffer (juc obj);
 size_t ju_get_length (juc obj);
 ju_fnp ju_get_fn (juc obj);
 ju_real ju_get_real (juc obj);
+
+void   ju_put (juc obj, ju_int i, juc val);
+void   ju_safe_put (juc obj, char* tagname, ju_int tag, ju_int i, juc val);
