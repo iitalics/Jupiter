@@ -4,9 +4,10 @@
 #include <stdio.h>
 
 // TODO: hash function in compiler AND runtime
-#define JU_TAG_STR     0x1
-#define JU_TAG_REAL    0x2
-#define JU_TAG_CLOSURE 0x3
+#define JU_TAG_BOX     0x1
+#define JU_TAG_STR     0x2
+#define JU_TAG_REAL    0x3
+#define JU_TAG_CLOSURE 0x4
 
 
 // utilities
@@ -124,6 +125,11 @@ juc ju_make_str (const char* buf, size_t size)
 		memcpy(ju_get_buffer(obj), buf, size);
 	
 	return obj;
+}
+
+juc ju_make_box (juc val)
+{
+	return ju_make_buf(JU_TAG_BOX, 0, 1, val);
 }
 
 juc ju_make_real (ju_real r)

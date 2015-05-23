@@ -397,9 +397,9 @@ std::string CompileUnit::compile (ExpPtr e, EnvPtr env, bool retain)
 	case eiGet:   return compileiGet(e, env);
 	case eiTag:   return compileiTag(e, env);
 	case eLambda: return compileLambda(e, env);
+	case eAssign: return compileAssign(e, env);
 	case eiEnv:   return "i8* " ENV_VAR;
 	case eTuple:
-	case eAssign:
 		return "i8* null";
 
 	case eiMake:
@@ -615,7 +615,7 @@ std::string CompileUnit::compileLet (ExpPtr e, EnvPtr env)
 	{
 		auto box = makeUnique(".box");
 		ssBody << box << " = call i8* @ju_make_box (" << res << ")" << std::endl;
-		res = box;
+		res = "i8* " + box;
 	}
 	stackStore(internal, res);
 
@@ -732,4 +732,9 @@ std::string CompileUnit::compileLambda (ExpPtr e, EnvPtr env)
 		   << " to i8*), i32 " << (e->subexps.size() - 1) << args.str() << ")" << std::endl;
 
 	return "i8* " + res;
+}
+
+std::string CompileUnit::compileAssign (ExpPtr e, ExpPtr env)
+{
+	return "i8* null";
 }

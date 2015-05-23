@@ -3,7 +3,7 @@
 #include <stdbool.h>
 #include <stdlib.h>
 
-// VERSION  0.0.8
+// VERSION  0.0.9
 
 typedef    void* juc;
 typedef int32_t  ju_int;
@@ -60,6 +60,7 @@ juc    ju_from_bool (bool b);
 
 juc    ju_make_buf (ju_int tag, size_t aug, ju_int nmems, ...);
 #define ju_make(tag, ...) ju_make_buf(tag, 0, __VA_ARGS__)
+juc    ju_make_box (juc val);
 juc    ju_make_str (const char* buf, size_t size);
 juc    ju_make_real (ju_real r);
 juc    ju_closure (ju_fnp fn, ju_int nmems, ...);
