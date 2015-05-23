@@ -50,6 +50,7 @@ enum ExpKind
 	eInfix,
 	eCond,
 	eLambda,
+	eAssign,
 	eBlock,
 	eLet,           //  string, type
 	eiMake,         //  string, int_t, type
@@ -222,6 +223,7 @@ ExpPtr parseLambda (Lexer& lex);
 ExpPtr parseBlock (Lexer& lex);
 void parseBlockExp (Lexer& lex, ExpList& list);
 ExpPtr parseLet (Lexer& lex);
+ExpPtr parseAssign (Lexer& lex, ExpPtr left);
 ExpPtr parseiMake (Lexer& lex);
 ExpPtr parseiGet (Lexer& lex);
 ExpPtr parseiPut (Lexer& lex);

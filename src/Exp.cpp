@@ -134,7 +134,7 @@ void Exp::_string (std::ostringstream& ss, bool tag, int increase, int ind) cons
 		"string", "bool", "var",
 		"tuple", "call", "member",
 		"infix", "cond", "lambda",
-		"block", "let",
+		"assign", "block", "let",
 		"^make", "^get", "^put", "^tag?", "^call"
 	};
 
@@ -203,6 +203,15 @@ void Exp::_string (std::ostringstream& ss, bool tag, int increase, int ind) cons
 		ind += increase;
 		_indent(ss, ind);
 		subexps[0]->_string(ss, tag, increase, ind);
+		ind -= increase;
+		break;
+
+	case eAssign:
+		subexps[0]->_string(ss, tag, increase, ind);
+		ss << " = " << std::endl;
+		ind += increase;
+		_indent(ss, ind);
+		subexps[1]->_string(ss, tag, increase, ind);
 		ind -= increase;
 		break;
 	

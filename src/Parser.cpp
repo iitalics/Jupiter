@@ -464,7 +464,7 @@ void parseBlockExp (Lexer& lex, ExpList& list)
 
 	// everthing else does
 	default:
-		list.push_back(parseExp(lex));
+		list.push_back(parseAssign(lex, parseExp(lex)));
 		if (lex.current() != tSemicolon)
 			lex.expect(tRCurl);
 		else
@@ -490,7 +490,19 @@ ExpPtr parseLet (Lexer& lex)
 	auto e = Exp::make(eLet, ty, name, { init }, spStart + spEnd);
 	return e;
 }
+ExpPtr parseAssign (Lexer& lex, ExpPtr left)
+{
+	if (lex.current() != tEqual)
+		return left;
 
+	lex.eat(tEqual);
+
+	auto right = parseExp(lex);
+
+	lex.expect(tSemicolon);
+
+	return Exp::make(eAssign, { left, right }, left->span + right->span);
+}
 ExpPtr parseiMake (Lexer& lex)
 {
 	// ^make <ty> <tag>

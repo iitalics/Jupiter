@@ -70,6 +70,8 @@ TyPtr Infer::infer (ExpPtr exp, LocEnvPtr lenv)
 		return inferBlock(exp, lenv);
 	case eLet:
 		return inferLet(exp, lenv);
+	case eAssign:
+		return inferAssign(exp, lenv);
 
 	case eiMake:
 	case eiGet:
@@ -261,4 +263,12 @@ TyPtr Infer::inferLambda (ExpPtr exp, LocEnvPtr lenv)
 	env.addFunc(lamName)->overloads.push_back(overload);
 
 	return Ty::makeOverloaded(exp, lamName);
+}
+TyPtr Infer::inferAssign (ExpPtr exp, LocEnvPtr lenv)
+{
+	auto t1 = infer(exp->subexps[0], lenv);
+	auto t2 = infer(exp->subexps[1], lenv);
+	unify(t1, t2, exp->span);
+
+	return Ty::makeUnit();
 }

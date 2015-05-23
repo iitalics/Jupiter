@@ -25,6 +25,7 @@ struct Desugar
 	ExpPtr desugarInfix (ExpPtr e, LocEnvPtr lenv);
 	ExpPtr desugarCond (ExpPtr e, LocEnvPtr lenv);
 	ExpPtr desugarLambda (ExpPtr e, LocEnvPtr lenv);
+	ExpPtr desugarAssign (ExpPtr e, LocEnvPtr lenv);
 	ExpPtr desugarBlock (ExpPtr e, LocEnvPtr lenv);
 	ExpPtr desugarLet (ExpPtr e, LocEnvPtr lenv);
 	ExpPtr desugarGlobal (ExpPtr e);

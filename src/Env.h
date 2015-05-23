@@ -119,6 +119,7 @@ public:
 	{
 		std::string name;
 		TyPtr ty;
+		bool mut;
 	};
 	using VarPtr = Var*;
 

@@ -23,6 +23,8 @@ ExpPtr Desugar::desugar (ExpPtr exp, LocEnvPtr lenv)
 		return desugarCond(exp, lenv);
 	case eLambda:
 		return desugarLambda(exp, lenv);
+	case eAssign:
+		return desugarAssign(exp, lenv);
 	case eBlock:
 		return desugarBlock(exp, lenv);
 
@@ -194,7 +196,38 @@ ExpPtr Desugar::desugarLet (ExpPtr e, LocEnvPtr lenv)
 	lenv->newVar(e->getString());
 	return res;
 }
+ExpPtr Desugar::desugarAssign (ExpPtr e, LocEnvPtr lenv)
+{
+	auto left = e->subexps[0];
+	auto right = desugar(e->subexps[1], lenv);
 
+	if (left->kind == eVar)
+	{
+		auto var = lenv->get(left->getString());
+
+		if (var == nullptr)
+			throw e->span.die("cannot assign to global");
+		var->mut = true;
+
+		left = desugar(left, lenv);
+
+		return Exp::make(eAssign, { left, right }, e->span);
+	}
+	else if (left->kind == eMem)
+	{
+		//   x.t = y   ->   t=(x, y)
+
+		auto fnName = left->getString() + "=";
+		auto fn = Exp::make(eVar, fnName, true, {}, e->span);
+
+		fn = desugarGlobal(fn);
+		left = desugar(left->subexps[0], lenv);
+
+		return Exp::make(eCall, { fn, left, right }, e->span);
+	}
+	else
+		throw left->span.die("cannot assign to this expression");
+}
 
 
 

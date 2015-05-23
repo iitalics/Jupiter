@@ -204,7 +204,7 @@ LocEnv::VarPtr LocEnv::newVar (TyPtr ty)
 
 LocEnv::VarPtr LocEnv::newVar (const std::string& name, TyPtr ty)
 {
-	auto v = new Var { name, ty };
+	auto v = new Var { name, ty, false };
 	vars.push_back(v);
 	return v;
 }
