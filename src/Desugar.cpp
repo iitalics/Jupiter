@@ -170,7 +170,7 @@ ExpPtr Desugar::desugarBlock (ExpPtr e, LocEnvPtr lenvp)
 {
 	auto lenv = LocEnv::make(lenvp);
 
-	return e->mapSubexps([=] (ExpPtr e2)
+	auto res = e->mapSubexps([=] (ExpPtr e2)
 	{
 		ExpPtr res;
 
@@ -181,6 +181,20 @@ ExpPtr Desugar::desugarBlock (ExpPtr e, LocEnvPtr lenvp)
 
 		return res;
 	});
+
+	// back-track to confirm each var is mutable
+	for (auto& var : lenv->vars)
+		if (var->mut)
+		{
+			for (auto& e : res->subexps)
+				if (e->kind == eLet && e->getString() == var->name)
+				{
+					e->set<bool>(true);
+					break;
+				}
+		}
+
+	return res;
 }
 ExpPtr Desugar::desugarLet (ExpPtr e, LocEnvPtr lenv)
 {
