@@ -399,6 +399,7 @@ std::string CompileUnit::compile (ExpPtr e, EnvPtr env, bool retain)
 	case eLambda: return compileLambda(e, env);
 	case eiEnv:   return "i8* " ENV_VAR;
 	case eTuple:
+	case eAssign:
 		return "i8* null";
 
 	case eiMake:
@@ -503,6 +504,13 @@ std::string CompileUnit::compileVar (ExpPtr e, EnvPtr env)
 			auto val = makeUnique(".v");
 			ssBody << val << " = load i8** " << var.internal << std::endl;
 
+			if (var.mut)
+			{
+				auto unbox = makeUnique(".ub");
+				ssBody << unbox << " = call i8* @ju_get (i8* " << val << ", i32 0)" << std::endl;
+				val = unbox;
+			}
+
 			return "i8* " + val;
 		}
 		else
@@ -585,13 +593,30 @@ std::string CompileUnit::compileLet (ExpPtr e, EnvPtr env)
 	auto internal = makeUnique(e->getString());
 	stackAlloc(internal);
 
+	auto mut = e->get<bool>();
+
+	// don't create a box for variable already boxed
+	//  this is a super hacky way to solve this problem
+	//  TODO: make this better
+	auto unboxing =
+		e->subexps[0]->kind == eiGet &&
+		e->subexps[0]->subexps[0]->kind == eiEnv;
+
 	env->vars.push_back({
 		e->getString(),
 		internal,
-		true
+		true,
+		mut,
 	});
 
-	auto res = compile(e->subexps.front(), env, false);
+	auto res = compile(e->subexps[0], env, false);
+
+	if (mut && !unboxing)
+	{
+		auto box = makeUnique(".box");
+		ssBody << box << " = call i8* @ju_make_box (" << res << ")" << std::endl;
+		res = box;
+	}
 	stackStore(internal, res);
 
 	return "i8* null"; // returns unit

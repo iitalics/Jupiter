@@ -1,0 +1,77 @@
+SYNTAX
+	<id>
+	<op>
+	<number>
+	<string>
+
+	toplevel :=
+		<decl>*
+
+	decl :=
+		<func-def>
+
+	type :=
+		<poly-ty>
+		<concrete-ty>
+		'_'
+
+	poly-ty :=
+		'\\' <id>
+
+	concrete-ty :=
+		<id>
+		<id> '(' (<type> (',' <type>)*)? ')'
+
+	func-def :=
+		'func' <id> '(' <sig>? ')' <block>
+
+	var :=
+		<id> (':' <type>)?
+
+	sig :=
+		<var> (',' <var>)*
+
+	block :=
+		'{' <block-exp>* <exp>? '}'
+
+	block-exp :=
+		';'
+		<let-exp>
+		<cond>
+		<block>
+		<exp> ';'
+
+	let-exp :=
+		'let' <var> '=' <exp> ';'
+
+	cond :=
+		'if' <exp> <block> ('else' <block>)?
+		'if' <exp> 'then' <exp> 'else' <exp>
+
+	exp :=
+		<term> (<op> <term>)*
+
+	term :=
+		<lit>
+		<id>
+		<tuple>
+		<lambda>
+		<cond>
+		<block>
+		# postfix:
+		<call>
+
+	lit :=
+		<number>
+		<string>
+		'true' | 'false'
+
+	tuple :=
+		'(' (<exp> ',')* <exp>? ')'
+
+	call :=
+		<term> <tuple>
+
+	lambda :=
+		'func' '(' <sig>? ')' <block>
+		'\\' <sig> '->' <exp>

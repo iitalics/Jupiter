@@ -1,28 +1,17 @@
 # lambdas in action!
 
-func each (lst : [\a], cb : (\a) -> _) {
-	if lst.cons? {
-		cb(lst.hd);
-		lst.tl.each(cb);
+func repeat (fn, n) {
+	if n > 0 {
+		fn();
+		fn.repeat(n - 1);
 	}
 }
-
-func print (lst : [\a]) {
-	print("[");
-
-	if !(lst.nil?) {
-		print(lst.hd);
-		lst.tl.each(\x ->
-			print(", ", x))
-	}
-
-	print("]");
-}
-
-func :: (x, xs) { cons(x, xs) }
 
 func main () {
-	let lst = 1 :: 2 :: 3 :: 4 :: 5 :: nil();
+	let x = 1;
 
-	println("lst = ", lst);
+	func () {
+		println("x = ", x);
+		x = x + 1;
+	}.repeat(10);
 }

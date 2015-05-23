@@ -36,6 +36,7 @@ struct CompileUnit
 		std::string name;
 		std::string internal;
 		bool stackAlloc;
+		bool mut;
 	};
 	struct Env
 	{
