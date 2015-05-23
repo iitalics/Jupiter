@@ -151,7 +151,7 @@ TyPtr Infer::inferLet (ExpPtr exp, LocEnvPtr lenv)
 	if (ty->kind == tyOverloaded)
 		throw exp->span.die("invalid for variable to have overloaded type");
 
-	lenv->newVar(exp->getString(), ty);
+	lenv->newVar(exp->getString(), ty)->mut = exp->get<bool>();
 
 	return nullptr;
 }
@@ -240,13 +240,16 @@ TyPtr Infer::inferLambda (ExpPtr exp, LocEnvPtr lenv)
 		body->subexps.reserve(exp->subexps.size());
 		for (size_t i = 0, len = exp->subexps.size() - 1; i < len; i++)
 		{
-			auto var = exp->subexps[i + 1]->getString();
+			auto var = lenv->get(exp->subexps[i + 1]->getString());
 			auto get = Exp::make(eiGet, int_t(i), { envExp });
-			get->setType(lenv->get(var)->ty);
+			get->setType(var->ty);
+
+			auto let = Exp::make(eLet, get->getType(), var->name, { get });
+			let->set<bool>(var->mut);
 
 			// retrieve variables from environment
-			body->subexps.push_back(
-				Exp::make(eLet, get->getType(), var, { get }));
+			body->subexps.push_back(let);
+
 		}
 		body->subexps.push_back(exp->subexps[0]);
 	}
