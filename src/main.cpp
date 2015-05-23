@@ -5,6 +5,9 @@
 #include "Desugar.h"
 #include "Compiler.h"
 
+#define VERSION   "jupiter version 0.0.4 dev"
+#define COPYRIGHT "copyright (C) 2015 iitalics"
+
 static int Main (std::vector<std::string>&& args);
 
 int main (int argc, char** argv)
@@ -28,7 +31,10 @@ static int Main (std::vector<std::string>&& args)
 
 	if (args.size() == 1)
 	{
-		std::cout << "Usage: jup file1 [, file2...]" << std::endl;
+		std::cout << "Usage: jup file1 [, file2...]" << std::endl
+		          << std::endl
+			  << VERSION << std::endl
+			  << COPYRIGHT << std::endl;
 		return 1;
 	}
 
