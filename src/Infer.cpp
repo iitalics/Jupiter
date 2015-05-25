@@ -47,31 +47,20 @@ TyPtr Infer::infer (ExpPtr exp, LocEnvPtr lenv)
 
 	switch (exp->kind)
 	{
-	case eInt:
-		return tyInt;
-	case eReal:
-		return tyReal;
-	case eString:
-		return tyStr;
-	case eBool:
-		return tyBool;
+	case eInt:    return tyInt;
+	case eReal:   return tyReal;
+	case eString: return tyStr;
+	case eBool:   return tyBool;
 
-	case eVar:
-		return inferVar(exp, lenv);
-	case eTuple:
-		return inferTuple(exp, lenv);
-	case eCall:
-		return inferCall(exp, lenv);
-	case eCond:
-		return inferCond(exp, lenv);
-	case eLambda:
-		return inferLambda(exp, lenv);
-	case eBlock:
-		return inferBlock(exp, lenv);
-	case eLet:
-		return inferLet(exp, lenv);
-	case eAssign:
-		return inferAssign(exp, lenv);
+	case eVar:    return inferVar(exp, lenv);
+	case eTuple:  return inferTuple(exp, lenv);
+	case eCall:   return inferCall(exp, lenv);
+	case eCond:   return inferCond(exp, lenv);
+	case eLambda: return inferLambda(exp, lenv);
+	case eAssign: return inferAssign(exp, lenv);
+	case eLoop:   return inferLoop(exp, lenv);
+	case eBlock:  return inferBlock(exp, lenv);
+	case eLet:    return inferLet(exp, lenv);
 
 	case eiMake:
 	case eiGet:
@@ -280,6 +269,20 @@ TyPtr Infer::inferAssign (ExpPtr exp, LocEnvPtr lenv)
 	}
 
 	unify(t1, t2, exp->span);
+
+	return Ty::makeUnit();
+}
+TyPtr Infer::inferLoop (ExpPtr exp, LocEnvPtr lenv)
+{
+	if (exp->subexps.size() > 1)
+	{
+		auto tcond = infer(exp->subexps[0], lenv);
+		unify(tcond, Ty::makeConcrete("Bool"), exp->subexps[0]->span);
+
+		infer(exp->subexps[1], lenv);
+	}
+	else
+		infer(exp->subexps[0], lenv);
 
 	return Ty::makeUnit();
 }

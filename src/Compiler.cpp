@@ -391,13 +391,14 @@ std::string CompileUnit::compile (ExpPtr e, EnvPtr env, bool retain)
 	case eString: return compileString(e, env);
 	case eReal:   return compileReal(e, env);
 	case eCall:   return compileCall(e, env);
-	case eLet:    return compileLet(e, env);
-	case eBlock:  return compileBlock(e, env);
 	case eCond:   return compileCond(e, env);
-	case eiGet:   return compileiGet(e, env);
-	case eiTag:   return compileiTag(e, env);
 	case eLambda: return compileLambda(e, env);
 	case eAssign: return compileAssign(e, env);
+	case eLoop:   return compileLoop(e, env);
+	case eBlock:  return compileBlock(e, env);
+	case eLet:    return compileLet(e, env);
+	case eiGet:   return compileiGet(e, env);
+	case eiTag:   return compileiTag(e, env);
 	case eiEnv:   return "i8* " ENV_VAR;
 	case eTuple:
 		return "i8* null";
@@ -622,9 +623,20 @@ std::string CompileUnit::compileLet (ExpPtr e, EnvPtr env)
 	return "i8* null"; // returns unit
 }
 
-std::string CompileUnit::compileBlock (ExpPtr e, EnvPtr env)
+std::string CompileUnit::compileBlock (ExpPtr e, EnvPtr penv)
 {
 	std::string res = "i8* null";
+
+	bool newEnv = false;
+	for (auto e2 : e->subexps)
+		if (e2->kind == eLet)
+		{
+			newEnv = true;
+			break;
+		}
+
+	// conserve memory
+	auto env = newEnv ? makeEnv(penv) : penv;
 
 	for (auto e2 : e->subexps)
 		res = compile(e2, env, false);
@@ -670,6 +682,41 @@ std::string CompileUnit::compileCond (ExpPtr e, EnvPtr env)
 	ssBody << res << " = load i8** " << temp << std::endl;
 
 	return "i8* " + res;
+}
+std::string CompileUnit::compileLoop (ExpPtr e, EnvPtr penv)
+{
+	auto env = makeEnv(penv);
+	auto lbegin = makeUnique("Lloop");
+	auto lend = makeUnique("Lend");
+	auto body = e->subexps[0];
+
+	ssBody << "br label " << lbegin << std::endl
+	       << std::endl
+	       << lbegin.substr(1) << ":" << std::endl;
+
+	if (e->subexps.size() > 1)
+	{
+		auto ldo = makeUnique("Ldo");
+		auto cmp = makeUnique(".cond");
+		auto cond = compile(e->subexps[0], penv, false);
+		ssBody << cmp << " = icmp eq " << cond << ", null" << std::endl
+		       << "br i1 " << cmp
+		       << ", label " << lend
+		       << ", label " << ldo << std::endl
+		       << std::endl
+		       << ldo.substr(1) << ":" << std::endl;
+
+		body = e->subexps[1];
+	}
+
+	env->loop = { true, lbegin, lend };
+	compile(body, env, false);
+
+	ssBody << "br label " << lbegin << std::endl
+	       << std::endl
+	       << lend.substr(1) << ":" << std::endl;
+
+	return "i8* null";
 }
 
 std::string CompileUnit::compileiGet (ExpPtr e, EnvPtr env)

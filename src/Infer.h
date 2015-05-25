@@ -57,8 +57,9 @@ struct Infer
 	TyPtr inferTuple (ExpPtr exp, LocEnvPtr lenv);
 	TyPtr inferCall (ExpPtr exp, LocEnvPtr lenv);
 	TyPtr inferCond (ExpPtr exp, LocEnvPtr lenv);
-	TyPtr inferBlock (ExpPtr exp, LocEnvPtr lenv);
-	TyPtr inferLet (ExpPtr exp, LocEnvPtr lenv);
 	TyPtr inferLambda (ExpPtr exp, LocEnvPtr lenv);
 	TyPtr inferAssign (ExpPtr exp, LocEnvPtr lenv);
+	TyPtr inferLoop (ExpPtr exp, LocEnvPtr lenv);
+	TyPtr inferBlock (ExpPtr exp, LocEnvPtr lenv);
+	TyPtr inferLet (ExpPtr exp, LocEnvPtr lenv);
 };

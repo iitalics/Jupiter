@@ -31,6 +31,11 @@ struct CompileUnit
 	int lifetime;
 	size_t nroots;
 
+	struct Loop
+	{
+		bool any;
+		std::string labelBegin, labelEnd;
+	};
 	struct Var
 	{
 		std::string name;
@@ -42,6 +47,7 @@ struct CompileUnit
 	{
 		EnvPtr parent;
 		std::vector<Var> vars;
+		Loop loop;
 
 		Env (CompileUnit* cunit, EnvPtr parent);
 		Var get (const std::string& name) const;
@@ -85,6 +91,7 @@ struct CompileUnit
 	std::string compileCond (ExpPtr e, EnvPtr env);
 	std::string compileLambda (ExpPtr e, EnvPtr env);
 	std::string compileAssign (ExpPtr e, EnvPtr env);
+	std::string compileLoop (ExpPtr e, EnvPtr env);
 	std::string compileiGet (ExpPtr e, EnvPtr env);
 	std::string compileiTag (ExpPtr e, EnvPtr env);
 };

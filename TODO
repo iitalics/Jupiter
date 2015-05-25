@@ -35,8 +35,8 @@ VERSION         GOAL
 0.0.2 dev       checkpoint - jupc hello.j
                 parser - user types
                 desugar - type validity
-		parser - user types constructor
-		parser - user types accesors
+                parser - user types constructor
+                parser - user types accesors
                 codegen - ^call
                 codegen - user types
                 main - organized standard library
@@ -51,10 +51,10 @@ VERSION         GOAL
                 runtime - lambda
 0.0.4 dev       checkpoint - The Ultimate
                 parser/desugar - mutable state
-		codegen - mutable state
+                codegen - mutable state
                 parser - loops
+                desugar/codegen - loops
 TODO
-		desugar/codegen - loops
                 desugar - sugar loops
                 codegen - tail calls?
                 stdlib - more complete primitive functions
