@@ -84,7 +84,7 @@ struct CompileUnit
 	std::string compileBlock (ExpPtr e, EnvPtr env);
 	std::string compileCond (ExpPtr e, EnvPtr env);
 	std::string compileLambda (ExpPtr e, EnvPtr env);
-	std::string compileAssign (ExpPtr e, ExpPtr env);
+	std::string compileAssign (ExpPtr e, EnvPtr env);
 	std::string compileiGet (ExpPtr e, EnvPtr env);
 	std::string compileiTag (ExpPtr e, EnvPtr env);
 };

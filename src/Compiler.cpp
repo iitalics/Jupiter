@@ -734,7 +734,14 @@ std::string CompileUnit::compileLambda (ExpPtr e, EnvPtr env)
 	return "i8* " + res;
 }
 
-std::string CompileUnit::compileAssign (ExpPtr e, ExpPtr env)
+std::string CompileUnit::compileAssign (ExpPtr e, EnvPtr env)
 {
+	auto var = env->get(e->subexps[0]->getString());
+	auto res = compile(e->subexps[1], env, false);
+	auto box = makeUnique(".box");
+
+	ssBody << box << " = load i8** " << var.internal << std::endl
+	       << "call void @ju_put (i8* " << box << ", i32 0, " << res << ")" << std::endl;
+
 	return "i8* null";
 }

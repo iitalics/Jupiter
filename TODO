@@ -52,7 +52,6 @@ VERSION         GOAL
 0.0.4 dev       checkpoint - The Ultimate
                 parser/desugar - mutable state
 TODO
-                codegen - mutable state (boxed values)
                 parser/codegen - loops
                 desugar - sugar loops
                 codegen - tail calls?
