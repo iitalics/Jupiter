@@ -54,6 +54,7 @@ VERSION         GOAL
                 codegen - mutable state
                 parser - loops
                 desugar/codegen - loops
+                infer - overload resolution
 TODO
                 desugar - sugar loops
                 codegen - tail calls?

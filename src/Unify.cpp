@@ -164,17 +164,118 @@ bool Infer::unify (Subs& out, TyList l1, TyList l2)
 }
 
 
+
+
+
+
+
+
+enum TyCmp {
+	Same,
+	Ambiguous,
+	Opt1Better,
+	Opt2Better,
+};
+
+
+// determines which type is a better representation of the model
+// RULES:
+//   for one concrete type to be "better" than the other,
+//     each subtype has to be either "same" or "better"
+//     and atleast one subtype has to be "better"
+//   for two concrete types to be "ambiguous"
+//     a subtype of the first type is "better" than that of the second
+//     and a subtype of the second type is "better" than that of the first
+//     or, if either type contains any "ambiguous" subtype pairs
+//   concrete types are "better" than poly types
+//   if the model is a poly type, the two types are "same" no matter what
+static TyCmp compareOverload (TyPtr model, TyPtr opt1, TyPtr opt2)
+{
+	if (model->kind == tyPoly)
+		return TyCmp::Same;
+	if (opt1->kind == tyPoly && opt2->kind == tyPoly)
+		return TyCmp::Same;
+	if (opt1->kind == tyPoly)
+		return TyCmp::Opt2Better;
+	if (opt2->kind == tyPoly)
+		return TyCmp::Opt1Better;
+
+	// iterate all three (linked)lists of subtypes at the same time
+	auto sm = model->subtypes,
+		s1 = opt1->subtypes,
+		s2 = opt2->subtypes;
+
+	auto res = TyCmp::Same;
+	for (; !sm.nil(); ++sm, ++s1, ++s2)
+	{
+		auto cmp = compareOverload(sm.head(), s1.head(), s2.head());
+
+		if (cmp == TyCmp::Ambiguous)
+			return TyCmp::Ambiguous;
+
+		if (cmp != TyCmp::Same)
+		{
+			if (res == TyCmp::Same) // influence to one side
+				res = cmp;
+			else if (res != cmp)    // conflicting => ambiguous
+				return TyCmp::Ambiguous;
+		}
+	}
+	return res;
+}
+
+struct Valid
+{
+	OverloadPtr overload;
+	TyPtr ty;
+	Subs subs;
+};
+
+static void sortValid (TyPtr model, std::vector<Valid>& valid)
+{
+	int i, best, len;
+
+	for (best = 0, i = 1, len = valid.size(); i < len; i++)
+	{
+		auto cmp = compareOverload(model,
+		              valid[best].ty,
+		              valid[i].ty);
+
+		if (cmp == TyCmp::Opt2Better)
+			best = i;
+	}
+
+	// remove worse entries from list
+	for (i = 0; i < len; i++)
+		if (i != best)
+		{
+			auto cmp = compareOverload(model,
+			              valid[best].ty,
+			              valid[i].ty);
+
+			if (cmp == TyCmp::Opt1Better)
+			{
+				valid.erase(valid.begin() + i);
+				if (i < best)
+					--best;
+				--i;
+				--len;
+			}
+			// else keep in list
+		}
+}
+
+
+
+
 bool Infer::unifyOverload (Subs& out,
                              TyPtr t1, TyPtr t2,
                              TyList l1, TyList l2)
 {
 	auto& name = t1->name;
 	auto globfn = env.getFunc(name);
-
-	using Valid = std::tuple<OverloadPtr, TyPtr, Subs>;
-	std::vector<Valid> valid;
-
 	auto ret = Ty::makePoly();
+	std::vector<Valid> valid;
 
 	for (auto& overload : globfn->overloads)
 	{
@@ -187,11 +288,9 @@ bool Infer::unifyOverload (Subs& out,
 		if (!unify(subs, TyList(t2, l1), TyList(fnty, l2)))
 			goto cont;
 
-		fnty = subs(fnty);
-
 		// if any of the arguments are complete polytypes,
 		//  it is considered an invalid overload
-		for (auto s = fnty->subtypes; !s.tail().nil(); ++s)
+		for (auto s = subs(fnty)->subtypes; !s.tail().nil(); ++s)
 			if (s.head()->kind == tyPoly)
 				goto cont;
 
@@ -204,9 +303,10 @@ bool Infer::unifyOverload (Subs& out,
 	if (valid.empty())
 		return false;
 
-	// TODO: decide best overload here
-	//  right now it assumes that all
-	//  overloads are equally valid
+	// sortValid() finds the best overloads, keeps ambiguous overloads
+	//  and removes worse overloads
+	sortValid(t2, valid);
+
 	auto& best = valid.front();
 	if (valid.size() > 1)
 	{
@@ -217,14 +317,16 @@ bool Infer::unifyOverload (Subs& out,
 
 		extra.push_back("given: " + t2->string());
 		for (auto& v : valid)
-			extra.push_back("  candidate: " + std::get<1>(v)->string());
+			extra.push_back("  candidate: " + v.ty->string());
 
 		throw t1->srcExp->span.die(ss.str(), extra);
 	}
 
-	auto overload = std::get<0>(best);
-	auto fnty = std::get<1>(best);
-	out = std::get<2>(best);
+	auto overload = best.overload;
+	auto fnty = best.ty;
+	out = best.subs;
+
+	fnty = out(fnty);
 
 	// construct signature from overloaded function
 	auto sig = Sig::make();
