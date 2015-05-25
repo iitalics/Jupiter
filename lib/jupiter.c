@@ -189,7 +189,7 @@ void ju_put (juc cell, ju_int i, juc val)
 	ju_obj* obj = cell;
 
 	if (i >= 0 && i < obj->nmems)
-		obj->mems[i] = val;
+		juGC_store(obj->mems + i, val);
 }
 void ju_safe_put (juc cell, char* tagname, ju_int tag, ju_int i, juc val)
 {
