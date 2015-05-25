@@ -39,6 +39,12 @@ enum ExpKind
 {
 	// KIND         //  DATA
 	eInvalid = 0,
+	eiMake,         //  string, int_t, type
+	eiGet,          //  int_t, type
+	eiPut,          //  int_t
+	eiTag,          //  string
+	eiCall,         //  string, type
+	eiEnv,
 	eInt,           //  int_t
 	eReal,          //  real_t
 	eString,        //  string
@@ -53,12 +59,7 @@ enum ExpKind
 	eAssign,
 	eBlock,
 	eLet,           //  string, type
-	eiMake,         //  string, int_t, type
-	eiGet,          //  int_t, type
-	eiPut,          //  int_t
-	eiTag,          //  string
-	eiCall,         //  string, type
-	eiEnv
+	eLoop
 };
 
 class Exp
@@ -244,12 +245,16 @@ ExpPtr parseBlock (Lexer& lex);
 //             := <if>
 //             := <let> ';'
 //             := <assign> ';'
+//             := <loop> ';'
 //             := <exp> ';'
 void parseBlockExp (Lexer& lex, ExpList& list);
 // <let> := 'let' <var> '=' <exp>
 ExpPtr parseLet (Lexer& lex);
 // <assign> := <exp> '=' <exp>
 ExpPtr parseAssign (Lexer& lex, ExpPtr left);
+// <loop> := 'loop' <exp>? <block>
+ExpPtr parseLoop (Lexer& lex);
+
 
 // undocumented?
 ExpPtr parseiMake (Lexer& lex);

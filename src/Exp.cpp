@@ -130,12 +130,13 @@ void Exp::_indent (std::ostringstream& ss, int ind)
 void Exp::_string (std::ostringstream& ss, bool tag, int increase, int ind) const
 {
 	static std::vector<std::string> kinds = {
-		"invalid", "int", "real",
-		"string", "bool", "var",
-		"tuple", "call", "member",
-		"infix", "cond", "lambda",
-		"assign", "block", "let",
-		"^make", "^get", "^put", "^tag?", "^call"
+		"invalid",
+		"^make", "^get", "^put", "^tag",
+		"^call", "^env", "int", "real",
+		"string", "bool", "var", "tuple",
+		"call", "mem", "infix", "cond",
+		"lambda", "assign", "block", "let",
+		"loop"
 	};
 
 	if (tag)
@@ -220,6 +221,21 @@ void Exp::_string (std::ostringstream& ss, bool tag, int increase, int ind) cons
 		
 		ss << " : " << _type->string() << " = ";
 		subexps[0]->_string(ss, tag, increase, ind);
+		break;
+
+	case eLoop:
+		ss << "loop ";
+		if (subexps.size() > 1)
+		{
+			subexps[0]->_string(ss, tag, increase, ind);
+			ss << std::endl;
+			subexps[1]->_string(ss, tag, increase, ind);
+		}
+		else
+		{
+			ss << std::endl;
+			subexps[1]->_string(ss, tag, increase, ind);
+		}
 		break;
 
 	case eBlock:

@@ -52,8 +52,9 @@ VERSION         GOAL
 0.0.4 dev       checkpoint - The Ultimate
                 parser/desugar - mutable state
 		codegen - mutable state
+                parser - loops
 TODO
-                parser/codegen - loops
+		desugar/codegen - loops
                 desugar - sugar loops
                 codegen - tail calls?
                 stdlib - more complete primitive functions

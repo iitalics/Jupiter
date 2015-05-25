@@ -449,17 +449,18 @@ void parseBlockExp (Lexer& lex, ExpList& list)
 	case tSemicolon:
 		lex.advance();
 		break;
-
 	case tLet:
 		list.push_back(parseLet(lex));
 		lex.eat(tSemicolon);
 		break;
-
 	case tLCurl:
 		list.push_back(parseBlock(lex));
 		break;
 	case tIf:
 		list.push_back(parseCond(lex));
+		break;
+	case tLoop:
+		list.push_back(parseLoop(lex));
 		break;
 
 	// everthing else does
@@ -502,6 +503,28 @@ ExpPtr parseAssign (Lexer& lex, ExpPtr left)
 	lex.expect(tSemicolon);
 
 	return Exp::make(eAssign, { left, right }, left->span + right->span);
+}
+ExpPtr parseLoop (Lexer& lex)
+{
+	Span spStart, spEnd;
+	ExpPtr body;
+
+	spStart = lex.eat(tLoop).span;
+
+	ExpList sub;
+	sub.reserve(2);
+	if (lex.current() == tLCurl)
+	{
+		sub.push_back(body = parseBlock(lex));
+	}
+	else
+	{
+		sub.push_back(parseExp(lex));
+		sub.push_back(body = parseBlock(lex));
+	}
+	spEnd = body->span;
+
+	return Exp::make(eLoop, std::move(sub), spStart + spEnd);
 }
 ExpPtr parseiMake (Lexer& lex)
 {
@@ -560,6 +583,9 @@ ExpPtr parseiCall (Lexer& lex)
 
 	return e;
 }
+
+
+
 
 
 
