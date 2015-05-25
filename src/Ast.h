@@ -218,7 +218,7 @@ void parseVar (Lexer& lex, std::string& name, TyPtr& ty, Span&);
 SigPtr parseSig (Lexer& lex, bool requireAnything = true);
 SigPtr parseSigParens (Lexer& lex);
 
-// <exp> := <infix>
+// <exp> := <term> (<op> <term>)*
 ExpPtr parseExp (Lexer& lex);
 // <term> := <call> | <mem> | <prefix>
 ExpPtr parseTerm (Lexer& lex);
@@ -263,7 +263,7 @@ TyPtr parseType (Lexer& lex, Span& sp);
 TyPtr parseTypePoly (Lexer& lex, Span& sp);
 // <ty-list> := '[' <ty> ']'
 TyPtr parseTypeList (Lexer& lex, Span& sp);
-// <ty-tupl> := '(' (<ty> ',')* <ty?> ')'
+// <ty-tupl> := '(' (<ty> ',')* <ty>? ')'
 // <ty-func> := <ty-tupl> '->' <ty>
 TyPtr parseTypeTuple (Lexer& lex, Span& sp);
 // <ty-conc> := <id> <ty-tupl>
