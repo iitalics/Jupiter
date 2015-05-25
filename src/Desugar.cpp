@@ -84,7 +84,7 @@ ExpPtr Desugar::desugarGlobal (ExpPtr e)
 	if (global.getFunc(e->getString()) == nullptr)
 	{
 		std::ostringstream ss;
-		ss << "undeclared global \"" << e->getString() << "\"";
+		ss << "undeclared variable \"" << e->getString() << "\"";
 		throw e->span.die(ss.str());
 	}
 
@@ -217,13 +217,11 @@ ExpPtr Desugar::desugarAssign (ExpPtr e, LocEnvPtr lenv)
 
 	if (left->kind == eVar)
 	{
-		auto var = lenv->get(left->getString());
-
-		if (var == nullptr)
+		left = desugarVar(left, lenv);
+		if (left->get<bool>())
 			throw e->span.die("cannot assign to global");
-		var->mut = true;
 
-		left = desugar(left, lenv);
+		lenv->get(left->getString())->mut = true;
 
 		return Exp::make(eAssign, { left, right }, e->span);
 	}
