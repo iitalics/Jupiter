@@ -202,38 +202,71 @@ namespace Parse
 {
 
 
+// <func> := 'func' <id> <psig> <block>
 FuncDecl parseFuncDecl (Lexer& lex);
+// <type> := 'type' <ty> '=' <ctor> (',' <ctor>)*
+// <ctor> := <id> <psig>
 TypeDecl parseTypeDecl (Lexer& lex);
+// <toplevel> := (<func> | <type>)*
 bool parseToplevel (Lexer& lex, GlobProto& proto);
 GlobProto parseToplevel (Lexer& lex);
 
+// <var> := 'id' (':' <ty>)?
 void parseVar (Lexer& lex, std::string& name, TyPtr& ty, Span&);
+// <sig> := <var> (',' <var>)*
+// <psig> := '(' <sig>? ')'
 SigPtr parseSig (Lexer& lex, bool requireAnything = true);
 SigPtr parseSigParens (Lexer& lex);
 
+// <exp> := <infix>
 ExpPtr parseExp (Lexer& lex);
+// <term> := <call> | <mem> | <prefix>
 ExpPtr parseTerm (Lexer& lex);
+// <prefix> := <id> | <const> | <block> | <cond> | <lambda>
+// <const> := <int> | <real> | <string>
 ExpPtr parseTermPrefix (Lexer& lex);
 ExpPtr parseTermPostfix (Lexer& lex, ExpPtr in);
+// <call> := <term> <tuple>
 ExpPtr parseCall (Lexer& lex, ExpPtr in);
+// <mem> := <term> '.' <id>
 ExpPtr parseMem (Lexer& lex, ExpPtr in);
+// <tuple> := '(' (<term> ',')* <term>? ')'
 ExpPtr parseTuple (Lexer& lex);
+// <cond> := 'if' <exp> 'then' <exp> 'else' <exp>
+//        := 'if' <exp> <block> ('else' <block>)?
 ExpPtr parseCond (Lexer& lex);
+// <lambda> := '\' <sig> '->' <exp>
+//          := 'func' <psig> <block>
 ExpPtr parseLambda (Lexer& lex);
+// <block> := '{' <block-exp>* <exp>? '}'
 ExpPtr parseBlock (Lexer& lex);
+// <block-exp> := ';'
+//             := <if>
+//             := <let> ';'
+//             := <assign> ';'
+//             := <exp> ';'
 void parseBlockExp (Lexer& lex, ExpList& list);
+// <let> := 'let' <var> '=' <exp>
 ExpPtr parseLet (Lexer& lex);
+// <assign> := <exp> '=' <exp>
 ExpPtr parseAssign (Lexer& lex, ExpPtr left);
+
+// undocumented?
 ExpPtr parseiMake (Lexer& lex);
 ExpPtr parseiGet (Lexer& lex);
 ExpPtr parseiPut (Lexer& lex);
 ExpPtr parseiCall (Lexer& lex);
 
-//TyPtr parseType (Lexer& lex);
+// <ty> := <ty-poly> | <ty-list> | <ty-func> | <ty-tupl> | <ty-conc>
 TyPtr parseType (Lexer& lex, Span& sp);
+// <ty-poly> := '\' <id>
 TyPtr parseTypePoly (Lexer& lex, Span& sp);
+// <ty-list> := '[' <ty> ']'
 TyPtr parseTypeList (Lexer& lex, Span& sp);
+// <ty-tupl> := '(' (<ty> ',')* <ty?> ')'
+// <ty-func> := <ty-tupl> '->' <ty>
 TyPtr parseTypeTuple (Lexer& lex, Span& sp);
+// <ty-conc> := <id> <ty-tupl>
 TyPtr parseTypeConcrete (Lexer& lex, Span& sp);
 
 };
