@@ -54,6 +54,7 @@ public:
 	inline bool operator!= (TyKind k) const
 	{ return kind != k; }
 
+	bool hasPoly () const;
 	bool aEquiv (TyPtr other) const;
 	std::string string () const;
 

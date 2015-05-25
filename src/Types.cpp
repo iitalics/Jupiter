@@ -97,6 +97,17 @@ bool Ty::aEquiv (TyPtr other) const
 		return false;
 	}
 }
+bool Ty::hasPoly () const
+{
+	if (kind == tyPoly)
+		return true;
+	else
+		for (auto t : subtypes)
+			if (t->hasPoly())
+				return true;
+
+	return false;
+}
 
 TyPtr Ty::newPoly (TyPtr ty)
 {

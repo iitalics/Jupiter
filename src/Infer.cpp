@@ -271,6 +271,14 @@ TyPtr Infer::inferAssign (ExpPtr exp, LocEnvPtr lenv)
 {
 	auto t1 = infer(exp->subexps[0], lenv);
 	auto t2 = infer(exp->subexps[1], lenv);
+
+	if (t1->hasPoly())
+	{
+		std::ostringstream ss;
+		ss << "cannot assign to poly type " << t1->string();
+		throw exp->span.die(ss.str());
+	}
+
 	unify(t1, t2, exp->span);
 
 	return Ty::makeUnit();
