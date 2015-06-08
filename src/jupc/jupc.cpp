@@ -18,7 +18,7 @@
 
 enum Op
 {
-	Output = 0, Mode, Compiler, Assembler, Linker, Runtime, NumOps
+	Output = 0, Mode, Compiler, Linker, Runtime, NumOps
 };
 
 enum CompileMode
@@ -29,7 +29,7 @@ enum CompileMode
 struct Result
 {
 	std::vector<std::string> files;
-	std::string output, compiler, assembler, linker, runtime;
+	std::string output, compiler, linker, runtime;
 	int mode;
 };
 
@@ -81,7 +81,6 @@ static const char* defaults[] =
 	"bin",
 	"./jup",
 #endif
-	"llc",
 	"clang",
 	"lib/runtime.a"
 };
@@ -118,7 +117,6 @@ void usage ()
 "    -o <file>         Output to file                default: '%s'\n"
 "    -c <mode>         Compile mode (see \"Modes\")    default: '%s'\n"
 "    -C <program>      Jupiter compiler program      default: '%s'\n"
-"    -A <program>      LLVM assembler program        default: '%s'\n"
 "    -L <program>      Linker program                default: '%s'\n"
 "    -R <path>         Location of runtime archive   default: '%s'\n"
 "\n"
@@ -130,8 +128,7 @@ void usage ()
 		defaults[1],
 		defaults[2],
 		defaults[3],
-		defaults[4],
-		defaults[5]);
+		defaults[4]);
 }
 void version ()
 {
@@ -198,7 +195,6 @@ bool parse (Result& result, size_t argc, char** argv)
 
 	result.output    = values[Op::Output];
 	result.compiler  = values[Op::Compiler];
-	result.assembler = values[Op::Assembler];
 	result.linker    = values[Op::Linker];
 	result.runtime   = values[Op::Runtime];
 	result.mode      = getMode(values[Op::Mode]);
@@ -271,15 +267,14 @@ static bool compileLLVM (Result& data, const std::string& outFile)
 	for (auto& file : data.files)
 		ss << " " << escape(file);
 
-	ss << " > " << escape(outFile);
+	ss << " | opt -O2 | llvm-dis > " << escape(outFile);
 	return shell_exec(ss.str()) == 0;
 }
 
 static bool compileAsm (Result& data, const std::string& inFile, const std::string& outFile)
 {
 	std::ostringstream ss;
-	ss << escape(data.assembler)
-	   << " -o " << escape(outFile) << " "
+	ss << "llc -o " << escape(outFile) << " "
 	   << escape(inFile);
 
 	return shell_exec(ss.str()) == 0;
