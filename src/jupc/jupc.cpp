@@ -267,7 +267,7 @@ static bool compileLLVM (Result& data, const std::string& outFile)
 	for (auto& file : data.files)
 		ss << " " << escape(file);
 
-	ss << " | opt -O2 | llvm-dis > " << escape(outFile);
+	ss << " | opt -O2 -S > " << escape(outFile);
 	return shell_exec(ss.str()) == 0;
 }
 
