@@ -1,71 +1,108 @@
-# built in functions:
-#           + : (Int, Int) -> Int       add
-#           * : (Int, Int) -> Int       multiply
-#           / : (Int, Int) -> Int       divide
-#           - : (Int) -> Int            negate
-#          == : (Int, Int) -> Bool      test equality
-#     println : () -> ()                print a line break
-#       print : (Str) -> ()             print the argument
-#       print : (Int) -> ()             ...
-#       print : (Bool) -> ()            ...
+# showcases most all features of the syntax
+#  useful for codegen testing as well as 
+#  testing syntax highlighting
+
+func main () {
+	# variables
+	# types are optional in most cases
+	let w : Str = "Hello, world";
+	let x = 3;      # x : Int
+	let y = 4.0;    # y : Real
+	let z = true;   # z : Bool
+
+	# function calls
+	# print(x) is overloaded with basic types (Str, Int, etc...)
+	# println(x, y) calls print(x); print(y)
+	# each individual overload is determined at compile time
+	println(w);
+	println("x = ", x);
+	println("y = ", y);
+
+	# conditions
+	if z {
+		println("z is true!");
+	}
+
+	# loops
+	print(x);
+	loop x < 6 {
+		x = x.succ;
+		print(", ", x);
+	}
+	println();
+
+	# lambdas
+	let fn1 = func () { println("function one!"); };
+	let fn2 = \x : Int -> println("function two: ", x);
+	
+	fn1.twice();
+	fn2.twice(3);
+
+	# using the custom types below
+	let pt = point(4, 5);
+	println("pt = ", pt);
+	println(pair(3, true));
+
+	let n = intNum(3);
+	println(n);
+	n = realNum(4.0);
+	println(n);
+}
 
 
-# functions are declared with 'func'
 
-func twice (x) { x + x }
+#  function types are declared as
+#    (args...) -> ret
+#   or
+#    Fn(args..., ret)
+#
+#  list types are declared as
+#    [type]
+#   or
+#    List(type)
+#
+#  tuple types are declared as
+#    (types...)
+#   or
+#    Tuple(types...)
+#
+#  poly types are declared as
+#    \<name>
+
+# user defined type
+# generates function 'point' : (Int, Int) -> Point
+type Point = point(x : Int, y : Int)
+
+# user defined types can be generic
+type Pair(\a, \b) = pair(left : \a, right : \b)
+
+# all types are actually sum types, for instance
+type Number =
+	intNum(intVal : Int),
+	realNum(realVal : Real)
 
 
-# types are declared after variable names and are optional
-# although this is the only type declaration you will see here,
-#  every expression and variable has a type like in C or Java,
-#  it is just automatically deduced by the compiler
-
-func zero? (x : Int) { x == 0 }
-
-
-# functions are called like in C and other C-like languages
-
-func foo (x) {
-	if zero?(x) {
-		println("x is zero!");
+# overloading the 'print' function
+func print (pt : Point) {
+	print(pt.x, ", ", pt.y);
+}
+func print (p : Pair(\a, \b)) {
+	print(p.left, "/", p.right);
+}
+func print (num : Number) {
+	if num.intNum? {
+		print("int: ", num.intVal);
 	} else {
-		println("x isn't zero.");
+		print("real: ", num.realVal);
 	}
 }
 
-# declare local variables with 'let'
-
-func sum1 (n) {
-	let m = n + 1;
-	m * n / 2;
+func twice (fn : () -> _) {
+	fn();
+	fn();
 }
-
-
-# 'if' can either take the form
-#   if <condition> { <code> } else { <code> }
-# or
-#   if <condition> then <expression> else <expression>
-
-func sum2 (n) {
-	if n == 0 then
-		0
-	else
-		n + sum2(n - 1)
-}
-
-
-# the 'main' function is executed first
-# 'if' is an expression, not a statement, so it
-#  can exists where any expression does
-
-func main () {
-	let max = 10;
-	let result1 = sum1(max);
-	let result2 = sum2(max);
-
-	println(
-		if result1 == result2 then
-			"it works!"
-		else
-			"it doesn't work :c"); 
+# poly type '\a' for generic functions
+func twice (fn : (\a) -> _, arg : \a) {
+	fn(arg);
+	fn(arg);
 }

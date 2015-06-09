@@ -1,0 +1,150 @@
+---
+name: Jupiter
+fileTypes: [j, jup]
+scopeName: source.jup
+uuid: 3fb1017f-0e67-4de1-a684-5fc1cce52b0d
+
+patterns:
+  - include: '#top_ctx'
+
+repository:
+  general:
+    patterns:
+    - name: comment.line.jup
+      match: "#.*$"
+
+    - name: string.quoted.double.jup
+      begin: \"
+      end: \"
+
+  top_ctx:
+    patterns:
+    - include: '#general'
+    - include: '#type_ctx'
+
+    - name: meta.funcdecl.jup
+      begin: "\\b(func)\\s+([!$%&'*+\\-/:|~<-Z^-z\\d]+)\\s*(\\()"
+      end: "(\\))"
+      beginCaptures:
+        '1': {name: storage.type.jup}
+        '2': {name: entity.name.function.jup}
+      patterns:
+      - include: '#type_ctx'
+
+    - name: meta.typedecl.jup
+      comment: Type declaration with arguments
+      begin: "\\b(type)\\s+([!$%&'*+\\-/:|~<-Z^-z\\d]+)\\s*(\\()"
+      end: "(\\))\\s*(=)"
+      beginCaptures:
+        '1': {name: storage.type.jup}
+        '2': {name: entity.name.type.jup}
+      endCaptures:
+        '2': {name: keyword.operator.jup}
+      patterns:
+      - include: '#type_ctx'
+
+    - name: meta.typedecl.jup
+      comment: Type declaration without arguments
+      match: "\\b(type)\\s+([!$%&'*+\\-/:|~<-Z^-z\\d]+)\\s*(=)"
+      captures:
+        '1': {name: storage.type.jup}
+        '2': {name: entity.name.type.jup}
+        '3': {name: keyword.operator.jup}
+
+    - name: meta.constructor.jup
+      begin: "([!$%&'*+\\-/:|~<-Z^-z\\d]+)\\s*(\\()"
+      end: "(\\))"
+      beginCaptures:
+        '1': {name: entity.name.function.jup}
+      patterns:
+      - include: '#type_ctx'
+
+    - name: meta.block.jup
+      begin: \{
+      end: \}
+      patterns:
+      - include: '#expr_ctx'
+
+  expr_ctx:
+    patterns:
+    - include: '#general'
+
+    - name: meta.lambda.jup
+      comment: Lambda declared as "func (...) { ... }"
+      begin: "\\b(func)\\s*(\\()"
+      end: "(\\))\\s*"
+      beginCaptures:
+        '1': {name: keyword.control.jup}
+      patterns:
+      - include: '#type_ctx'
+
+    - name: meta.lamda.jup
+      comment: Lambda declared as "\... -> ..."
+      begin: "(\\\\)"
+      end: "\\s+(->)"
+      beginCaptures:
+        '1': {name: keyword.operator.jup}
+      endCaptures:
+        '1': {name: keyword.operator.jup}
+      patterns:
+      - include: '#type_ctx'
+
+    - name: meta.funccall.jup
+      begin: "(?:(?!func))([!$%&'*+\\-/:|~<-Z^-z\\d]+)\\s*(\\()"
+      end: "(\\))"
+      beginCaptures:
+        '1': {name: support.function.jup}
+      patterns:
+      - include: '#expr_ctx'
+
+    - name: meta.member.jup
+      match: "\\.([!$%&'*+\\-/:|~<-Z^-z\\d]+)"
+      captures:
+        '1': {name: support.function.jup}
+
+    - name: meta.let.variable.jup
+      begin: "\\b(let)\\s+([!$%&'*+\\-/:|~<-Z^-z\\d]+)"
+      end: "\\s*(=)"
+      beginCaptures:
+        '1': {name: keyword.control.jup}
+      patterns:
+      - include: '#type_ctx'
+
+    - name: meta.block.jup
+      begin: \{
+      end: \}
+      patterns:
+      - include: '#expr_ctx'
+
+    - name: constant.numeric.jup
+      match: "\\b\\d+(\\.\\d*)?"
+
+    - name: constant.language.jup
+      match: "\\b(true|false|_|\\(\\s*\\))\\b"
+
+    - name: keyword.control.jup
+      match: "\\b(if|then|else|let|loop|for|->)\\b"
+
+
+  type_ctx:
+    patterns:
+    - include: '#general'
+
+    - name: variable.parameter.polytype.jup
+      match: "\\\\\\s*([!$%&'*+\\-/:|~<-Z^-z\\d]+)"
+
+    - name: variable.parameter.wildcard.jup
+      match: "\\b_"
+
+    - name: storage.type.concrete.jup
+      match: "\\b[A-Z][!$%&'*+\\-/:|~<-Z^-z\\d]+"
+
+    - match: "(?:\\s*)(->)(?:\\s*)"
+      captures:
+        '1': {name: keyword.operator.jup}
+
+    - name: meta.parens.jup
+      begin: \(
+      end: \)
+      patterns:
+      - include: '#type_ctx'
