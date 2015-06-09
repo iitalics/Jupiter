@@ -3,7 +3,7 @@
 #include <stdbool.h>
 #include <stdlib.h>
 
-// VERSION  0.0.9
+// VERSION  0.0.10
 
 typedef    void* juc;
 typedef int32_t  ju_int;

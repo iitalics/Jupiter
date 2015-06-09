@@ -1,4 +1,4 @@
-### jupiter standard library for version 0.0.7
+### jupiter standard library for version 0.0.10
 
 
 ## standard library internal calls
@@ -11,6 +11,8 @@ func *  (x : Int, y : Int) { ^call (Int, Int) -> Int  "juStd_mulInt"  (x, y) }
 func /  (x : Int, y : Int) { ^call (Int, Int) -> Int  "juStd_divInt"  (x, y) }
 func <  (x : Int, y : Int) { ^call (Int, Int) -> Bool "juStd_ltInt"   (x, y) }
 func == (x : Int, y : Int) { ^call (Int, Int) -> Bool "juStd_eqInt"   (x, y) }
+func incr (x : Int)        { ^call (Int) -> Int       "juStd_incrInt" (x) }
+func decr (x : Int)        { ^call (Int) -> Int       "juStd_decrInt" (x) }
 
 # string functions
 func str (x : Int)  { ^call (Int) -> Str  "juStd_strInt"  (x) }

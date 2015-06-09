@@ -7,8 +7,16 @@
 	fprintf(stderr, "RUNTIME ERROR: unimplemented: \"" s "\"\n"), \
 	exit(-1), ju_null
 
+;
 
-
+juc juStd_incrInt (juc ca)
+{
+	return (juc) ((ju_int) ca + 2);
+}
+juc juStd_decrInt (juc ca)
+{
+	return (juc) ((ju_int) ca - 2);
+}
 juc juStd_addInt (juc ca, juc cb)
 {
 	const ju_int a = (ju_int) ca;

@@ -1,4 +1,4 @@
-; jupiter runtime header for version 0.0.9
+; jupiter runtime header for version 0.0.10
 
 declare void @ju_init ()                        ; void init ()
 declare void @ju_destroy ()                     ; void destroy ()
