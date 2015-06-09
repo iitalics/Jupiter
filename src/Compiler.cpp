@@ -177,14 +177,15 @@ CompileUnit::CompileUnit (Compiler* comp, OverloadPtr over,
 CompileUnit::CompileUnit (Compiler* comp, OverloadPtr overload, SigPtr sig)
 	: compiler(comp),
 	  overload(overload),
-	  internalName(comp->genUniqueName("fn_" +
-	  					comp->mangle(overload->name))),
 	  funcInst(this, sig),
 	  finishedInfer(false),
 
 	  lifetime(0),
 	  nroots(0)
-{}
+{
+	internalName =
+		comp->genUniqueName("fn_" + comp->mangle(overload->name));
+}
 
 
 
@@ -195,23 +196,12 @@ CompileUnit::EnvPtr CompileUnit::makeEnv (EnvPtr parent)
 }
 std::string CompileUnit::makeUnique (const std::string& str)
 {
-	// TODO: binary search? or too much
-	bool unique;
-	std::string res = str;
+	auto res = str;
 
 	for (int k = 2; ; k++)
-	{
-		unique = true;
-		for (auto& nu : nonUnique)
-			if (nu == res)
-			{
-				unique = false;
-				break;
-			}
-
-		if (unique)
+		if (nonUnique.find(res) == nonUnique.end())
 		{
-			nonUnique.push_back(res);
+			nonUnique.insert(res);
 			return "%" + res;
 		}
 		else
@@ -223,7 +213,6 @@ std::string CompileUnit::makeUnique (const std::string& str)
 				ss << str << '.' << k;
 			res = ss.str();
 		}
-	}
 }
 std::string CompileUnit::getTemp ()
 {
@@ -364,7 +353,7 @@ void CompileUnit::compile ()
 	if (nroots > 0)
 		writeUnroot();
 	
-	ssBody << "ret " << res << std::endl;
+	ssBody << "ret i8* " << res << std::endl;
 }
 
 
@@ -418,7 +407,7 @@ void CompileUnit::stackAlloc (const std::string& name)
 void CompileUnit::stackStore (const std::string& name, 
                                 const std::string& value)
 {
-	ssBody << "call void @juGC_store (i8** " << name << ", " << value << ")" << std::endl;
+	ssBody << "call void @juGC_store (i8** " << name << ", i8* " << value << ")" << std::endl;
 }
 bool CompileUnit::needsRetain (ExpPtr exp)
 {
@@ -455,16 +444,16 @@ std::string CompileUnit::compile (ExpPtr e, EnvPtr env, bool retain)
 	switch (e->kind)
 	{
 	case eInt:
-		ss << "i8* inttoptr (i32 "
+		ss << "inttoptr (i32 "
 		   << (1 | (e->get<int_t>() << 1))
 		   << " to i8*)";
 		return ss.str();
 
 	case eBool:
 		if (e->get<bool>())
-			return "i8* inttoptr (i32 1 to i8*)";
+			return "inttoptr (i32 1 to i8*)";
 		else
-			return "i8* null";
+			return "null";
 
 	case eVar:    return compileVar(e, env);
 	case eString: return compileString(e, env);
@@ -478,9 +467,9 @@ std::string CompileUnit::compile (ExpPtr e, EnvPtr env, bool retain)
 	case eLet:    return compileLet(e, env);
 	case eiGet:   return compileiGet(e, env);
 	case eiTag:   return compileiTag(e, env);
-	case eiEnv:   return "i8* " ENV_VAR;
+	case eiEnv:   return ENV_VAR;
 	case eTuple:
-		return "i8* null";
+		return "null";
 
 	case eiMake:
 	case eiCall:
@@ -525,7 +514,7 @@ std::string CompileUnit::makeGlobalString (const std::string& str, bool nullterm
 	ssEnd << "\"" << std::endl;
 
 	std::ostringstream ss;
-	ss << "i8* getelementptr (" << strType.str() << "* @" << strConst
+	ss << "getelementptr (" << strType.str() << "* @" << strConst
 	   << ", i32 0, i32 0)";
 	
 	return ss.str();
@@ -536,11 +525,11 @@ std::string CompileUnit::compileString (ExpPtr e, EnvPtr env)
 	auto str = makeGlobalString(e->getString());
 	auto res = makeUnique(".str");
 
-	ssBody << res << " = call i8* @ju_make_str ("
+	ssBody << res << " = call i8* @ju_make_str (i8* "
 	       << str << ", i32 " << e->getString().size()
 	       << ")" << std::endl;
 	
-	return "i8* " + res;
+	return res;
 }
 
 std::string CompileUnit::compileReal (ExpPtr e, EnvPtr env)
@@ -558,7 +547,7 @@ std::string CompileUnit::compileReal (ExpPtr e, EnvPtr env)
 
 	ssBody << ")" << std::endl;
 
-	return "i8* " + res;
+	return res;
 }
 
 std::string CompileUnit::compileVar (ExpPtr e, EnvPtr env)
@@ -573,7 +562,7 @@ std::string CompileUnit::compileVar (ExpPtr e, EnvPtr env)
 			   << joinCommas(cunit->overload->signature->args.size(), "i8*")
 			   << ")* @" << cunit->internalName << " to i8*), i32 0)" << std::endl;
 		
-		return "i8* " + val;
+		return val;
 	}
 	else
 	{
@@ -588,13 +577,14 @@ std::string CompileUnit::compileVar (ExpPtr e, EnvPtr env)
 			{
 				auto unbox = makeUnique(".ub");
 				ssBody << unbox << " = call i8* @ju_get (i8* " << val << ", i32 0)" << std::endl;
-				val = unbox;
+				
+				return unbox;
 			}
-
-			return "i8* " + val;
+			else
+				return val;
 		}
 		else
-			return "i8* " + var.internal;
+			return var.internal;
 	}
 }
 
@@ -644,7 +634,7 @@ std::string CompileUnit::compileCall (ExpPtr e, EnvPtr env)
 			   << joinCommas(nargs + 1, "i8*")
 			   << ")*";
 
-		ssBody << data << " = call i8* @ju_get_fn (" << closure << ")" << std::endl
+		ssBody << data << " = call i8* @ju_get_fn (i8* " << closure << ")" << std::endl
 		       << fnp << " = bitcast i8* " << data << " to " << fntype.str() << std::endl;
 		call << "call " JUP_CCONV " " << fntype.str() << " " << fnp << "(";
 	}
@@ -655,7 +645,7 @@ std::string CompileUnit::compileCall (ExpPtr e, EnvPtr env)
 		if (i > 0)
 			call << ", ";
 
-		call << compile(e->subexps[i + 1], env, true);
+		call << "i8* " << compile(e->subexps[i + 1], env, true);
 	}
 	popLifetime();
 
@@ -664,7 +654,7 @@ std::string CompileUnit::compileCall (ExpPtr e, EnvPtr env)
 		if (nargs > 0)
 			call << ", ";
 
-		call << closure;
+		call << "i8* " << closure;
 	}
 	call << ")";
 
@@ -681,7 +671,7 @@ std::string CompileUnit::compileCall (ExpPtr e, EnvPtr env)
 	else
 		ssBody << res << " = " << call.str() << std::endl;
 
-	return "i8* " + res;
+	return res;
 }
 
 std::string CompileUnit::compileLet (ExpPtr e, EnvPtr env)
@@ -710,17 +700,17 @@ std::string CompileUnit::compileLet (ExpPtr e, EnvPtr env)
 	if (mut && !unboxing)
 	{
 		auto box = makeUnique(".box");
-		ssBody << box << " = call i8* @ju_make_box (" << res << ")" << std::endl;
-		res = "i8* " + box;
+		ssBody << box << " = call i8* @ju_make_box (i8* " << res << ")" << std::endl;
+		res = box;
 	}
 	stackStore(internal, res);
 
-	return "i8* null"; // returns unit
+	return "null"; // returns unit
 }
 
 std::string CompileUnit::compileBlock (ExpPtr e, EnvPtr penv)
 {
-	std::string res = "i8* null";
+	std::string res = "null";
 
 	bool newEnv = false;
 	for (auto e2 : e->subexps)
@@ -763,7 +753,7 @@ std::string CompileUnit::compileCond (ExpPtr e, EnvPtr env)
 	       << "store i8* null, i8** " << tmp << std::endl;
 
 	auto cond = compile(e->subexps[0], env, false);
-	ssBody << cmp << " = icmp ne "
+	ssBody << cmp << " = icmp ne i8* "
 	       << cond << ", null" << std::endl
 	       << "br i1 " << cmp
 	       << ", label " << lthen
@@ -772,19 +762,19 @@ std::string CompileUnit::compileCond (ExpPtr e, EnvPtr env)
 	       << lthen.substr(1) << ":" << std::endl;
 
 	auto r1 = compile(e->subexps[1], env, false);
-	ssBody << "store " << r1 << ", i8** " << tmp << std::endl
+	ssBody << "store i8* " << r1 << ", i8** " << tmp << std::endl
 	       << "br label " << lend << std::endl
 	       << std::endl
 	       << lelse.substr(1) << ":" << std::endl;
 
 	auto r2 = compile(e->subexps[2], env, false);
-	ssBody << "store " << r2 << ", i8** " << tmp << std::endl
+	ssBody << "store i8* " << r2 << ", i8** " << tmp << std::endl
 	       << "br label " << lend << std::endl
 	       << std::endl
 	       << lend.substr(1) << ":" << std::endl;
 
 	ssBody << res << " = load i8** " << tmp << std::endl;
-	return "i8* " + res;
+	return res;
 }
 std::string CompileUnit::compileLoop (ExpPtr e, EnvPtr penv)
 {
@@ -802,10 +792,10 @@ std::string CompileUnit::compileLoop (ExpPtr e, EnvPtr penv)
 		auto ldo = makeUnique("Ldo");
 		auto cmp = makeUnique(".cond");
 		auto cond = compile(e->subexps[0], penv, false);
-		ssBody << cmp << " = icmp eq " << cond << ", null" << std::endl
+		ssBody << cmp << " = icmp ne i8* " << cond << ", null" << std::endl
 		       << "br i1 " << cmp
-		       << ", label " << lend
-		       << ", label " << ldo << std::endl
+		       << ", label " << ldo
+		       << ", label " << lend << std::endl
 		       << std::endl
 		       << ldo.substr(1) << ":" << std::endl;
 
@@ -819,7 +809,7 @@ std::string CompileUnit::compileLoop (ExpPtr e, EnvPtr penv)
 	       << std::endl
 	       << lend.substr(1) << ":" << std::endl;
 
-	return "i8* null";
+	return "null";
 }
 
 std::string CompileUnit::compileiGet (ExpPtr e, EnvPtr env)
@@ -828,19 +818,19 @@ std::string CompileUnit::compileiGet (ExpPtr e, EnvPtr env)
 	auto inp = compile(e->subexps[0], env, true);
 
 	if (e->getString() == "")
-		ssBody << res << " = call i8* @ju_get (" << inp
+		ssBody << res << " = call i8* @ju_get (i8* " << inp
 		       << ", i32 " << e->get<int_t>() << ")" << std::endl;
 	else
 	{
 		auto tag = GlobEnv::getTag(e->getString());
 		auto str = makeGlobalString(e->getString(), true);
 
-		ssBody << res << " = call i8* @ju_safe_get ("
-			   << inp << ", " << str << ", i32 " << tag
+		ssBody << res << " = call i8* @ju_safe_get (i8* "
+			   << inp << ", i8* " << str << ", i32 " << tag
 			   << ", i32 " << e->get<int_t>() << ")" << std::endl;
 	}
 	
-	return "i8* " + res;
+	return res;
 }
 
 std::string CompileUnit::compileiTag (ExpPtr e, EnvPtr env)
@@ -850,12 +840,12 @@ std::string CompileUnit::compileiTag (ExpPtr e, EnvPtr env)
 	auto res = makeUnique(".r");
 	auto inp = compile(e->subexps[0], env, true);
 
-	ssBody << tag << " = call i32 @ju_get_tag (" << inp << ")" << std::endl
+	ssBody << tag << " = call i32 @ju_get_tag (i8* " << inp << ")" << std::endl
 	       << cmp << " = icmp eq i32 " << tag << ", "
 	       << GlobEnv::getTag(e->getString()) << std::endl
 	       << res << " = inttoptr i1 " << cmp << " to i8* " << std::endl;
 
-	return "i8* " + res;
+	return res;
 }
 
 std::string CompileUnit::compileLambda (ExpPtr e, EnvPtr env)
@@ -881,7 +871,7 @@ std::string CompileUnit::compileLambda (ExpPtr e, EnvPtr env)
 		   << ")* @" << cunit->internalName
 		   << " to i8*), i32 " << (e->subexps.size() - 1) << args.str() << ")" << std::endl;
 
-	return "i8* " + res;
+	return res;
 }
 
 std::string CompileUnit::compileAssign (ExpPtr e, EnvPtr env)
@@ -891,7 +881,7 @@ std::string CompileUnit::compileAssign (ExpPtr e, EnvPtr env)
 	auto box = makeUnique(".box");
 
 	ssBody << box << " = load i8** " << var.internal << std::endl
-	       << "call void @ju_put (i8* " << box << ", i32 0, " << res << ")" << std::endl;
+	       << "call void @ju_put (i8* " << box << ", i32 0, i8* " << res << ")" << std::endl;
 
-	return "i8* null";
+	return "null";
 }

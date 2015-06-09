@@ -26,7 +26,7 @@ struct CompileUnit
 
 	bool finishedInfer;
 	std::map<ExpPtr, CompileUnit*> special;
-	std::vector<std::string> nonUnique;
+	std::set<std::string> nonUnique;
 	std::vector<int> tempLifetimes;
 	std::set<ExpPtr> tailCalls;
 	int lifetime;
