@@ -688,6 +688,8 @@ std::string CompileUnit::compileLet (ExpPtr e, EnvPtr env)
 		e->subexps[0]->kind == eiGet &&
 		e->subexps[0]->subexps[0]->kind == eiEnv;
 
+	auto boxing = mut && !unboxing;
+
 	env->vars.push_back({
 		e->getString(),
 		internal,
@@ -695,13 +697,17 @@ std::string CompileUnit::compileLet (ExpPtr e, EnvPtr env)
 		mut,
 	});
 
-	auto res = compile(e->subexps[0], env, false);
+	if (boxing) pushLifetime();
 
-	if (mut && !unboxing)
+	auto res = compile(e->subexps[0], env, boxing);
+
+	if (boxing)
 	{
 		auto box = makeUnique(".box");
 		ssBody << box << " = call i8* @ju_make_box (i8* " << res << ")" << std::endl;
 		res = box;
+
+		popLifetime();
 	}
 	stackStore(internal, res);
 
@@ -814,6 +820,7 @@ std::string CompileUnit::compileLoop (ExpPtr e, EnvPtr penv)
 
 std::string CompileUnit::compileiGet (ExpPtr e, EnvPtr env)
 {
+	pushLifetime();
 	auto res = makeUnique(".get");
 	auto inp = compile(e->subexps[0], env, true);
 
@@ -829,7 +836,7 @@ std::string CompileUnit::compileiGet (ExpPtr e, EnvPtr env)
 			   << inp << ", i8* " << str << ", i32 " << tag
 			   << ", i32 " << e->get<int_t>() << ")" << std::endl;
 	}
-	
+	popLifetime();
 	return res;
 }
 
