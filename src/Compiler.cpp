@@ -260,6 +260,52 @@ void CompileUnit::popLifetime ()
 
 
 
+void CompileUnit::findTailCalls (ExpPtr exp)
+{
+	switch (exp->kind)
+	{
+	case eCall:
+		{
+			auto fn = exp->subexps[0];
+			auto it = special.find(fn);
+
+			if (it != special.end() && it->second == this)
+				tailCalls.insert(exp);
+			break;
+		}
+
+	case eCond:
+		findTailCalls(exp->subexps[1]);
+		findTailCalls(exp->subexps[2]);
+		break;
+
+	case eBlock:
+		if (!exp->subexps.empty())
+			findTailCalls(exp->subexps.back());
+		break;
+
+	default: break;
+	}
+}
+bool CompileUnit::doesTailCall (ExpPtr exp) const
+{
+	switch (exp->kind)
+	{
+	case eCall:
+		return tailCalls.find(exp) != tailCalls.end();
+	// for the love of god tail call these
+	case eCond:
+		return doesTailCall(exp->subexps[1]) || doesTailCall(exp->subexps[2]);
+	case eBlock:
+		if (exp->subexps.empty())
+			return false;
+		else
+			return doesTailCall(exp->subexps.back());
+	default: return false;
+	}
+}
+
+
 
 void CompileUnit::compile ()
 {
@@ -285,11 +331,39 @@ void CompileUnit::compile ()
 
 	ssBody << std::endl;
 
+	findTailCalls(overload->body);
 	auto res = compile(overload->body, env, false);
 
+	if (!tailCalls.empty())
+	{
+		// root all of the arguments in the case of
+		//  a tail call
+
+		std::vector<std::string> tmps;
+		tmps.reserve(env->vars.size());
+		for (auto& v : env->vars)
+		{
+			auto tmp = makeUnique(v.name);
+			stackAlloc(tmp);
+			tmps.push_back(tmp);
+		}
+
+		for (size_t i = 0, len = env->vars.size(); i < len; i++)
+			ssPrefix << "call void @juGC_store (i8** " << tmps[i]
+			         << ", i8* " << env->vars[i].internal << ")" << std::endl;
+	}
+
+	if (nroots > 0 || !tailCalls.empty())
+	{
+		// 'opt -mem2reg' will convert this stack allocation
+		// to a constant
+		ssPrefix << "%.nroots = alloca i32" << std::endl
+		         << "store i32 " << nroots << ", i32* %.nroots";
+	}
+
 	if (nroots > 0)
-		ssBody << "call void @juGC_unroot (i32 "
-		       << nroots << ")" << std::endl;
+		writeUnroot();
+	
 	ssBody << "ret " << res << std::endl;
 }
 
@@ -328,6 +402,12 @@ void CompileUnit::writeEnd ()
 {
 	ssEnd << "}" << std::endl;
 }
+void CompileUnit::writeUnroot ()
+{
+	auto v = makeUnique(".v");
+	ssBody << v << " = load i32* %.nroots" << std::endl
+	       << "call void @juGC_unroot (i32 " << v << ")" << std::endl;
+}
 void CompileUnit::stackAlloc (const std::string& name)
 {
 	ssPrefix << name << " = alloca i8*" << std::endl
@@ -346,7 +426,6 @@ bool CompileUnit::needsRetain (ExpPtr exp)
 	{
 	case eInt:
 	case eBool:
-	case eCond:
 	case eiEnv:
 		return false;
 
@@ -521,36 +600,41 @@ std::string CompileUnit::compileVar (ExpPtr e, EnvPtr env)
 
 std::string CompileUnit::compileCall (ExpPtr e, EnvPtr env)
 {
-	std::ostringstream args;
+	std::ostringstream call;
 	auto fn = e->subexps.front();
 	std::string closure = "";
 
 	size_t nargs = e->subexps.size() - 1;
+	auto isTail = doesTailCall(e);
 
 	if (fn->kind == eVar && fn->get<bool>())
 	{
+		// call global function
 		auto cunit = special[fn];
-		args << "call " JUP_CCONV " i8* @" << cunit->internalName << " (";
+		call << "call " JUP_CCONV " i8* @" << cunit->internalName << " (";
 	}
 	else if (fn->kind == eiMake)
 	{
+		// ^make construct for manually creating runtime objects
 		auto tag = GlobEnv::getTag(fn->getString());
 
-		args << "call i8* (i32, i32, i32, ...)* @ju_make_buf (i32 "
+		call << "call i8* (i32, i32, i32, ...)* @ju_make_buf (i32 "
 		     << tag << ", i32 0, i32 " << nargs;
 
 		if (nargs > 0)
-			args << ", ";
+			call << ", ";
 	}
 	else if (fn->kind == eiCall)
 	{
-		args << "call ccc i8* bitcast (i8* (...)* @" << fn->getString()
+		// ^call construct for calling C runtime/stdlib functions
+		call << "call ccc i8* bitcast (i8* (...)* @" << fn->getString()
 			 << " to i8* (" << joinCommas(nargs, "i8*") << ")*) (";
 
 		compiler->declares.insert(fn->getString());
 	}
 	else
 	{
+		// call function value obtained from other expression
 		auto data = makeUnique(".d");
 		auto fnp = makeUnique(".fn");
 
@@ -562,29 +646,40 @@ std::string CompileUnit::compileCall (ExpPtr e, EnvPtr env)
 
 		ssBody << data << " = call i8* @ju_get_fn (" << closure << ")" << std::endl
 		       << fnp << " = bitcast i8* " << data << " to " << fntype.str() << std::endl;
-		args << "call " JUP_CCONV " " << fntype.str() << " " << fnp << "(";
+		call << "call " JUP_CCONV " " << fntype.str() << " " << fnp << "(";
 	}
 
 	pushLifetime();
 	for (size_t i = 0; i < nargs; i++)
 	{
 		if (i > 0)
-			args << ", ";
+			call << ", ";
 
-		args << compile(e->subexps[i + 1], env, true);
+		call << compile(e->subexps[i + 1], env, true);
 	}
 	popLifetime();
 
 	if (!closure.empty())
 	{
 		if (nargs > 0)
-			args << ", ";
+			call << ", ";
 
-		args << closure;
+		call << closure;
 	}
+	call << ")";
 
 	auto res = makeUnique(".r");
-	ssBody << res << " = " << args.str() << ")" << std::endl;
+	if (isTail)
+	{
+		// unroot first, then call
+		writeUnroot();
+		ssBody << res << " = tail " << call.str() << std::endl
+		       << "ret i8* " << res << std::endl
+		       << std::endl
+		       << makeUnique("Lunreach").substr(1) << ":" << std::endl;
+	}
+	else
+		ssBody << res << " = " << call.str() << std::endl;
 
 	return "i8* " + res;
 }
@@ -649,38 +744,46 @@ std::string CompileUnit::compileCond (ExpPtr e, EnvPtr env)
 	/*
 		br <cond>, <then>, <else>
 	*/
-	auto temp = getTemp();
-	auto cmp = makeUnique(".cond");
+	auto res = makeUnique(".cond");
+	auto tmp = makeUnique(".t");
+	auto cmp = makeUnique(".cmp");
 	auto lthen = makeUnique("Lthen");
 	auto lelse = makeUnique("Lelse");
 	auto lend = makeUnique("Lend");
 
+	// by using standard 'alloca's, the optimizer
+	//  can convert the stores into a 'phi' instruction
+	// generating 'phi' here isn't an option because of the 
+	//  "implications" of the unreachable blocks created by
+	//  tail calls
+	// there are currently some cases in which the optimizer
+	//  generates code that makes tail calls impossible and
+	//  i want to know how to mitigate that
+	ssBody << tmp << " = alloca i8*" << std::endl
+	       << "store i8* null, i8** " << tmp << std::endl;
+
 	auto cond = compile(e->subexps[0], env, false);
-	ssBody << cmp << " = icmp eq "
+	ssBody << cmp << " = icmp ne "
 	       << cond << ", null" << std::endl
 	       << "br i1 " << cmp
-	       << ", label " << lelse
-	       << ", label " << lthen << std::endl
+	       << ", label " << lthen
+	       << ", label " << lelse << std::endl
 	       << std::endl
 	       << lthen.substr(1) << ":" << std::endl;
 
-	{
-		stackStore(temp, compile(e->subexps[1], env, false));
-		ssBody << "br label " << lend << std::endl
-		       << std::endl
-		       << lelse.substr(1) << ":" << std::endl;
-	}
+	auto r1 = compile(e->subexps[1], env, false);
+	ssBody << "store " << r1 << ", i8** " << tmp << std::endl
+	       << "br label " << lend << std::endl
+	       << std::endl
+	       << lelse.substr(1) << ":" << std::endl;
 
-	{
-		stackStore(temp, compile(e->subexps[2], env, false));
-		ssBody << "br label " << lend << std::endl
-		       << std::endl
-		       << lend.substr(1) << ":" << std::endl;
-	}
+	auto r2 = compile(e->subexps[2], env, false);
+	ssBody << "store " << r2 << ", i8** " << tmp << std::endl
+	       << "br label " << lend << std::endl
+	       << std::endl
+	       << lend.substr(1) << ":" << std::endl;
 
-	auto res = makeUnique(".r");
-	ssBody << res << " = load i8** " << temp << std::endl;
-
+	ssBody << res << " = load i8** " << tmp << std::endl;
 	return "i8* " + res;
 }
 std::string CompileUnit::compileLoop (ExpPtr e, EnvPtr penv)

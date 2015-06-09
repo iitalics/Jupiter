@@ -28,6 +28,7 @@ struct CompileUnit
 	std::map<ExpPtr, CompileUnit*> special;
 	std::vector<std::string> nonUnique;
 	std::vector<int> tempLifetimes;
+	std::set<ExpPtr> tailCalls;
 	int lifetime;
 	size_t nroots;
 
@@ -62,6 +63,7 @@ struct CompileUnit
 
 	void writePrefix (EnvPtr env);
 	void writeEnd ();
+	void writeUnroot ();
 	void output (std::ostream& out);
 	
 	void stackAlloc (const std::string& name);
@@ -78,6 +80,8 @@ struct CompileUnit
 	void popLifetime ();
 
 	bool needsRetain (ExpPtr exp);
+	bool doesTailCall (ExpPtr exp) const;
+	void findTailCalls (ExpPtr exp);
 
 	std::string compile (ExpPtr exp, EnvPtr env,
 					bool retain = true);

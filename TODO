@@ -55,9 +55,9 @@ VERSION         GOAL
                 parser - loops
                 desugar/codegen - loops
                 infer - overload resolution
+                codegen - tail calls
 TODO
                 desugar - sugar loops
-                codegen - tail calls?
                 stdlib - more complete primitive functions
 0.0.5 dev       checkpoint - fizzbuzz!
                 main - modules (namespaces?)
