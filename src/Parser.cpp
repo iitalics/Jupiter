@@ -462,6 +462,9 @@ void parseBlockExp (Lexer& lex, ExpList& list)
 	case tLoop:
 		list.push_back(parseLoop(lex));
 		break;
+	case tFor:
+		list.push_back(parseFor(lex));
+		break;
 
 	// everthing else does
 	default:
@@ -525,6 +528,35 @@ ExpPtr parseLoop (Lexer& lex)
 	spEnd = body->span;
 
 	return Exp::make(eLoop, std::move(sub), spStart + spEnd);
+}
+ExpPtr parseFor (Lexer& lex)
+{
+	Span spStart, spEnd;
+	ExpPtr val1, val2, body;
+
+	spStart = lex.eat(tFor).span;
+
+	auto var = lex.eat(tIdent).str;
+	lex.eat(tColon);
+
+	val1 = parseExp(lex);
+	if (lex.current() == tArrow)
+	{
+		lex.advance();
+		val2 = parseExp(lex);
+	}
+	else
+		val2 = nullptr;
+
+	body = parseBlock(lex);
+	spEnd = body->span;
+
+	if (val2 == nullptr)
+		return Exp::make(eForEach, var,
+				{ val1, body }, spStart + spEnd);
+	else
+		return Exp::make(eForRange, var,
+				{ val1, body }, spStart + spEnd);
 }
 ExpPtr parseiMake (Lexer& lex)
 {

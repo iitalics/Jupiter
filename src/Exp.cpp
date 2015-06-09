@@ -136,7 +136,7 @@ void Exp::_string (std::ostringstream& ss, bool tag, int increase, int ind) cons
 		"string", "bool", "var", "tuple",
 		"call", "mem", "infix", "cond",
 		"lambda", "assign", "block", "let",
-		"loop"
+		"loop", "for", "for"
 	};
 
 	if (tag)
@@ -236,6 +236,23 @@ void Exp::_string (std::ostringstream& ss, bool tag, int increase, int ind) cons
 			ss << std::endl;
 			subexps[1]->_string(ss, tag, increase, ind);
 		}
+		break;
+
+	case eForEach:
+		ss << "for each " << getString() << std::endl;
+		ind += increase;
+		subexps[0]->_string(ss, tag, increase, ind);
+		subexps[1]->_string(ss, tag, increase, ind);
+		ind -= increase;
+		break;
+
+	case eForRange:
+		ss << "for range " << getString() << std::endl;
+		ind += increase;
+		subexps[0]->_string(ss, tag, increase, ind);
+		subexps[1]->_string(ss, tag, increase, ind);
+		subexps[2]->_string(ss, tag, increase, ind);
+		ind -= increase;
 		break;
 
 	case eBlock:

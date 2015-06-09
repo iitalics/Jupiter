@@ -59,7 +59,9 @@ enum ExpKind
 	eAssign,
 	eBlock,
 	eLet,           //  string, type
-	eLoop
+	eLoop,
+	eForRange,
+	eForEach
 };
 
 class Exp
@@ -254,6 +256,8 @@ ExpPtr parseLet (Lexer& lex);
 ExpPtr parseAssign (Lexer& lex, ExpPtr left);
 // <loop> := 'loop' <exp>? <block>
 ExpPtr parseLoop (Lexer& lex);
+// <for-loop> := 'for' <id> ':' <exp> ('->' <exp>)? <block>
+ExpPtr parseFor (Lexer& lex);
 
 
 // undocumented?
@@ -262,7 +266,8 @@ ExpPtr parseiGet (Lexer& lex);
 ExpPtr parseiPut (Lexer& lex);
 ExpPtr parseiCall (Lexer& lex);
 
-// <ty> := <ty-poly> | <ty-list> | <ty-func> | <ty-tupl> | <ty-conc>
+// <ty> := <ty-poly> | <ty-list> |
+//         <ty-func> | <ty-tupl> | <ty-conc>
 TyPtr parseType (Lexer& lex, Span& sp);
 // <ty-poly> := '\' <id>
 TyPtr parseTypePoly (Lexer& lex, Span& sp);
