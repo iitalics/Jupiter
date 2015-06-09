@@ -1,10 +1,20 @@
 # loops
 
 func main () {
-	let i = 1;
+	# "while" loop
+	let going = true;
+	let y = 0;
+	loop going {
+		println("y = ", y);
+		y = y.succ;
 
-	loop i <= 10 {
-		println("i = ", i);
-		i = i.succ;
+		if y >= 10 {
+			going = false;
+		}
+	}
+
+	# "for range" loop
+	for x : 0 -> 10 {
+		println("x = ", x);
 	}
 }

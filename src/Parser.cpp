@@ -556,7 +556,7 @@ ExpPtr parseFor (Lexer& lex)
 				{ val1, body }, spStart + spEnd);
 	else
 		return Exp::make(eForRange, var,
-				{ val1, body }, spStart + spEnd);
+				{ val1, val2, body }, spStart + spEnd);
 }
 ExpPtr parseiMake (Lexer& lex)
 {

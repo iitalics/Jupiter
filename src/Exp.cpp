@@ -229,6 +229,7 @@ void Exp::_string (std::ostringstream& ss, bool tag, int increase, int ind) cons
 		{
 			subexps[0]->_string(ss, tag, increase, ind);
 			ss << std::endl;
+			_indent(ss, ind);
 			subexps[1]->_string(ss, tag, increase, ind);
 		}
 		else
