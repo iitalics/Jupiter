@@ -9,11 +9,11 @@
 
 ;
 
-juc juStd_incrInt (juc ca)
+juc juStd_succInt (juc ca)
 {
 	return (juc) ((ju_int) ca + 2);
 }
-juc juStd_decrInt (juc ca)
+juc juStd_predInt (juc ca)
 {
 	return (juc) ((ju_int) ca - 2);
 }

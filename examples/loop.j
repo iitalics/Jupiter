@@ -5,6 +5,6 @@ func main () {
 
 	loop i <= 10 {
 		println("i = ", i);
-		i = i + 1;
+		i = i.succ;
 	}
 }
