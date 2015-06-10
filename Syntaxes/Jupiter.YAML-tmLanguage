@@ -89,6 +89,9 @@ repository:
       patterns:
       - include: '#type_ctx'
 
+    - name: keyword.control.jup
+      match: "\\b(if|then|else|let|loop|for|->)\\b"
+
     - name: meta.funccall.jup
       begin: "(?:(?!func))([!$%&'*+\\-/:|~<-Z^-z\\d]+)\\s*(\\()"
       end: "(\\))"
@@ -121,9 +124,6 @@ repository:
 
     - name: constant.language.jup
       match: "\\b(true|false|_|\\(\\s*\\))\\b"
-
-    - name: keyword.control.jup
-      match: "\\b(if|then|else|let|loop|for|->)\\b"
 
 
   type_ctx:

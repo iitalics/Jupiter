@@ -85,6 +85,12 @@
 					</array>
 				</dict>
 				<dict>
+					<key>match</key>
+					<string>\b(if|then|else|let|loop|for|-&gt;)\b</string>
+					<key>name</key>
+					<string>keyword.control.jup</string>
+				</dict>
+				<dict>
 					<key>begin</key>
 					<string>(?:(?!func))([!$%&amp;'*+\-/:|~&lt;-Z^-z\d]+)\s*(\()</string>
 					<key>beginCaptures</key>
@@ -170,12 +176,6 @@
 					<string>\b(true|false|_|\(\s*\))\b</string>
 					<key>name</key>
 					<string>constant.language.jup</string>
-				</dict>
-				<dict>
-					<key>match</key>
-					<string>\b(if|then|else|let|loop|for|-&gt;)\b</string>
-					<key>name</key>
-					<string>keyword.control.jup</string>
 				</dict>
 			</array>
 		</dict>
