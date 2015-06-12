@@ -57,8 +57,10 @@ VERSION         GOAL
                 infer - overload resolution
                 codegen - tail calls
                 parser - sugar loops
-TODO
                 desugar - sugar loops
+TODO
+                parser - list literal
+                codegen - list literal
                 stdlib - more complete primitive functions
 0.0.5 dev       checkpoint - fizzbuzz!
                 main - modules (namespaces?)

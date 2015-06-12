@@ -17,4 +17,10 @@ func main () {
 	for x : 0 -> 10 {
 		println("x = ", x);
 	}
+
+	# "for each" loop
+	let lst = cons(6, cons(3, cons(2, nil())));
+	for t : lst {
+		println("t = ", t);
+	}
 }

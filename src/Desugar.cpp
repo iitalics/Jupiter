@@ -29,7 +29,7 @@ ExpPtr Desugar::desugar (ExpPtr exp, LocEnvPtr lenv)
 		return desugarBlock(exp, lenv);
 
 	case eForEach:
-		throw exp->span.die("for-each loop unimplemented");
+		return desugarForEach(exp, lenv);
 	case eForRange:
 		return desugarForRange(exp, lenv);
 
@@ -273,38 +273,30 @@ ExpPtr Desugar::desugarMem (ExpPtr e, LocEnvPtr lenv)
 
 ExpPtr Desugar::desugarForRange (ExpPtr e, LocEnvPtr lenv)
 {
-	/*
-	for x1 : e1 -> e2 { e3 }
-
+	static auto wc = Ty::makeWildcard();
+	/*	for x1 : (e1) -> (e2) { e3 }
 	{
-		let t1 = e1;
-		let t2 = e2;
+		let t1 = (e1);
+		let t2 = (e2);
 		loop <(t1, t2) {
 			let x1 = t1;
 			{ e3 };
 			t1 = succ(t1);
 		}
-	}
-	*/
+	} */
 	auto span = e->span;
-	auto less = Exp::make(eVar, std::string("<"), {}, span);
-	auto succ = Exp::make(eVar, std::string("succ"), {}, span);
+	auto v_less = Exp::make(eVar, std::string("<"), {}, span);
+	auto v_succ = Exp::make(eVar, std::string("succ"), {}, span);
 	auto block1 = Exp::make(eBlock, {}, span);
 	auto block2 = Exp::make(eBlock, {}, span);
 	auto t1 = genVar(block1, e->subexps[0]);
 	auto t2 = genVar(block1, e->subexps[1]);
 
-	// t1 < t2
-	auto cond = Exp::make(eCall, { less, t1, t2 }, span);
-	// loop t1 < t2 { ... }
+	auto cond = Exp::make(eCall, { v_less, t1, t2 }, span);
 	auto loop = Exp::make(eLoop, { cond, block2 }, span);
-	// let x1 = t1;
-	auto let = Exp::make(eLet, Ty::makeWildcard(),
-				e->getString(), { t1 }, span);
-	// succ(t1)
-	auto incr = Exp::make(eCall, { succ, t1 }, span);
-	// t1 = succ(t1)
-	auto assign = Exp::make(eAssign, { t1, incr }, span);
+	auto let = Exp::make(eLet, wc, e->getString(), { t1 }, span);
+	auto succ = Exp::make(eCall, { v_succ, t1 }, span);
+	auto assign = Exp::make(eAssign, { t1, succ }, span);
 
 	block2->subexps.reserve(3);
 	block2->subexps.push_back(let);
@@ -315,6 +307,41 @@ ExpPtr Desugar::desugarForRange (ExpPtr e, LocEnvPtr lenv)
 	return desugar(block1, lenv);
 }
 
+ExpPtr Desugar::desugarForEach (ExpPtr e, LocEnvPtr lenv)
+{
+	static auto wc = Ty::makeWildcard();
+	/*	for x1 : (e1) { e2 }
+	{
+		let t1 = (e1);
+		loop cons?(t1) {
+			let x1 = hd(t1);
+			{ e2 };
+			t1 = tl(t1);
+		}
+	} */
+	auto span = e->span;
+	auto v_cons = Exp::make(eVar, std::string("cons?"), {}, span);
+	auto v_hd = Exp::make(eVar, std::string("hd"), {}, span);
+	auto v_tl = Exp::make(eVar, std::string("tl"), {}, span);
+	auto block1 = Exp::make(eBlock, {}, span);
+	auto block2 = Exp::make(eBlock, {}, span);
+	auto t1 = genVar(block1, e->subexps[0]);
+
+	auto cons = Exp::make(eCall, { v_cons, t1 }, span);
+	auto loop = Exp::make(eLoop, { cons, block2 }, span);
+	auto hd = Exp::make(eCall, { v_hd, t1 }, span);
+	auto let = Exp::make(eLet, wc, e->getString(), { hd }, span);
+	auto tl = Exp::make(eCall, { v_tl, t1 }, span);
+	auto assign = Exp::make(eAssign, { t1, tl }, span);
+
+	block2->subexps.reserve(3);
+	block2->subexps.push_back(let);
+	block2->subexps.push_back(e->subexps[1]);
+	block2->subexps.push_back(assign);
+	block1->subexps.push_back(loop);
+
+	return desugar(block1, lenv);
+}
 
 
 
