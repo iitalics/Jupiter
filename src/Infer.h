@@ -62,4 +62,5 @@ struct Infer
 	TyPtr inferLoop (ExpPtr exp, LocEnvPtr lenv);
 	TyPtr inferBlock (ExpPtr exp, LocEnvPtr lenv);
 	TyPtr inferLet (ExpPtr exp, LocEnvPtr lenv);
+	TyPtr inferList (ExpPtr exp, LocEnvPtr lenv);
 };

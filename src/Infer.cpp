@@ -52,6 +52,8 @@ TyPtr Infer::infer (ExpPtr exp, LocEnvPtr lenv)
 	case eString: return tyStr;
 	case eBool:   return tyBool;
 
+	case eBlock:  return inferBlock(exp, lenv);
+	case eLet:    return inferLet(exp, lenv);
 	case eVar:    return inferVar(exp, lenv);
 	case eTuple:  return inferTuple(exp, lenv);
 	case eCall:   return inferCall(exp, lenv);
@@ -59,8 +61,7 @@ TyPtr Infer::infer (ExpPtr exp, LocEnvPtr lenv)
 	case eLambda: return inferLambda(exp, lenv);
 	case eAssign: return inferAssign(exp, lenv);
 	case eLoop:   return inferLoop(exp, lenv);
-	case eBlock:  return inferBlock(exp, lenv);
-	case eLet:    return inferLet(exp, lenv);
+	case eList:   return inferList(exp, lenv);
 
 	case eiMake:
 	case eiGet:
@@ -285,4 +286,17 @@ TyPtr Infer::inferLoop (ExpPtr exp, LocEnvPtr lenv)
 		infer(exp->subexps[0], lenv);
 
 	return Ty::makeUnit();
+}
+TyPtr Infer::inferList (ExpPtr exp, LocEnvPtr lenv)
+{
+	auto res = Ty::makePoly();
+
+	for (auto& e : exp->subexps)
+	{
+		auto ty = infer(e, lenv);
+		auto subs = unify(ty, res, e->span);
+		res = subs(res);
+	}
+
+	return Ty::makeConcrete("List", { res });
 }

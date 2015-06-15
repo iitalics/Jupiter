@@ -61,7 +61,8 @@ enum ExpKind
 	eLet,           //  string, type
 	eLoop,
 	eForRange,
-	eForEach
+	eForEach,
+	eList
 };
 
 class Exp
@@ -225,7 +226,12 @@ SigPtr parseSigParens (Lexer& lex);
 ExpPtr parseExp (Lexer& lex);
 // <term> := <call> | <mem> | <prefix>
 ExpPtr parseTerm (Lexer& lex);
-// <prefix> := <id> | <const> | <block> | <cond> | <lambda>
+// <prefix> := <id>
+//          := <const>
+//          := <block>
+//          := <cond>
+//          := <lambda>
+//          := <list>
 // <const> := <int> | <real> | <string>
 ExpPtr parseTermPrefix (Lexer& lex);
 ExpPtr parseTermPostfix (Lexer& lex, ExpPtr in);
@@ -258,6 +264,8 @@ ExpPtr parseAssign (Lexer& lex, ExpPtr left);
 ExpPtr parseLoop (Lexer& lex);
 // <for-loop> := 'for' <id> ':' <exp> ('->' <exp>)? <block>
 ExpPtr parseFor (Lexer& lex);
+// <list> := '[' (<exp> ',')* <exp>? ']'
+ExpPtr parseList (Lexer& lex);
 
 
 // undocumented?

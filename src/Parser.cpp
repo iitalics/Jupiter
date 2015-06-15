@@ -269,6 +269,8 @@ ExpPtr parseTermPrefix (Lexer& lex)
 		return parseCond(lex);
 	case tLCurl:
 		return parseBlock(lex);
+	case tLBrack:
+		return parseList(lex);
 
 	case tFunc: case tLambda:
 		return parseLambda(lex);
@@ -336,17 +338,16 @@ ExpPtr parseTuple (Lexer& lex)
 
 	spStart = lex.eat(tLParen).span;
 
-	if (lex.current() != tRParen)
-		while (lex.current() != tRParen)
-		{
-			e = parseExp(lex);
-			exps.push_back(e);
+	while (lex.current() != tRParen)
+	{
+		e = parseExp(lex);
+		exps.push_back(e);
 
-			if (lex.current() == tComma)
-				lex.advance();
-			else
-				break;
-		}
+		if (lex.current() == tComma)
+			lex.advance();
+		else
+			break;
+	}
 	
 	spEnd = lex.eat(tRParen).span;
 
@@ -557,6 +558,25 @@ ExpPtr parseFor (Lexer& lex)
 	else
 		return Exp::make(eForRange, var,
 				{ val1, val2, body }, spStart + spEnd);
+}
+ExpPtr parseList (Lexer& lex)
+{
+	Span spStart, spEnd;
+	ExpList vals;
+
+	spStart = lex.eat(tLBrack).span;
+	while (lex.current() != tRBrack)
+	{
+		vals.push_back(parseExp(lex));
+
+		if (lex.current() == tComma)
+			lex.advance();
+		else
+			break;
+	}
+	spEnd = lex.eat(tRBrack).span;
+
+	return Exp::make(eList, std::move(vals), spStart + spEnd);
 }
 ExpPtr parseiMake (Lexer& lex)
 {
