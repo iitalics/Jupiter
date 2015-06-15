@@ -96,6 +96,7 @@ struct CompileUnit
 	std::string compileLambda (ExpPtr e, EnvPtr env);
 	std::string compileAssign (ExpPtr e, EnvPtr env);
 	std::string compileLoop (ExpPtr e, EnvPtr env);
+	std::string compileList (ExpPtr e, EnvPtr env);
 	std::string compileiGet (ExpPtr e, EnvPtr env);
 	std::string compileiTag (ExpPtr e, EnvPtr env);
 };

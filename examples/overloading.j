@@ -18,6 +18,6 @@ func thing (x : [Int]) {
 func main () {
 	# dontDoThis(0, 0);      ambiguous call
 
-	thing(cons("Not an Int!", nil()));
-	thing(cons(1, cons(2, nil())));
+	thing(["Not an Int!"]);
+	thing([1, 2]);
 }

@@ -19,7 +19,7 @@ func main () {
 	}
 
 	# "for each" loop
-	let lst = cons(6, cons(3, cons(2, nil())));
+	let lst = [6, 3, 2];
 	for t : lst {
 		println("t = ", t);
 	}

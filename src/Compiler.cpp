@@ -465,6 +465,7 @@ std::string CompileUnit::compile (ExpPtr e, EnvPtr env, bool retain)
 	case eLoop:   return compileLoop(e, env);
 	case eBlock:  return compileBlock(e, env);
 	case eLet:    return compileLet(e, env);
+	case eList:   return compileList(e, env);
 	case eiGet:   return compileiGet(e, env);
 	case eiTag:   return compileiTag(e, env);
 	case eiEnv:   return ENV_VAR;
@@ -858,7 +859,7 @@ std::string CompileUnit::compileiTag (ExpPtr e, EnvPtr env)
 std::string CompileUnit::compileLambda (ExpPtr e, EnvPtr env)
 {
 	auto cunit = special[e];
-	auto res = makeUnique(".l");
+	auto res = makeUnique(".lm");
 
 	std::ostringstream args;
 
@@ -891,4 +892,51 @@ std::string CompileUnit::compileAssign (ExpPtr e, EnvPtr env)
 	       << "call void @ju_put (i8* " << box << ", i32 0, i8* " << res << ")" << std::endl;
 
 	return "null";
+}
+
+std::string CompileUnit::compileList (ExpPtr e, EnvPtr env)
+{
+	static auto tag_nil = GlobEnv::getTag("nil");
+	static auto tag_cons = GlobEnv::getTag("cons");
+
+	std::vector<std::string> items;
+	items.reserve(e->subexps.size());
+
+	pushLifetime();
+
+	for (auto& e2 : e->subexps)
+		items.push_back(compile(e2, env, true));
+
+	auto res = makeUnique(".l");
+	std::string temp = "";
+
+	// make 'nil'
+	ssBody << res << " = call i8* (i32, i32, i32, ...)* @ju_make_buf(i32 "
+	       << tag_nil << ", i32 0, i32 0)" << std::endl;
+
+	// iterate cells backwards
+	// let x = [1, 2, 3]
+	//    l = nil()
+	//    l2 = cons(3, l)
+	//    l3 = cons(2, l2)
+	//    x = cons(1, l3)
+	for (auto it = items.rbegin(); it != items.rend(); ++it)
+	{
+		auto prev = res;
+		res = makeUnique(".l");
+
+		// root prev cell
+		if (temp.empty())
+			temp = getTemp();
+		stackStore(temp, prev);
+
+		// make 'cons'
+		ssBody << res << " = call i8* (i32, i32, i32, ...)* @ju_make_buf(i32 "
+		       << tag_cons << ", i32 0, i32 2, i8* "
+		       << *it << ", i8* " << prev << ")" << std::endl;
+	}
+
+	popLifetime();
+
+	return res;
 }

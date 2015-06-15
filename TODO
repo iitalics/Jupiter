@@ -59,8 +59,8 @@ VERSION         GOAL
                 parser - sugar loops
                 desugar - sugar loops
                 parser - list literal
-TODO
                 codegen - list literal
+TODO
                 stdlib - more complete primitive functions
 0.0.5 dev       checkpoint - fizzbuzz!
                 main - modules (namespaces?)
