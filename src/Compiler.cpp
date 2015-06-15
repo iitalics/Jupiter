@@ -866,11 +866,17 @@ std::string CompileUnit::compileLambda (ExpPtr e, EnvPtr env)
 	// make env from variables
 	for (size_t i = 1, len = e->subexps.size(); i < len; i++)
 	{
-		auto var = e->subexps[i]->getString();
-		auto tmp = makeUnique(".v");
-		args << ", i8* " << tmp;
+		auto name = e->subexps[i]->getString();
+		auto var = env->get(name);
 
-		ssBody << tmp << " = load i8** " << env->get(var).internal << std::endl;
+		if (var.stackAlloc)
+		{
+			auto tmp = makeUnique(".v");
+			args << ", i8* " << tmp;
+			ssBody << tmp << " = load i8** " << var.internal << std::endl;
+		}
+		else
+			args << ", i8* " << var.internal;
 	}
 
 	ssBody << res << " = call i8* (i8*, i32, ...)* @ju_closure ("
