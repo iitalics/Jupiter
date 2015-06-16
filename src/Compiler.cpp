@@ -57,6 +57,7 @@ std::string Compiler::mangle (const std::string& ident)
 		else if (c == '>') ss << "_gr";
 		else if (c == '=') ss << "_eq";
 		else if (c == '?') ss << "_is";
+		else if (c == '\'') ss << "_pr";
 		else if (c == '#') ss << "_J";
 		else if (!(isalpha(c) || isdigit(c)))
 			ss << "_";
@@ -184,7 +185,7 @@ CompileUnit::CompileUnit (Compiler* comp, OverloadPtr overload, SigPtr sig)
 	  nroots(0)
 {
 	internalName =
-		comp->genUniqueName("fn_" + comp->mangle(overload->name));
+		comp->genUniqueName("fn_" + Compiler::mangle(overload->name));
 }
 
 
@@ -312,7 +313,7 @@ void CompileUnit::compile ()
 	for (size_t i = 0, len = sig->args.size(); i < len; i++)
 		env->vars.push_back({
 			sig->args[i].first,
-			makeUnique(sig->args[i].first),
+			makeUnique(Compiler::mangle(sig->args[i].first)),
 			false });
 
 	writePrefix(env);
@@ -677,7 +678,7 @@ std::string CompileUnit::compileCall (ExpPtr e, EnvPtr env)
 
 std::string CompileUnit::compileLet (ExpPtr e, EnvPtr env)
 {
-	auto internal = makeUnique(e->getString());
+	auto internal = makeUnique(Compiler::mangle(e->getString()));
 	stackAlloc(internal);
 
 	auto mut = e->get<bool>();

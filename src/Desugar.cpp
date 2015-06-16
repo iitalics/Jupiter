@@ -215,7 +215,7 @@ ExpPtr Desugar::desugarLet (ExpPtr e, LocEnvPtr lenv)
 ExpPtr Desugar::genVar (ExpPtr block, ExpPtr initial, TyPtr ty)
 {
 	std::stringstream name;
-	name << ".s" << (vars++);
+	name << "#s" << (vars++);
 
 	auto let = Exp::make(eLet, ty, name.str(), { initial }, block->span);
 	auto var = Exp::make(eVar, name.str(), bool(false), {}, block->span);
