@@ -7,61 +7,111 @@
 	fprintf(stderr, "RUNTIME ERROR: unimplemented: \"" s "\"\n"), \
 	exit(-1), ju_null
 
+#define to_bool(c) ((c) ? ju_true : ju_false)
+
 ;
 
-juc juStd_succInt (juc ca)
-{
-	return (juc) ((ju_int) ca + 2);
-}
-juc juStd_predInt (juc ca)
-{
-	return (juc) ((ju_int) ca - 2);
-}
+
+
+
+//////////////////////////////// Int ////////////////////////////////
+juc juStd_succInt (juc ca) { return (juc) ((ju_int) ca + 2); }
+juc juStd_predInt (juc ca) { return (juc) ((ju_int) ca - 2); }
 juc juStd_addInt (juc ca, juc cb)
 {
-	const ju_int a = (ju_int) ca;
-	const ju_int b = (ju_int) cb;
-
 	return (juc)
-		(a + b - 1); // hacky things
+		((ju_int) ca + (ju_int) cb - 1); // hacky things
 }
 juc juStd_mulInt (juc ca, juc cb)
 {
-	const ju_int a = ju_to_int(ca);
-	const ju_int b = ju_to_int(cb);
-
-	return ju_from_int(a * b);
+	return ju_from_int(ju_to_int(ca) * ju_to_int(cb));
 }
 juc juStd_divInt (juc ca, juc cb)
 {
-	const ju_int a = ju_to_int(ca);
-	const ju_int b = ju_to_int(cb);
+	// if (ju_to_int(cb) == 0) ?
 
-	// if (b == 0) ?
+	return ju_from_int(ju_to_int(ca) / ju_to_int(cb));
+}
+juc juStd_modInt (juc ca, juc cb)
+{
+	// if (ju_to_int(cb) == 0) ?
 
-	return ju_from_int(a / b);
+	return ju_from_int(ju_to_int(ca) % ju_to_int(cb));
 }
 juc juStd_negInt (juc ca)
 {
-	const ju_int a = (ju_int) ca;
-
-	return (juc) (2 - a); // more hacky things
+	return (juc) (2 - (ju_int) ca); // more hacky things
 }
 juc juStd_ltInt (juc ca, juc cb)
 {
 	const ju_int a = (ju_int) ca;
 	const ju_int b = (ju_int) cb;
 
-	return ((a - b) >> 1) < 0 ? ju_true : ju_false;
+	return to_bool(((a - b) >> 1) < 0);
 }
 juc juStd_eqInt (juc a, juc b)
 {
-	return (a == b) ? ju_true : ju_false;
+	return to_bool(a == b);
 }
+
+
+
+//////////////////////////////// Real ////////////////////////////////
+juc juStd_succReal (juc ca) { return ju_make_real(ju_get_real(ca) + 1.0); }
+juc juStd_predReal (juc ca) { return ju_make_real(ju_get_real(ca) - 1.0); }
+juc juStd_addReal (juc ca, juc cb)
+{
+	return ju_make_real(ju_get_real(ca) + ju_get_real(cb));
+}
+juc juStd_mulReal (juc ca, juc cb)
+{
+	return ju_make_real(ju_get_real(ca) * ju_get_real(cb));
+}
+juc juStd_divReal (juc ca, juc cb)
+{
+	// if (ju_get_real(cb) == 0) ?
+	return ju_make_real(ju_get_real(ca) / ju_get_real(cb));
+}
+juc juStd_negReal (juc ca)
+{
+	return ju_make_real(-ju_get_real(ca));
+}
+juc juStd_recipReal (juc ca)
+{
+	// if (ju_get_real(ca) == 0) ?
+	return ju_make_real(1.0 / ju_get_real(ca));
+}
+juc juStd_ltReal (juc ca, juc cb)
+{
+	return to_bool(ju_get_real(ca) < ju_get_real(cb));
+}
+juc juStd_eqReal (juc ca, juc cb)
+{
+	return to_bool(ju_get_real(ca) == ju_get_real(cb));
+}
+
+
+
+
+
+//////////////////////////////// Bool ////////////////////////////////
 juc juStd_notBool (juc a)
 {
 	return a ? ju_false : ju_true;
 }
+juc juStd_addBool (juc a, juc b)
+{
+	return a ? ju_true : b;
+}
+juc juStd_mulBool (juc a, juc b)
+{
+	return a ? b : ju_false;
+}
+
+
+
+
+//////////////////////////////// print ////////////////////////////////
 juc juStd_println ()
 {
 	putchar('\n');
@@ -103,6 +153,7 @@ juc juStd_printBool (juc cell)
 
 
 
+//////////////////////////////// String ////////////////////////////////
 juc juStd_strInt (juc ca)
 {
 	const size_t BUF_SIZE = 16;
@@ -126,7 +177,7 @@ juc juStd_strBool (juc ca)
 }
 juc juStd_strReal (juc ca)
 {
-	return die_unimpl("str(Real) -> Str");	
+	return die_unimpl("str(Real)");	
 }
 juc juStd_lenStr (juc a)
 {
