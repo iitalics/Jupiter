@@ -85,6 +85,33 @@
 					</array>
 				</dict>
 				<dict>
+					<key>begin</key>
+					<string>\b(let)\s+([!$%&amp;'*+\-/:|~&lt;-Z^-z\d]+)</string>
+					<key>beginCaptures</key>
+					<dict>
+						<key>1</key>
+						<dict>
+							<key>name</key>
+							<string>keyword.other.let.jup</string>
+						</dict>
+					</dict>
+					<key>comment</key>
+					<string>Variable definition using 'let'</string>
+					<key>end</key>
+					<string>\s*(=)</string>
+					<key>name</key>
+					<string>meta.let.variable.jup</string>
+					<key>patterns</key>
+					<array>
+						<dict>
+							<key>include</key>
+							<string>#type_ctx</string>
+						</dict>
+					</array>
+				</dict>
+				<dict>
+					<key>comment</key>
+					<string>Normal keyword for conditions, loops, etc</string>
 					<key>match</key>
 					<string>\b(if|then|else|let|loop|for|-&gt;)\b</string>
 					<key>name</key>
@@ -101,6 +128,8 @@
 							<string>support.function.jup</string>
 						</dict>
 					</dict>
+					<key>comment</key>
+					<string>Function call</string>
 					<key>end</key>
 					<string>(\))</string>
 					<key>name</key>
@@ -122,37 +151,34 @@
 							<string>support.function.jup</string>
 						</dict>
 					</dict>
+					<key>comment</key>
+					<string>Member access operator</string>
 					<key>match</key>
 					<string>\.([!$%&amp;'*+\-/:|~&lt;-Z^-z\d]+)</string>
 					<key>name</key>
 					<string>meta.member.jup</string>
 				</dict>
 				<dict>
-					<key>begin</key>
-					<string>\b(let)\s+([!$%&amp;'*+\-/:|~&lt;-Z^-z\d]+)</string>
-					<key>beginCaptures</key>
-					<dict>
-						<key>1</key>
-						<dict>
-							<key>name</key>
-							<string>keyword.control.jup</string>
-						</dict>
-					</dict>
-					<key>end</key>
-					<string>\s*(=)</string>
+					<key>comment</key>
+					<string>Int/Real constants</string>
+					<key>match</key>
+					<string>\b\d+(\.\d*)?</string>
 					<key>name</key>
-					<string>meta.let.variable.jup</string>
-					<key>patterns</key>
-					<array>
-						<dict>
-							<key>include</key>
-							<string>#type_ctx</string>
-						</dict>
-					</array>
+					<string>constant.numeric.jup</string>
+				</dict>
+				<dict>
+					<key>comment</key>
+					<string>Other constants</string>
+					<key>match</key>
+					<string>\b(true|false|_|\(\s*\))\b</string>
+					<key>name</key>
+					<string>constant.language.jup</string>
 				</dict>
 				<dict>
 					<key>begin</key>
 					<string>\{</string>
+					<key>comment</key>
+					<string>Block of code (expressions)</string>
 					<key>end</key>
 					<string>\}</string>
 					<key>name</key>
@@ -165,18 +191,6 @@
 						</dict>
 					</array>
 				</dict>
-				<dict>
-					<key>match</key>
-					<string>\b\d+(\.\d*)?</string>
-					<key>name</key>
-					<string>constant.numeric.jup</string>
-				</dict>
-				<dict>
-					<key>match</key>
-					<string>\b(true|false|_|\(\s*\))\b</string>
-					<key>name</key>
-					<string>constant.language.jup</string>
-				</dict>
 			</array>
 		</dict>
 		<key>general</key>
@@ -184,6 +198,8 @@
 			<key>patterns</key>
 			<array>
 				<dict>
+					<key>comment</key>
+					<string>Single-line comment</string>
 					<key>match</key>
 					<string>#.*$</string>
 					<key>name</key>
@@ -192,6 +208,8 @@
 				<dict>
 					<key>begin</key>
 					<string>\"</string>
+					<key>comment</key>
+					<string>String constant</string>
 					<key>end</key>
 					<string>\"</string>
 					<key>name</key>
@@ -212,6 +230,14 @@
 					<string>#type_ctx</string>
 				</dict>
 				<dict>
+					<key>comment</key>
+					<string>Module import at toplevel</string>
+					<key>match</key>
+					<string>\b(import)\b</string>
+					<key>name</key>
+					<string>keyword.control.import.jup</string>
+				</dict>
+				<dict>
 					<key>begin</key>
 					<string>\b(func)\s+([!$%&amp;'*+\-/:|~&lt;-Z^-z\d]+)\s*(\()</string>
 					<key>beginCaptures</key>
@@ -227,6 +253,8 @@
 							<string>entity.name.function.jup</string>
 						</dict>
 					</dict>
+					<key>comment</key>
+					<string>Function declaration at toplevel</string>
 					<key>end</key>
 					<string>(\))</string>
 					<key>name</key>
@@ -314,6 +342,8 @@
 							<string>entity.name.function.jup</string>
 						</dict>
 					</dict>
+					<key>comment</key>
+					<string>Type constructor</string>
 					<key>end</key>
 					<string>(\))</string>
 					<key>name</key>
@@ -329,6 +359,8 @@
 				<dict>
 					<key>begin</key>
 					<string>\{</string>
+					<key>comment</key>
+					<string>Block of code (expressions)</string>
 					<key>end</key>
 					<string>\}</string>
 					<key>name</key>
@@ -352,18 +384,24 @@
 					<string>#general</string>
 				</dict>
 				<dict>
+					<key>comment</key>
+					<string>Polytype</string>
 					<key>match</key>
 					<string>\\\s*([!$%&amp;'*+\-/:|~&lt;-Z^-z\d]+)</string>
 					<key>name</key>
 					<string>variable.parameter.polytype.jup</string>
 				</dict>
 				<dict>
+					<key>comment</key>
+					<string>Wildcard type</string>
 					<key>match</key>
 					<string>\b_</string>
 					<key>name</key>
 					<string>variable.parameter.wildcard.jup</string>
 				</dict>
 				<dict>
+					<key>comment</key>
+					<string>Concrete type</string>
 					<key>match</key>
 					<string>\b[A-Z][!$%&amp;'*+\-/:|~&lt;-Z^-z\d]+</string>
 					<key>name</key>
@@ -378,12 +416,16 @@
 							<string>keyword.operator.jup</string>
 						</dict>
 					</dict>
+					<key>comment</key>
+					<string>Arrow in function type</string>
 					<key>match</key>
 					<string>(?:\s*)(-&gt;)(?:\s*)</string>
 				</dict>
 				<dict>
 					<key>begin</key>
 					<string>\(</string>
+					<key>comment</key>
+					<string>Parenthesis (tuple/concrete type)</string>
 					<key>end</key>
 					<string>\)</string>
 					<key>name</key>

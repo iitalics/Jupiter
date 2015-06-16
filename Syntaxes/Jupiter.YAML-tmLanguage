@@ -11,9 +11,11 @@ repository:
   general:
     patterns:
     - name: comment.line.jup
+      comment: Single-line comment
       match: "#.*$"
 
     - name: string.quoted.double.jup
+      comment: String constant
       begin: \"
       end: \"
 
@@ -22,7 +24,12 @@ repository:
     - include: '#general'
     - include: '#type_ctx'
 
+    - name: keyword.control.import.jup
+      comment: Module import at toplevel
+      match: "\\b(import)\\b"
+
     - name: meta.funcdecl.jup
+      comment: Function declaration at toplevel
       begin: "\\b(func)\\s+([!$%&'*+\\-/:|~<-Z^-z\\d]+)\\s*(\\()"
       end: "(\\))"
       beginCaptures:
@@ -52,6 +59,7 @@ repository:
         '3': {name: keyword.operator.jup}
 
     - name: meta.constructor.jup
+      comment: Type constructor
       begin: "([!$%&'*+\\-/:|~<-Z^-z\\d]+)\\s*(\\()"
       end: "(\\))"
       beginCaptures:
@@ -60,6 +68,7 @@ repository:
       - include: '#type_ctx'
 
     - name: meta.block.jup
+      comment: Block of code (expressions)
       begin: \{
       end: \}
       patterns:
@@ -89,10 +98,21 @@ repository:
       patterns:
       - include: '#type_ctx'
 
+    - name: meta.let.variable.jup
+      comment: Variable definition using 'let'
+      begin: "\\b(let)\\s+([!$%&'*+\\-/:|~<-Z^-z\\d]+)"
+      end: "\\s*(=)"
+      beginCaptures:
+        '1': {name: keyword.other.let.jup}
+      patterns:
+      - include: '#type_ctx'
+
     - name: keyword.control.jup
+      comment: Normal keyword for conditions, loops, etc
       match: "\\b(if|then|else|let|loop|for|->)\\b"
 
     - name: meta.funccall.jup
+      comment: Function call
       begin: "(?:(?!func))([!$%&'*+\\-/:|~<-Z^-z\\d]+)\\s*(\\()"
       end: "(\\))"
       beginCaptures:
@@ -101,29 +121,25 @@ repository:
       - include: '#expr_ctx'
 
     - name: meta.member.jup
+      comment: Member access operator
       match: "\\.([!$%&'*+\\-/:|~<-Z^-z\\d]+)"
       captures:
         '1': {name: support.function.jup}
 
-    - name: meta.let.variable.jup
-      begin: "\\b(let)\\s+([!$%&'*+\\-/:|~<-Z^-z\\d]+)"
-      end: "\\s*(=)"
-      beginCaptures:
-        '1': {name: keyword.control.jup}
-      patterns:
-      - include: '#type_ctx'
+    - name: constant.numeric.jup
+      comment: Int/Real constants
+      match: "\\b\\d+(\\.\\d*)?"
+
+    - name: constant.language.jup
+      comment: Other constants
+      match: "\\b(true|false|_|\\(\\s*\\))\\b"
 
     - name: meta.block.jup
+      comment: Block of code (expressions)
       begin: \{
       end: \}
       patterns:
       - include: '#expr_ctx'
-
-    - name: constant.numeric.jup
-      match: "\\b\\d+(\\.\\d*)?"
-
-    - name: constant.language.jup
-      match: "\\b(true|false|_|\\(\\s*\\))\\b"
 
 
   type_ctx:
@@ -131,19 +147,24 @@ repository:
     - include: '#general'
 
     - name: variable.parameter.polytype.jup
+      comment: Polytype
       match: "\\\\\\s*([!$%&'*+\\-/:|~<-Z^-z\\d]+)"
 
     - name: variable.parameter.wildcard.jup
+      comment: Wildcard type
       match: "\\b_"
 
     - name: storage.type.concrete.jup
+      comment: Concrete type
       match: "\\b[A-Z][!$%&'*+\\-/:|~<-Z^-z\\d]+"
 
     - match: "(?:\\s*)(->)(?:\\s*)"
+      comment: Arrow in function type
       captures:
         '1': {name: keyword.operator.jup}
 
     - name: meta.parens.jup
+      comment: Parenthesis (tuple/concrete type)
       begin: \(
       end: \)
       patterns:
