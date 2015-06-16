@@ -53,6 +53,10 @@ juc juStd_eqInt (juc a, juc b)
 {
 	return to_bool(a == b);
 }
+juc juStd_intReal (juc r)
+{
+	return ju_from_int((ju_int) ju_get_real(r));
+}
 
 
 
@@ -88,6 +92,10 @@ juc juStd_ltReal (juc ca, juc cb)
 juc juStd_eqReal (juc ca, juc cb)
 {
 	return to_bool(ju_get_real(ca) == ju_get_real(cb));
+}
+juc juStd_realInt (juc ci)
+{
+	return ju_make_real((ju_real) ((ju_int) ci >> 1));
 }
 
 
