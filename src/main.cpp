@@ -47,6 +47,7 @@ static int Main (std::vector<std::string>&& args)
 	env.operators.push_back(Op("-",  70, Assoc::Left));
 	env.operators.push_back(Op("*",  60, Assoc::Left));
 	env.operators.push_back(Op("/",  60, Assoc::Left));
+	env.operators.push_back(Op("%",  60, Assoc::Left));
 	env.operators.push_back(Op("^",  50, Assoc::Right));
 
 
