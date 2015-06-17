@@ -143,37 +143,6 @@ void Compiler::outputEntryPoint (std::ostream& os)
 
 
 
-
-
-
-CompileUnit::Env::Env (CompileUnit* cunit, EnvPtr _parent)
-	: parent(_parent) {}
-
-CompileUnit::Var CompileUnit::Env::get (const std::string& name) const
-{
-	for (auto& v : vars)
-		if (v.name == name)
-			return v;
-	return parent->get(name);
-}
-
-
-
-// baked
-CompileUnit::CompileUnit (Compiler* comp, OverloadPtr over,
-                            SigPtr sig, TyPtr ret,
-                            const std::string& intName)
-	: compiler(comp),
-	  overload(over),
-	  internalName(intName),
-	  funcInst(this, sig, ret),
-	  finishedInfer(true)
-{
-	// declare baked signature
-	ssPrefix << "declare " JUP_CCONV " i8* @" << intName
-	         << " (" << joinCommas(sig->args.size(), "i8*") << ")";
-}
-
 // normal
 CompileUnit::CompileUnit (Compiler* comp, OverloadPtr overload, SigPtr sig)
 	: compiler(comp),
@@ -188,6 +157,24 @@ CompileUnit::CompileUnit (Compiler* comp, OverloadPtr overload, SigPtr sig)
 		comp->genUniqueName("fn_" + Compiler::mangle(overload->name));
 }
 
+// baked
+CompileUnit::CompileUnit (Compiler* comp, OverloadPtr over,
+                            SigPtr sig, TyPtr ret,
+                            const std::string& intName)
+	: compiler(comp),
+	  overload(over),
+	  internalName(intName),
+	  funcInst(this, sig, ret),
+	  finishedInfer(true)
+{}
+
+
+void CompileUnit::output (std::ostream& out)
+{
+	out << ssPrefix.str() << ssBody.str() << ssEnd.str();
+}
+
+
 
 
 
@@ -195,6 +182,22 @@ CompileUnit::EnvPtr CompileUnit::makeEnv (EnvPtr parent)
 {
 	return std::make_shared<Env>(this, parent);
 }
+
+CompileUnit::Env::Env (CompileUnit* cunit, EnvPtr _parent)
+	: parent(_parent) {}
+
+CompileUnit::Var CompileUnit::Env::get (const std::string& name) const
+{
+	for (auto& v : vars)
+		if (v.name == name)
+			return v;
+	return parent->get(name);
+}
+
+
+
+
+
 std::string CompileUnit::makeUnique (const std::string& str)
 {
 	auto res = str;
@@ -245,6 +248,55 @@ void CompileUnit::popLifetime ()
 
 	lifetime--;
 }
+void CompileUnit::writePrefix (EnvPtr env)
+{
+	ssPrefix << std::endl << std::endl << std::endl
+	         << ";;;   " << funcInst.name << " "
+	         << funcInst.type()->string() << std::endl
+	         << "define " JUP_CCONV " i8* @"
+	         << internalName << " (";
+
+	for (size_t i = 0, len = env->vars.size(); i < len; i++)
+	{
+		if (i > 0)
+			ssPrefix << ", ";
+
+		ssPrefix << "i8* " << env->vars[i].internal;
+	}
+
+	if (overload->hasEnv)
+	{
+		if (env->vars.size() > 0)
+			ssPrefix << ", ";
+		ssPrefix << "i8* " ENV_VAR;
+	}
+
+	ssPrefix << ") unnamed_addr" << std::endl
+	         << "{" << std::endl;
+}
+void CompileUnit::writeEnd ()
+{
+	ssEnd << "}" << std::endl;
+}
+void CompileUnit::writeUnroot ()
+{
+	auto v = makeUnique(".v");
+	ssBody << v << " = load i32* %.nroots" << std::endl
+	       << "call void @juGC_unroot (i32 " << v << ")" << std::endl;
+}
+void CompileUnit::stackAlloc (const std::string& name)
+{
+	ssPrefix << name << " = alloca i8*" << std::endl
+	         << "call void @juGC_root (i8** " << name << ")" << std::endl;
+
+	nroots++;
+}
+void CompileUnit::stackStore (const std::string& name, 
+                                const std::string& value)
+{
+	ssBody << "call void @juGC_store (i8** " << name << ", i8* " << value << ")" << std::endl;
+}
+
 
 
 
@@ -294,6 +346,22 @@ bool CompileUnit::doesTailCall (ExpPtr exp) const
 	default: return false;
 	}
 }
+bool CompileUnit::needsRetain (ExpPtr exp)
+{
+	switch (exp->kind)
+	{
+	case eInt:
+	case eBool:
+	case eiEnv:
+		return false;
+
+	case eVar:
+		// access to global functions needs to be retained
+		return exp->get<bool>();
+
+	default: return true;
+	}
+}
 
 
 
@@ -304,11 +372,11 @@ void CompileUnit::compile ()
 	
 	auto& sig = funcInst.signature;
 
+	// do type inference
 	Infer inf(this, sig);
-
 	finishedInfer = true;
 
-	// TODO: put in arguments 
+	// create arguments
 	auto env = makeEnv();
 	for (size_t i = 0, len = sig->args.size(); i < len; i++)
 		env->vars.push_back({
@@ -316,11 +384,13 @@ void CompileUnit::compile ()
 			makeUnique(Compiler::mangle(sig->args[i].first)),
 			false });
 
+	// write basic stuff
 	writePrefix(env);
 	writeEnd();
 
 	ssBody << std::endl;
 
+	// find tail calls beforehand
 	findTailCalls(overload->body);
 	auto res = compile(overload->body, env, false);
 
@@ -343,6 +413,7 @@ void CompileUnit::compile ()
 			         << ", i8* " << env->vars[i].internal << ")" << std::endl;
 	}
 
+	// create variable for number of gc roots on stack
 	if (nroots > 0 || !tailCalls.empty())
 	{
 		// 'opt -mem2reg' will convert this stack allocation
@@ -358,80 +429,9 @@ void CompileUnit::compile ()
 }
 
 
-void CompileUnit::output (std::ostream& out)
-{
-	out << ssPrefix.str() << ssBody.str() << ssEnd.str();
-}
-void CompileUnit::writePrefix (EnvPtr env)
-{
-	ssPrefix << std::endl << std::endl << std::endl
-	         << ";;;   " << funcInst.name << " "
-	         << funcInst.type()->string() << std::endl
-	         << "define " JUP_CCONV " i8* @"
-	         << internalName << " (";
-
-	for (size_t i = 0, len = env->vars.size(); i < len; i++)
-	{
-		if (i > 0)
-			ssPrefix << ", ";
-
-		ssPrefix << "i8* " << env->vars[i].internal;
-	}
-
-	if (overload->hasEnv)
-	{
-		if (env->vars.size() > 0)
-			ssPrefix << ", ";
-		ssPrefix << "i8* " ENV_VAR;
-	}
-
-	ssPrefix << ") unnamed_addr" << std::endl
-	         << "{" << std::endl;
-}
-void CompileUnit::writeEnd ()
-{
-	ssEnd << "}" << std::endl;
-}
-void CompileUnit::writeUnroot ()
-{
-	auto v = makeUnique(".v");
-	ssBody << v << " = load i32* %.nroots" << std::endl
-	       << "call void @juGC_unroot (i32 " << v << ")" << std::endl;
-}
-void CompileUnit::stackAlloc (const std::string& name)
-{
-	ssPrefix << name << " = alloca i8*" << std::endl
-	         << "call void @juGC_root (i8** " << name << ")" << std::endl;
-
-	nroots++;
-}
-void CompileUnit::stackStore (const std::string& name, 
-                                const std::string& value)
-{
-	ssBody << "call void @juGC_store (i8** " << name << ", i8* " << value << ")" << std::endl;
-}
-bool CompileUnit::needsRetain (ExpPtr exp)
-{
-	switch (exp->kind)
-	{
-	case eInt:
-	case eBool:
-	case eiEnv:
-		return false;
-
-	case eVar:
-		// access to global functions needs to be retained
-		return exp->get<bool>();
-
-	default: return true;
-	}
-}
-
-
-
-
 std::string CompileUnit::compile (ExpPtr e, EnvPtr env, bool retain)
 {
+	// retain the result if needed
 	if (retain && needsRetain(e))
 	{
 		auto res = compile(e, env, false);
