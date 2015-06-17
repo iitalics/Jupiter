@@ -128,8 +128,8 @@ TyPtr Infer::inferLet (ExpPtr exp, LocEnvPtr lenv)
 			= ()
 			where
 				t1 = infer e1
-				S  = unify t1 a
-				env += { x1 : S a }
+				S = unify t1 a
+				env += [x1 : (S a)]
 	*/
 	auto ty = mainSubs(exp->getType());      // written type
 	auto tye = infer(exp->subexps[0], lenv); // inferred type
@@ -153,8 +153,8 @@ TyPtr Infer::inferCall (ExpPtr exp, LocEnvPtr lenv)
 			= S a
 			where
 				t1,...,tn = infer e1,...,infer en
-				a : Ty    = newtype
-				S : Subs  = unify t1 "Fn"(t2,...,tn,a)
+				a = {new type}
+				S = unify t1 "Fn"(t2,...,tn,a)
 	*/
 	auto fnty = infer(exp->subexps[0], lenv);
 	auto ret = Ty::makePoly();
@@ -199,8 +199,10 @@ TyPtr Infer::inferCond (ExpPtr exp, LocEnvPtr lenv)
 		infer  if e1 then e2 else e3
 			= S t2
 			where
-				t1,t2,t3 = infer t1,...,infer t3
-				    unify t1 "Bool"
+				t1 = infer e1
+				t2 = infer e2
+				t3 = infer e3
+				unify t1 "Bool"
 				S = unify t2 t3
 	*/
 	TyPtr tc, t1, t2;
@@ -216,8 +218,17 @@ TyPtr Infer::inferCond (ExpPtr exp, LocEnvPtr lenv)
 }
 TyPtr Infer::inferLambda (ExpPtr exp, LocEnvPtr lenv)
 {
-	// this special expression retrieves the environment object
-	//  of the current closure
+	/*
+		infer  \x,... -> e
+			= infer var
+			where
+				var = {unique name}
+				create func
+					name: var
+					sig: (x, ...)
+					body: e
+					env: ...
+	*/
 	static auto envExp = Exp::make(eiEnv);
 
 	auto sig = mainSubs(Sig::fromSigType(exp->getType(), exp->span));
@@ -259,6 +270,14 @@ TyPtr Infer::inferLambda (ExpPtr exp, LocEnvPtr lenv)
 }
 TyPtr Infer::inferAssign (ExpPtr exp, LocEnvPtr lenv)
 {
+	/*
+		infer  e1 = e2
+			= ()
+			where
+				t1 = infer e1
+				t2 = infer t2
+				unify t1 t2
+	*/
 	auto t1 = infer(exp->subexps[0], lenv);
 	auto t2 = infer(exp->subexps[1], lenv);
 
@@ -275,6 +294,13 @@ TyPtr Infer::inferAssign (ExpPtr exp, LocEnvPtr lenv)
 }
 TyPtr Infer::inferLoop (ExpPtr exp, LocEnvPtr lenv)
 {
+	/*
+		infer  loop e1 { e2 }
+			= ()
+			where
+				t1 = infer e1
+				unify t1 "Bool"
+	*/
 	if (exp->subexps.size() > 1)
 	{
 		auto tcond = infer(exp->subexps[0], lenv);
@@ -289,6 +315,19 @@ TyPtr Infer::inferLoop (ExpPtr exp, LocEnvPtr lenv)
 }
 TyPtr Infer::inferList (ExpPtr exp, LocEnvPtr lenv)
 {
+	/*
+		infer  [e1,...,en]
+			= "List"(t)
+			where
+				t = inferL [e1,...,en]
+
+		inferL [] = {new type}
+		inferL (e1)::xs = S t1
+			where
+				t1 = infer e1
+				t2 = inferL xs
+				S = unify t1 t2
+	*/
 	auto res = Ty::makePoly();
 
 	for (auto& e : exp->subexps)
