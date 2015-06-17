@@ -25,11 +25,11 @@ public:
 	ExpPtr body;
 	bool hasEnv;
 	std::vector<CompileUnit*> instances;
+	bool isPublic;
 
 	static OverloadPtr make (GlobEnv& env, const std::string& name,
-	                           SigPtr sig, ExpPtr body);
-	static FuncInstance inst (OverloadPtr overload,
-	                            SigPtr sig, Compiler* comp);
+	                           SigPtr sig, ExpPtr body, bool isPub);
+	static FuncInstance inst (OverloadPtr overload, SigPtr sig);
 };
 
 struct FuncInstance
@@ -64,13 +64,13 @@ class GlobEnv
 {
 public:
 	using OpPrecedence = std::tuple<std::string, int, Assoc>;
+	static int_t getTag (const std::string& ident);
 
+	Compiler* compiler;
 	std::vector<OpPrecedence> operators;
 	std::vector<GlobFuncPtr> functions;
 	std::vector<TypeInfo*> types;
-	// modules
 
-	static int_t getTag (const std::string& ident);
 
 	GlobEnv ();
 	~GlobEnv ();
@@ -81,14 +81,7 @@ public:
 	void addType (const TypeInfo& tyi);
 	TypeInfo* getType (const std::string& name) const;
 
-	// creates a function and an instance
-	void bake (Compiler* comp,
-		        const std::string& intName,
-	            const std::string& name,
-	            const std::vector<TyPtr>& args,
-	            TyPtr ret);
 
-	// TODO: replace with 'import'
 	void loadToplevel (const std::string& filename);
 	void loadToplevel (GlobProto& proto);
 	void generateType (TypeDecl& tydecl, GlobProto& proto);

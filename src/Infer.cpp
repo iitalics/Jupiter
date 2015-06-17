@@ -251,7 +251,7 @@ TyPtr Infer::inferLambda (ExpPtr exp, LocEnvPtr lenv)
 
 	// create seperate function containing lambda
 	auto lamName = fn.cunit->compiler->genUniqueName("#lambda");
-	auto overload = Overload::make(env, lamName, sig, body);
+	auto overload = Overload::make(env, lamName, sig, body, false);
 	overload->hasEnv = true;
 	env.addFunc(lamName)->overloads.push_back(overload);
 

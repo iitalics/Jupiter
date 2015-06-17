@@ -59,6 +59,7 @@ static void generateCtor (GlobProto& proto,
 	exp_make->setType(fnty);
 
 	proto.funcs.push_back({
+		true,
 		ctorname,
 		sig,
 		Exp::make(eCall, callArgs, span),
@@ -72,6 +73,7 @@ static void generateCtor (GlobProto& proto,
 	auto exp_cmp = Exp::make(eiTag, ctorname, { util_var }, span);
 
 	proto.funcs.push_back({
+		true,
 		ctorname + "?",
 		util_sig,
 		exp_cmp,
@@ -94,6 +96,7 @@ static void generateCtor (GlobProto& proto,
 		exp_get->setString(ctorname); // ju_safe_get  instead of  ju_get
 
 		proto.funcs.push_back({
+			true,
 			field,
 			util_sig,
 			exp_get,

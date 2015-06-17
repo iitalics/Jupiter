@@ -239,7 +239,7 @@
 				</dict>
 				<dict>
 					<key>begin</key>
-					<string>\b(func)\s+([!$%&amp;'*+\-/:|~&lt;-Z^-z\d]+)\s*(\()</string>
+					<string>\b((?:pub\s+)?func)\s+([!$%&amp;'*+\-/:|~&lt;-Z^-z\d]+)\s*(\()</string>
 					<key>beginCaptures</key>
 					<dict>
 						<key>1</key>

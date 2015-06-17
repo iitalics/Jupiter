@@ -418,6 +418,7 @@ FuncDecl Desugar::desugar (const FuncDecl& func)
 		env->newVar(a.first, a.second);
 
 	return FuncDecl {
+		.isPublic = func.isPublic,
 		.name = func.name,
 		.signature = desugar(func.signature),
 		.body = desugar(func.body, env),

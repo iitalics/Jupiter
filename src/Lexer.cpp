@@ -94,6 +94,7 @@ std::vector<std::pair<std::string, int>> Lexer::keywords {
 	{ "for",   tFor },
 	{ "true",  tTrue },
 	{ "false", tFalse },
+	{ "pub",   tPub },
 	{ "^make", tiMake },
 	{ "^get",  tiGet },
 	{ "^put",  tiPut },

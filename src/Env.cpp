@@ -11,6 +11,7 @@
 // ------------------------------------- GlobEnv -------------------------------------//
 
 GlobEnv::GlobEnv ()
+	: compiler(new Compiler())
 {
 	// create some primitive types that are required for basic
 	//  operations to work
@@ -118,42 +119,26 @@ void GlobEnv::loadToplevel (GlobProto& proto)
 			*this,
 			fnd.name,
 			fnd.signature, 
-			fnd.body);
+			fnd.body,
+			fnd.isPublic);
 
 		globfn->overloads.push_back(overload);
 	}
 }
 
-void GlobEnv::bake (Compiler* comp, const std::string& intName,
-                        const std::string& name,
-                        const std::vector<TyPtr>& args,
-                        TyPtr ret)
-{
-	auto sig = Sig::make();
-	for (const auto& ty : args)
-		sig->args.push_back({ "_", ty });
-
-	auto overload = Overload::make(*this, name, sig, Exp::make(eInvalid));
-	auto cu = comp->bake(overload, sig, ret, intName);
-
-	addFunc(name)->overloads.push_back(overload);
-	overload->instances.push_back(cu);
-}
-
 OverloadPtr Overload::make (GlobEnv& env, const std::string& name,
-                              SigPtr sig, ExpPtr body)
+                              SigPtr sig, ExpPtr body, bool isPub)
 {
-	return OverloadPtr(new Overload { env, name, sig, body, false, {} });
+	return OverloadPtr(new Overload { env, name, sig, body, false, {}, isPub });
 }
 
-FuncInstance Overload::inst (OverloadPtr over, SigPtr sig, Compiler* compiler)
+FuncInstance Overload::inst (OverloadPtr over, SigPtr sig)
 {
 	for (auto cu : over->instances)
 		if (cu->funcInst.signature->aEquiv(sig))
 			return cu->funcInst;
 
-//	std::cerr << "instancing '" << over->name << "' with: " << sig->string() << std::endl;
-	auto cunit = compiler->compile(over, sig);
+	auto cunit = over->env.compiler->compile(over, sig);
 	over->instances.push_back(cunit);
 	cunit->compile();
 	return cunit->funcInst;

@@ -344,7 +344,7 @@ bool Infer::unifyOverload (Subs& out,
 
 	// instanciate overloaded function with
 	//  this signature
-	auto inst = Overload::inst(overload, sig, fn.cunit->compiler);
+	auto inst = Overload::inst(overload, sig);
 	TyPtr resty;
 
 	if (inst.cunit->finishedInfer)

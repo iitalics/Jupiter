@@ -5,7 +5,7 @@
 #include "Desugar.h"
 #include "Compiler.h"
 
-#define VERSION   "jupiter version 0.0.4 dev"
+#define VERSION   "jupiter version 0.0.5 dev"
 #define COPYRIGHT "copyright (C) 2015 iitalics"
 
 static int Main (std::vector<std::string>&& args);
@@ -39,7 +39,6 @@ static int Main (std::vector<std::string>&& args)
 	}
 
 	GlobEnv env;
-	Compiler compiler;
 	using Op = GlobEnv::OpPrecedence;
 
 	// TODO: integrate order-of-ops into jupiter syntax
@@ -50,10 +49,11 @@ static int Main (std::vector<std::string>&& args)
 	env.operators.push_back(Op("/",  60, Assoc::Left));
 	env.operators.push_back(Op("^",  50, Assoc::Right));
 
-	env.loadStdlib();
 
 	try
 	{
+		env.loadStdlib();
+
 		for (size_t i = 1, len = args.size(); i < len; i++)
 			env.loadToplevel(args[i]);
 
@@ -61,7 +61,7 @@ static int Main (std::vector<std::string>&& args)
 		auto entrySig = Sig::make();
 		auto entryBody =
 			Exp::make(eCall,
-				{ Exp::make(eVar, "main", int(-1), {}, entrySpan) },
+				{ Exp::make(eVar, "main", bool(false), {}, entrySpan) },
 				entrySpan);
 		try
 		{
@@ -78,13 +78,14 @@ static int Main (std::vector<std::string>&& args)
 				env,
 				"#entry",
 				entrySig,
-				entryBody);
+				entryBody,
+				false);
 
-		auto cunit = compiler.compile(entryOverload, entrySig);
-		compiler.entryPoint(cunit);
+		auto cunit = env.compiler->compile(entryOverload, entrySig);
+		env.compiler->entryPoint(cunit);
 		cunit->compile();
 
-		compiler.output(std::cout);
+		env.compiler->output(std::cout);
 
 
 		return 0;

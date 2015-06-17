@@ -25,6 +25,7 @@ enum
 	tFor,
 	tTrue,
 	tFalse,
+	tPub,
 	
 	tiMake, tiGet, tiPut, tiTag, tiCall,
 

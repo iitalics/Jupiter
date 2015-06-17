@@ -30,7 +30,7 @@ repository:
 
     - name: meta.funcdecl.jup
       comment: Function declaration at toplevel
-      begin: "\\b(func)\\s+([!$%&'*+\\-/:|~<-Z^-z\\d]+)\\s*(\\()"
+      begin: "\\b((?:pub\\s+)?func)\\s+([!$%&'*+\\-/:|~<-Z^-z\\d]+)\\s*(\\()"
       end: "(\\))"
       beginCaptures:
         '1': {name: storage.type.jup}

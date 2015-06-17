@@ -4,6 +4,132 @@
 namespace Parse
 {
 
+
+bool parseToplevel (Lexer& lex, GlobProto& proto)
+{
+	switch (lex.current().tok)
+	{
+	case tFunc:
+		proto.funcs.push_back(parseFuncDecl(lex));
+		return true;
+
+	case tType:
+		proto.types.push_back(parseTypeDecl(lex));
+		return true;
+
+	case tPub:
+		{
+			auto sp = lex.advance().span;
+			auto fn = parseFuncDecl(lex);
+			fn.isPublic = true;
+			fn.span = sp + fn.span;
+
+			proto.funcs.push_back(fn);
+			return true;
+		}
+
+	default:
+		return false;
+	}
+}
+
+GlobProto parseToplevel (Lexer& lex)
+{
+	GlobProto res;
+	while (parseToplevel(lex, res)) ;
+	return res;
+}
+
+FuncDecl parseFuncDecl (Lexer& lex)
+{
+	Span spStart, spEnd;
+
+	spStart = lex.eat(tFunc).span;
+	auto name = lex.eat(tIdent).str;
+	auto sig = parseSigParens(lex);
+	
+	ExpPtr body;
+/*	if (lex.current() == tEqual)
+	{
+		lex.advance();
+		body = parseExp(lex);
+	}
+	else */
+		body = parseBlock(lex);
+
+	spEnd = sig->span;
+
+	return FuncDecl
+		{
+			.isPublic = false,
+			.name = name,
+			.signature = sig,
+			.body = body,
+			.span = spStart + spEnd
+		};
+}
+
+static FuncDecl parseConstructor (Lexer& lex)
+{
+	Span spStart, spEnd;
+	FuncDecl result;
+
+	result.name = lex.current().str;
+	spStart = lex.eat(tIdent).span;
+	result.signature = parseSigParens(lex);
+	spEnd = result.signature->span;
+	result.span = spStart + spEnd;
+	result.body = nullptr;
+	return result;
+}
+TypeDecl parseTypeDecl (Lexer& lex)
+{
+	Span spStart, spEnd, spType;
+	std::vector<FuncDecl> ctors;
+
+	spStart = lex.eat(tType).span;
+
+	auto ty = parseType(lex, spType);
+
+	if (ty->kind != tyConcrete)
+		throw spType.die("invalid form of type in declaration");
+
+	for (auto sub = ty->subtypes; !sub.nil(); ++sub)
+	{
+		auto sty = sub.head();
+
+		if (sty->kind != tyPoly)
+			throw spType.die("arguments to type must be polytypes");
+
+		for (auto sty2 : sub.tail())
+			if (sty2->kind == tyPoly &&
+					sty->name == sty2->name)
+				throw spType.die("identical polytypes in declaration");
+	}
+
+	lex.eat(tEqual);
+	for (;;)
+	{
+		auto ctor = parseConstructor(lex);
+		spEnd = ctor.span;
+		ctors.push_back(ctor);
+
+		if (lex.current() == tComma)
+			lex.advance();
+		else
+			break;
+	}
+
+	return TypeDecl
+		{
+			ty->name,
+			ty->subtypes,
+			std::move(ctors),
+			spStart + spEnd
+		};
+}
+
+
 void parseVar (Lexer& lex, std::string& name, TyPtr& ty, Span& sp)
 {
 	sp = lex.current().span;
@@ -74,124 +200,6 @@ SigPtr parseSigParens (Lexer& lex)
 	res->span = spStart + spEnd;
 	return res;
 }
-
-
-
-
-
-FuncDecl parseFuncDecl (Lexer& lex)
-{
-	Span spStart, spEnd;
-
-	spStart = lex.eat(tFunc).span;
-	auto name = lex.eat(tIdent).str;
-	auto sig = parseSigParens(lex);
-	
-	ExpPtr body;
-/*	if (lex.current() == tEqual)
-	{
-		lex.advance();
-		body = parseExp(lex);
-	}
-	else */
-		body = parseBlock(lex);
-
-	spEnd = sig->span;
-
-	return FuncDecl
-		{
-			.name = name,
-			.signature = sig,
-			.body = body,
-			.span = spStart + spEnd
-		};
-}
-
-static FuncDecl parseConstructor (Lexer& lex)
-{
-	Span spStart, spEnd;
-	FuncDecl result;
-
-	result.name = lex.current().str;
-	spStart = lex.eat(tIdent).span;
-	result.signature = parseSigParens(lex);
-	spEnd = result.signature->span;
-	result.span = spStart + spEnd;
-	result.body = nullptr;
-	return result;
-}
-TypeDecl parseTypeDecl (Lexer& lex)
-{
-	Span spStart, spEnd, spType;
-	std::vector<FuncDecl> ctors;
-
-	spStart = lex.eat(tType).span;
-
-	auto ty = parseType(lex, spType);
-
-	if (ty->kind != tyConcrete)
-		throw spType.die("invalid form of type in declaration");
-
-	for (auto sub = ty->subtypes; !sub.nil(); ++sub)
-	{
-		auto sty = sub.head();
-
-		if (sty->kind != tyPoly)
-			throw spType.die("arguments to type must be polytypes");
-
-		for (auto sty2 : sub.tail())
-			if (sty2->kind == tyPoly &&
-					sty->name == sty2->name)
-				throw spType.die("identical polytypes in declaration");
-	}
-
-	lex.eat(tEqual);
-	for (;;)
-	{
-		auto ctor = parseConstructor(lex);
-		spEnd = ctor.span;
-		ctors.push_back(ctor);
-
-		if (lex.current() == tComma)
-			lex.advance();
-		else
-			break;
-	}
-
-	return TypeDecl
-		{
-			ty->name,
-			ty->subtypes,
-			std::move(ctors),
-			spStart + spEnd
-		};
-}
-
-
-bool parseToplevel (Lexer& lex, GlobProto& proto)
-{
-	switch (lex.current().tok)
-	{
-	case tFunc:
-		proto.funcs.push_back(parseFuncDecl(lex));
-		return true;
-
-	case tType:
-		proto.types.push_back(parseTypeDecl(lex));
-		return true;
-
-	default:
-		return false;
-	}
-}
-
-GlobProto parseToplevel (Lexer& lex)
-{
-	GlobProto res;
-	while (parseToplevel(lex, res)) ;
-	return res;
-}
-
 
 
 
@@ -303,6 +311,7 @@ ExpPtr parseTermPostfix (Lexer& lex, ExpPtr in)
 			return in;
 		}
 }
+
 ExpPtr parseCall (Lexer& lex, ExpPtr in)
 {
 	auto args = parseTuple(lex);

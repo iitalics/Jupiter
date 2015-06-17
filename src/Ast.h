@@ -181,6 +181,7 @@ private:
 
 struct FuncDecl
 {
+	bool isPublic;
 	std::string name;
 	SigPtr signature;
 	ExpPtr body;
