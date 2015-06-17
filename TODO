@@ -61,8 +61,8 @@ VERSION         GOAL
                 parser - list literal
                 codegen - list literal
                 stdlib - more complete primitive functions
-TODO
 0.0.5 dev       checkpoint - fizzbuzz!
+TODO
                 main - modules (namespaces?)
                 stdlib - move/break into modules
                 cleanliness - document header files
