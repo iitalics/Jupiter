@@ -42,6 +42,12 @@ static int Main (std::vector<std::string>&& args)
 	using Op = GlobEnv::OpPrecedence;
 
 	// TODO: integrate order-of-ops into jupiter syntax
+	env.operators.push_back(Op("==", 90, Assoc::Left));
+	env.operators.push_back(Op("!=", 90, Assoc::Left));
+	env.operators.push_back(Op(">=", 90, Assoc::Left));
+	env.operators.push_back(Op("<=", 90, Assoc::Left));
+	env.operators.push_back(Op(">", 90, Assoc::Left));
+	env.operators.push_back(Op("<", 90, Assoc::Left));
 	env.operators.push_back(Op("::", 80, Assoc::Right));
 	env.operators.push_back(Op("+",  70, Assoc::Left));
 	env.operators.push_back(Op("-",  70, Assoc::Left));
