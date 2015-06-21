@@ -4,7 +4,12 @@
 namespace Parse
 {
 
-
+GlobProto parseToplevel (Lexer& lex)
+{
+	GlobProto res;
+	while (parseToplevel(lex, res)) ;
+	return res;
+}
 bool parseToplevel (Lexer& lex, GlobProto& proto)
 {
 	switch (lex.current().tok)
@@ -12,34 +17,58 @@ bool parseToplevel (Lexer& lex, GlobProto& proto)
 	case tFunc:
 		proto.funcs.push_back(parseFuncDecl(lex));
 		return true;
-
+	case tImport:
+		proto.imports.push_back(parseImportDecl(lex));
+		return true;
 	case tType:
 		proto.types.push_back(parseTypeDecl(lex));
 		return true;
-
 	case tPub:
-		{
-			auto sp = lex.advance().span;
-			auto fn = parseFuncDecl(lex);
-			fn.isPublic = true;
-			fn.span = sp + fn.span;
-
-			proto.funcs.push_back(fn);
-			return true;
-		}
-
+		parsePublic(lex, proto);
+		return true;
 	default:
 		return false;
 	}
 }
 
-GlobProto parseToplevel (Lexer& lex)
+void parsePublic (Lexer& lex, GlobProto& proto)
 {
-	GlobProto res;
-	while (parseToplevel(lex, res)) ;
-	return res;
+	Span span = lex.eat(tPub).span;
+
+	if (lex.current() == tFunc)
+	{
+		auto fn = parseFuncDecl(lex);
+		fn.isPublic = true;
+		fn.span = span + fn.span;
+		proto.funcs.push_back(fn);
+	}
+	else if (lex.current() == tImport)
+	{
+		auto imp = parseImportDecl(lex);
+		imp.isPublic = true;
+		imp.span = span + imp.span;
+		proto.imports.push_back(imp);
+	}
+	else
+		lex.unexpect();
 }
 
+ImportDecl parseImportDecl (Lexer& lex)
+{
+	Span spStart, spEnd;
+
+	spStart = lex.eat(tImport).span;
+	auto nameTok = lex.eat(tIdent, tString);
+	auto name = nameTok.str;
+	spEnd = nameTok.span;
+
+	return ImportDecl
+		{
+			.isPublic = false,
+			.name = name,
+			.span = spStart + spEnd
+		};
+}
 FuncDecl parseFuncDecl (Lexer& lex)
 {
 	Span spStart, spEnd;

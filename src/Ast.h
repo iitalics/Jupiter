@@ -187,7 +187,6 @@ struct FuncDecl
 	ExpPtr body;
 	Span span;
 };
-
 struct TypeDecl
 {
 	std::string name;
@@ -195,11 +194,17 @@ struct TypeDecl
 	std::vector<FuncDecl> ctors;
 	Span span;
 };
-
+struct ImportDecl
+{
+	bool isPublic;
+	std::string name;
+	Span span;
+};
 struct GlobProto
 {
 	std::vector<FuncDecl> funcs;
 	std::vector<TypeDecl> types;
+	std::vector<ImportDecl> imports;
 };
 
 
@@ -207,16 +212,19 @@ namespace Parse
 {
 
 
-// <func> := 'func' <id> <psig> <block>
+// <func> := 'pub'? 'func' <id> <psig> <block>
 FuncDecl parseFuncDecl (Lexer& lex);
 // <type> := 'type' <ty> '=' <ctor> (',' <ctor>)*
 // <ctor> := <id> <psig>
 TypeDecl parseTypeDecl (Lexer& lex);
-// <toplevel> := (<func> | <type>)*
+// <import> := 'pub'? 'import' (<id> | <string>)
+ImportDecl parseImportDecl (Lexer& lex);
+// <toplevel> := (<func> | <type> | <import>)*
 bool parseToplevel (Lexer& lex, GlobProto& proto);
+void parsePublic (Lexer& lex, GlobProto& proto);
 GlobProto parseToplevel (Lexer& lex);
 
-// <var> := 'id' (':' <ty>)?
+// <var> := <id> (':' <ty>)?
 void parseVar (Lexer& lex, std::string& name, TyPtr& ty, Span&);
 // <sig> := <var> (',' <var>)*
 // <psig> := '(' <sig>? ')'
