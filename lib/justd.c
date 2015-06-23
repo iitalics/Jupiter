@@ -142,10 +142,30 @@ juc juStd_printInt (juc ca)
 
 	return ju_unit;
 }
+
+#define REAL_BUF_SIZE 32
+static size_t real_to_buf (char* buf, juc a)
+{
+	size_t len;
+
+	// using sprintf() to handle doubles
+	sprintf(buf, "%.8f", ju_get_real(a));
+	len = strlen(buf);
+
+	// trim excess zeroes
+	while (buf[len - 1] == '0')
+		len--;
+	if (buf[len - 1] == '.')
+		len++;
+
+	return len;
+}
 juc juStd_printReal (juc ca)
 {
-	// TODO: improve this
-	printf("%.6f", ju_get_real(ca));
+	char buf[REAL_BUF_SIZE];
+	size_t len = real_to_buf(buf, ca);
+
+	fwrite(buf, 1, len, stdout);
 
 	return ju_unit;
 }
@@ -185,7 +205,9 @@ juc juStd_strBool (juc ca)
 }
 juc juStd_strReal (juc ca)
 {
-	return die_unimpl("str(Real)");	
+	char buf[REAL_BUF_SIZE];
+	size_t len = real_to_buf(buf, ca);
+	return ju_make_str(buf, len);
 }
 juc juStd_lenStr (juc a)
 {
