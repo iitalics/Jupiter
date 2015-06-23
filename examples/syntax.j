@@ -83,7 +83,7 @@ type Number =
 	realNum(realVal : Real)
 
 
-# overloading the 'print' function
+# overloading the 'str' function
 func str (pt : Point) {
 	pt.x.str ++ ", " ++ pt.y.str
 }
