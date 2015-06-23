@@ -161,7 +161,7 @@ juc juStd_printBool (juc cell)
 
 
 
-//////////////////////////////// String ////////////////////////////////
+//////////////////////////////// Str ////////////////////////////////
 juc juStd_strInt (juc ca)
 {
 	const size_t BUF_SIZE = 16;
@@ -175,7 +175,7 @@ juc juStd_strInt (juc ca)
 		a /= 10;
 	} while (a > 0);
 
-	return ju_make_str(buf + BUF_SIZE - len - 1, len);
+	return ju_make_str(buf + BUF_SIZE - len, len);
 }
 juc juStd_strBool (juc ca)
 {
