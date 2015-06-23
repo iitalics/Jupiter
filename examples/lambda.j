@@ -1,4 +1,5 @@
 # lambdas in action!
+import std/stdlib
 
 func repeat (fn, n) {
 	if n > 0 {
@@ -7,7 +8,7 @@ func repeat (fn, n) {
 	}
 }
 
-func main () {
+pub func main () {
 	let x = 1;
 
 	func () {

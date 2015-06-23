@@ -65,7 +65,7 @@ VERSION         GOAL
 TODO
                 main - modules (namespaces?)
                 stdlib - move/break into modules
-                cleanliness - document header files
+0.0.6 dev       cleanliness - document header files
                 cleanliness - reorganize source
                 cleanliness - tests?
                 runtime - interleave GC

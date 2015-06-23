@@ -1,5 +1,5 @@
 # example of overload resolution
-
+import std/stdlib
 
 func dontDoThis (x : Int, y : \a) {
 	println(":(");
@@ -15,7 +15,7 @@ func thing (x : [Int]) {
 	println("Just list of Int");
 }
 
-func main () {
+pub func main () {
 	# dontDoThis(0, 0);      ambiguous call
 
 	thing(["Not an Int!"]);

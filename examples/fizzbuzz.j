@@ -1,6 +1,7 @@
 # obligatory fizzbuzz
+import std/stdlib
 
-func main () {
+pub func main () {
 	for i : 1 -> 101 {
 		let num = true;
 

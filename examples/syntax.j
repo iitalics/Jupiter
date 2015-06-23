@@ -1,8 +1,9 @@
 # showcases most all features of the syntax
 #  useful for codegen testing as well as 
 #  testing syntax highlighting
+import std/stdlib
 
-func main () {
+pub func main () {
 	# variables
 	# types are optional in most cases
 	let w : Str = "Hello, world";
@@ -40,13 +41,13 @@ func main () {
 
 	# using the custom types below
 	let pt = point(4, 5);
-	println("pt = ", pt);
-	println(pair(3, true));
+	println("pt = ", pt.str);
+	println(pair(3, true).str);
 
 	let n = intNum(3);
-	println(n);
+	println(n.str);
 	n = realNum(4.0);
-	println(n);
+	println(n.str);
 }
 
 
@@ -83,17 +84,17 @@ type Number =
 
 
 # overloading the 'print' function
-func print (pt : Point) {
-	print(pt.x, ", ", pt.y);
+func str (pt : Point) {
+	pt.x.str ++ ", " ++ pt.y.str
 }
-func print (p : Pair(\a, \b)) {
-	print(p.left, "/", p.right);
+func str (p : Pair(\a, \b)) {
+	p.left.str ++ "/" ++ p.right.str
 }
-func print (num : Number) {
+func str (num : Number) {
 	if num.intNum? {
-		print("int: ", num.intVal);
+		"int: " ++ num.intVal.str
 	} else {
-		print("real: ", num.realVal);
+		"real: " ++ num.realVal.str
 	}
 }
 

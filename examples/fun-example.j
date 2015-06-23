@@ -1,4 +1,5 @@
 # loops
+import std/stdlib
 
 type Weapon = weapon(name : Str, dmg : Int, price : Int)
 
@@ -20,7 +21,7 @@ func max (lst : [\a], pred : (\a, \a) -> Bool) {
 	best
 }
 
-func main () {
+pub func main () {
 	let store = [
 		weapon("Wand",   65, 100),
 		weapon("Axe",    45, 90),

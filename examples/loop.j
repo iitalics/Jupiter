@@ -1,6 +1,7 @@
 # loops
+import std/stdlib
 
-func main () {
+pub func main () {
 	# "while" loop
 	let going = true;
 	let y = 0;

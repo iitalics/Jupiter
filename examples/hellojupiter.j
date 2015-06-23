@@ -1,6 +1,8 @@
 # hello, jupiter!
 
-func main () {
+import std/stdlib
+
+pub func main () {
 	let a = "hello";
 	let b = ", ";
 	let c = "jupiter?";
