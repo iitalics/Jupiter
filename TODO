@@ -62,10 +62,17 @@ VERSION         GOAL
                 codegen - list literal
                 stdlib - more complete primitive functions
 0.0.5 dev       checkpoint - fizzbuzz!
+                main - modules!
 TODO
-                main - modules (namespaces?)
+                main - modules: cached build system
+                main - toolchain (jupc) for modules
                 stdlib - move/break into modules
-0.0.6 dev       cleanliness - document header files
+0.0.6 dev       checkpoint - fun project
+                codegen - improved user types gen
+                parser - Char type
+                stdlib - boxes and better string
+0.0.7 dev       checkpoint - vidya?
+                cleanliness - document header files
                 cleanliness - reorganize source
                 cleanliness - tests?
                 runtime - interleave GC

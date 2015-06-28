@@ -14,8 +14,8 @@ struct Desugar
 	std::map<std::string, TyPtr> polynames;
 	int vars;
 
-	FuncDecl desugar (const FuncDecl& func);
 	SigPtr desugar (SigPtr sig);
+	void desugar (OverloadPtr overload);
 
 	ExpPtr desugar (ExpPtr exp, LocEnvPtr lenv);
 	ExpPtr desugarSubexps (ExpPtr e, LocEnvPtr lenv);

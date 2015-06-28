@@ -89,7 +89,7 @@ ExpPtr Desugar::desugarGlobal (ExpPtr e)
 	if (global.getFunc(e->getString()) == nullptr)
 	{
 		std::ostringstream ss;
-		ss << "undeclared variable \"" << e->getString() << "\"";
+		ss << "undeclared global \"" << e->getString() << "\"";
 		throw e->span.die(ss.str());
 	}
 
@@ -411,17 +411,15 @@ SigPtr Desugar::desugar (SigPtr sig)
 
 	return Sig::make(args, sig->span);
 }
-FuncDecl Desugar::desugar (const FuncDecl& func)
+void Desugar::desugar (OverloadPtr overload)
 {
-	auto env = LocEnv::make();
-	for (auto& a : func.signature->args)
-		env->newVar(a.first, a.second);
+	if (overload->isDesugared) return;
 
-	return FuncDecl {
-		.isPublic = func.isPublic,
-		.name = func.name,
-		.signature = desugar(func.signature),
-		.body = desugar(func.body, env),
-		.span = func.span
-	};
+	overload->isDesugared = true;
+	overload->signature = desugar(overload->signature);
+
+	auto env = LocEnv::make();
+	for (auto& a : overload->signature->args)
+		env->newVar(a.first, a.second);
+	overload->body = desugar(overload->body, env);
 }

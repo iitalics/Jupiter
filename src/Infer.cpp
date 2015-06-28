@@ -264,6 +264,7 @@ TyPtr Infer::inferLambda (ExpPtr exp, LocEnvPtr lenv)
 	auto lamName = fn.cunit->compiler->genUniqueName("#lambda");
 	auto overload = Overload::make(env, lamName, sig, body, false);
 	overload->hasEnv = true;
+	overload->isDesugared = true;
 	env.addFunc(lamName)->overloads.push_back(overload);
 
 	return Ty::makeOverloaded(exp, lamName);

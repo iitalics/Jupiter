@@ -181,7 +181,7 @@ void Ty::_string (Pretty& pr) const
 		break;
 
 	case tyOverloaded:
-		if (name.find("#lambda") == 0)
+		if (name.find("#lambda") != std::string::npos)
 			pr.ss << "<lambda function>";
 		else
 			pr.ss << "<overloaded function \"" << name << "\">";

@@ -105,7 +105,7 @@ static void generateCtor (GlobProto& proto,
 	}
 }
 
-void GlobEnv::generateType (TypeDecl& tydecl, GlobProto& proto)
+void GlobEnv::generateType (TypeDecl& tydecl)
 {
 //	auto tyi = getType(tydecl.name);
 	auto mainty = Ty::makeConcrete(tydecl.name, tydecl.polytypes);

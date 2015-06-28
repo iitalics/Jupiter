@@ -79,7 +79,7 @@ public:
 		return std::make_shared<Exp>(k, l, s);
 	}
 
-	// make (kind, data, subexps, span)
+	// make (kind, data/str, subexps, span)
 	template <typename T>
 	inline static ExpPtr
 	make (ExpKind k, T d,

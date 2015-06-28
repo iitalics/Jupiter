@@ -10,8 +10,28 @@
 
 // ------------------------------------- GlobEnv -------------------------------------//
 
-GlobEnv::GlobEnv ()
-	: compiler(new Compiler())
+GlobEnv::GlobEnv (const GlobProto& _proto)
+	: compiler(nullptr), proto(_proto)
+{
+	// TODO: integrate order-of-ops into jupiter syntax
+	using Op = GlobEnv::OpPrecedence;
+	operators.push_back(Op("==", 90, Assoc::Left));
+	operators.push_back(Op("!=", 90, Assoc::Left));
+	operators.push_back(Op(">=", 90, Assoc::Left));
+	operators.push_back(Op("<=", 90, Assoc::Left));
+	operators.push_back(Op(">",  90, Assoc::Left));
+	operators.push_back(Op("<",  90, Assoc::Left));
+	operators.push_back(Op("::", 80, Assoc::Right));
+	operators.push_back(Op("+",  70, Assoc::Left));
+	operators.push_back(Op("-",  70, Assoc::Left));
+	operators.push_back(Op("*",  60, Assoc::Left));
+	operators.push_back(Op("/",  60, Assoc::Left));
+	operators.push_back(Op("%",  60, Assoc::Left));
+	operators.push_back(Op("^",  50, Assoc::Right));
+
+	loadToplevel();
+}
+void GlobEnv::loadBuiltinTypes ()
 {
 	// create some primitive types that are required for basic
 	//  operations to work
@@ -26,8 +46,10 @@ GlobEnv::GlobEnv ()
 
 GlobEnv::~GlobEnv ()
 {
-	for (auto f : functions)
+	for (auto& f : functions)
 		delete f;
+	for (auto& tyi : types)
+		delete tyi;
 }
 
 GlobEnv::OpPrecedence GlobEnv::getPrecedence (const std::string& operName) const
@@ -72,68 +94,43 @@ TypeInfo* GlobEnv::getType (const std::string& name) const
 	return nullptr;
 }
 
-void GlobEnv::loadToplevel (const std::string& filename)
+void GlobEnv::loadToplevel ()
 {
-	Lexer lex;
-	lex.openFile(filename);
-	auto toplevel = Parse::parseToplevel(lex);
-	lex.expect(tEOF);
-	
-	loadToplevel(toplevel);
-}
-
-void GlobEnv::loadToplevel (GlobProto& proto)
-{
-	// each loop is two-pass so thatt declaration order doesn't matter
 	for (auto& tydecl : proto.types)
-	{
-		// add type
-		if (getType(tydecl.name) != nullptr)
-			throw tydecl.span.die("redeclaration of existing type");
-
 		addType(TypeInfo(tydecl.name, tydecl.polytypes.size(), true));
-	}
 
 	for (auto& tydecl : proto.types)
-	{
-		// generate type
-		generateType(tydecl, proto);
-	}
-
+		generateType(tydecl);
 
 	for (auto& fn : proto.funcs)
 	{
-		// add function
-		addFunc(fn.name);
-	}
-
-	for (auto& fn : proto.funcs)
-	{
-		// generate function
-		auto globfn = getFunc(fn.name);
-
-		Desugar des(*this);
-		auto fnd = des.desugar(fn);
-
 		auto overload = Overload::make(
 			*this,
-			fnd.name,
-			fnd.signature, 
-			fnd.body,
-			fnd.isPublic);
+			fn.name,
+			fn.signature, 
+			fn.body,
+			fn.isPublic);
 
-		globfn->overloads.push_back(overload);
+		addFunc(fn.name)->overloads.push_back(overload);
 	}
 }
 
 OverloadPtr Overload::make (GlobEnv& env, const std::string& name,
                               SigPtr sig, ExpPtr body, bool isPub)
 {
-	return OverloadPtr(new Overload { env, name, sig, body, false, {}, isPub });
+	return OverloadPtr(new Overload { env, name, sig, body, {}, false, isPub, false });
 }
 
-FuncInstance Overload::inst (OverloadPtr over, SigPtr sig)
+FuncInstance Overload::inst (OverloadPtr over, SigPtr sig, Compiler* origin)
 {
+	if (origin != over->env.compiler)
+	{
+		auto inst = Overload::inst(over, sig, over->env.compiler);
+		origin->addExternal(inst.cunit);
+		return inst;
+	}
+
+
 	for (auto cu : over->instances)
 		if (cu->funcInst.signature->aEquiv(sig))
 			return cu->funcInst;

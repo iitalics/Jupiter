@@ -8,15 +8,6 @@
 #define ENV_VAR   "%.env"
 #define JUP_CCONV "fastcc"
 
-Compiler::Compiler ()
-	: nameId(0), entry(nullptr) {}
-
-Compiler::~Compiler ()
-{
-	for (auto cu : units)
-		delete cu;
-}
-
 static bool needs_escape (char c)
 {
 	static const char list[] = 
@@ -29,6 +20,14 @@ static bool needs_escape (char c)
 		if (list[i] == c)
 			return false;
 	return true;
+}
+
+static char hex_char (int k)
+{
+	if (k < 10)
+		return char('0' + k);
+	else
+		return char('a' + k - 10);
 }
 
 static std::string joinCommas (int n, const std::string& str)
@@ -67,17 +66,48 @@ std::string Compiler::mangle (const std::string& ident)
 	return ss.str();
 }
 
+
+
+
+Compiler::Compiler ()
+	: _uniquePrefix(""), _nameId(0), _entry(nullptr) {}
+
+Compiler::~Compiler ()
+{
+	for (auto cu : _units)
+		delete cu;
+}
+
+void Compiler::addDeclare (const std::string& name)
+{
+	if (_declares.insert(name).second)
+	{
+		_ssPrefix << "declare i8* @" << name << " (...)" << std::endl;
+	}
+}
+void Compiler::addExternal (CompileUnit* cunit)
+{
+	if (_externals.insert(cunit).second)
+	{
+		_ssPrefix << cunit->ssDeclare.str() << std::endl;
+	}
+}
+
+void Compiler::setUniquePrefix (const std::string& prefix)
+{
+	_uniquePrefix = prefix + ".";
+}
 std::string Compiler::genUniqueName (const std::string& prefix)
 {
 	std::ostringstream ss;
-	ss << prefix << "_" << (nameId++);
+	ss << _uniquePrefix << prefix << "_" << (_nameId++);
 	return ss.str();
 }
 
 CompileUnit* Compiler::compile (OverloadPtr overload, SigPtr sig)
 {
 	auto cu = new CompileUnit(this, overload, sig);
-	units.push_back(cu);
+	_units.push_back(cu);
 	return cu;
 }
 CompileUnit* Compiler::bake (OverloadPtr overload,
@@ -86,16 +116,16 @@ CompileUnit* Compiler::bake (OverloadPtr overload,
 {
 	auto cu = new CompileUnit(this, overload, sig, ret, intName);
 	cu->funcInst.cunit = cu;
-	units.push_back(cu);
+	_units.push_back(cu);
 	return cu;
 }
 void Compiler::entryPoint (CompileUnit* cunit)
 {
-	if (entry != nullptr)
+	if (_entry != nullptr)
 		throw cunit->overload->signature->
 				span.die("only one entry point per program allowed");
 
-	entry = cunit;
+	_entry = cunit;
 }
 void Compiler::output (std::ostream& os)
 {
@@ -107,12 +137,13 @@ void Compiler::output (std::ostream& os)
 
 	outputRuntimeHeader(os);
 
-	os << std::endl << std::endl;
+	os << _ssPrefix.str() << std::endl
+	   << std::endl << std::endl;
 
-	for (auto cu : units)
+	for (auto cu : _units)
 		cu->output(os);
 
-	if (entry != nullptr)
+	if (_entry != nullptr)
 		outputEntryPoint(os);
 }
 void Compiler::outputRuntimeHeader (std::ostream& os)
@@ -124,9 +155,6 @@ void Compiler::outputRuntimeHeader (std::ostream& os)
 		                   JUP_LIB_PATH("runtime.ll") "'");
 
 	os << libfs.rdbuf() << std::endl;
-
-	for (auto& name : declares)
-		os << "declare ccc i8* @" << name << " (...)" << std::endl;
 }
 void Compiler::outputEntryPoint (std::ostream& os)
 {
@@ -134,7 +162,7 @@ void Compiler::outputEntryPoint (std::ostream& os)
 	   << ";;;   < jupiter entry point >" << std::endl
 	   << "define ccc i32 @main (i32 %argc, i8** %argv)" << std::endl << "{" << std::endl
 	   << "call void @ju_init ()" << std::endl
-	   << "call " JUP_CCONV " i8* @" << entry->internalName << " ()" << std::endl
+	   << "call " JUP_CCONV " i8* @" << _entry->internalName << " ()" << std::endl
 	   << "call void @ju_destroy ()" << std::endl
 	   << "ret i32 0" << std::endl
 	   << "}" << std::endl;
@@ -154,7 +182,7 @@ CompileUnit::CompileUnit (Compiler* comp, OverloadPtr overload, SigPtr sig)
 	  nroots(0)
 {
 	internalName =
-		comp->genUniqueName("fn_" + Compiler::mangle(overload->name));
+		comp->genUniqueName(Compiler::mangle(overload->name));
 }
 
 // baked
@@ -226,7 +254,7 @@ std::string CompileUnit::getTemp ()
 		if (tempLifetimes[i] == -1)
 			break;
 	}
-	
+
 	if (i >= len)
 		tempLifetimes.push_back(lifetime);
 	else
@@ -256,23 +284,21 @@ void CompileUnit::writePrefix (EnvPtr env)
 	         << "define " JUP_CCONV " i8* @"
 	         << internalName << " (";
 
-	for (size_t i = 0, len = env->vars.size(); i < len; i++)
+	auto nargs = env->vars.size() + (overload->hasEnv ? 1 : 0);
+
+	for (size_t i = 0, len = env->vars.size(); i < nargs; i++)
 	{
 		if (i > 0)
 			ssPrefix << ", ";
 
-		ssPrefix << "i8* " << env->vars[i].internal;
-	}
-
-	if (overload->hasEnv)
-	{
-		if (env->vars.size() > 0)
-			ssPrefix << ", ";
-		ssPrefix << "i8* " ENV_VAR;
+		ssPrefix << "i8* " << (i >= len ? ENV_VAR : env->vars[i].internal);
 	}
 
 	ssPrefix << ") unnamed_addr" << std::endl
 	         << "{" << std::endl;
+
+	ssDeclare << "declare " JUP_CCONV << " i8* @" << internalName
+	          << " (" << joinCommas(nargs, "i8*") << ")";
 }
 void CompileUnit::writeEnd ()
 {
@@ -483,17 +509,9 @@ std::string CompileUnit::compile (ExpPtr e, EnvPtr env, bool retain)
 	}
 }
 
-static char hex_char (int k)
-{
-	if (k < 10)
-		return char('0' + k);
-	else
-		return char('a' + k - 10);
-}
-
 std::string CompileUnit::makeGlobalString (const std::string& str, bool nullterm)
 {
-	auto strConst = compiler->genUniqueName("string");
+	auto strConst = compiler->genUniqueName();
 
 	std::ostringstream strType;
 	strType << "[" << (str.size() + (nullterm ? 1 : 0)) << " x i8]";
@@ -622,7 +640,7 @@ std::string CompileUnit::compileCall (ExpPtr e, EnvPtr env)
 		call << "call ccc i8* bitcast (i8* (...)* @" << fn->getString()
 			 << " to i8* (" << joinCommas(nargs, "i8*") << ")*) (";
 
-		compiler->declares.insert(fn->getString());
+		compiler->addDeclare(fn->getString());
 	}
 	else
 	{

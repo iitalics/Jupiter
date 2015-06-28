@@ -20,6 +20,7 @@ struct CompileUnit
 	std::string internalName;
 	FuncInstance funcInst;
 
+	std::ostringstream ssDeclare;
 	std::ostringstream ssPrefix;
 	std::ostringstream ssBody;
 	std::ostringstream ssEnd;
@@ -110,7 +111,8 @@ public:
 	~Compiler ();
 
 	static std::string mangle (const std::string& ident);
-	std::string genUniqueName (const std::string& prefix = "");
+	void setUniquePrefix (const std::string& prefix);
+	std::string genUniqueName (const std::string& name = "");
 
 	CompileUnit* compile (OverloadPtr overload, SigPtr sig);
 	CompileUnit* bake (OverloadPtr overload,
@@ -118,17 +120,19 @@ public:
 						const std::string& internalName);
 
 	void entryPoint (CompileUnit* cunit);
-
 	void output (std::ostream& os);
-protected:
-	friend struct CompileUnit;
 
-	std::set<std::string> declares;
+	void addDeclare (const std::string& name);
+	void addExternal (CompileUnit* cunit);
 private:
-	std::vector<CompileUnit*> units;
-	int nameId;
+	std::ostringstream _ssPrefix;
+	std::set<std::string> _declares;
+	std::set<CompileUnit*> _externals;
+	std::vector<CompileUnit*> _units;
+	std::string _uniquePrefix;
+	int _nameId;
 
-	CompileUnit* entry;
+	CompileUnit* _entry;
 
 	void outputRuntimeHeader (std::ostream& os); 
 	void outputEntryPoint (std::ostream& os);

@@ -6,9 +6,9 @@
 
 class Compiler;
 class Overload;
-class GlobFunc;
 class LocEnv;
 class GlobEnv;
+struct GlobFunc;
 struct FuncInstance;
 struct CompileUnit;
 using GlobFuncPtr = GlobFunc*;
@@ -23,13 +23,15 @@ public:
 	std::string name;
 	SigPtr signature;
 	ExpPtr body;
-	bool hasEnv;
 	std::vector<CompileUnit*> instances;
+	bool hasEnv;
 	bool isPublic;
+	bool isDesugared;
 
 	static OverloadPtr make (GlobEnv& env, const std::string& name,
 	                           SigPtr sig, ExpPtr body, bool isPub);
-	static FuncInstance inst (OverloadPtr overload, SigPtr sig);
+	static FuncInstance inst (OverloadPtr overload, SigPtr sig,
+	                            Compiler* origin);
 };
 
 struct FuncInstance
@@ -46,9 +48,8 @@ struct FuncInstance
 	TyPtr type () const;
 };
 
-class GlobFunc
+struct GlobFunc
 {
-public:
 	explicit inline GlobFunc(GlobEnv& _env, const std::string& _name)
 		: env(_env), name(_name) {}
 
@@ -70,9 +71,9 @@ public:
 	std::vector<OpPrecedence> operators;
 	std::vector<GlobFuncPtr> functions;
 	std::vector<TypeInfo*> types;
+	GlobProto proto;
 
-
-	GlobEnv ();
+	GlobEnv (const GlobProto& proto);
 	~GlobEnv ();
 
 	OpPrecedence getPrecedence (const std::string& oper) const;
@@ -81,16 +82,10 @@ public:
 	void addType (const TypeInfo& tyi);
 	TypeInfo* getType (const std::string& name) const;
 
-
-	void loadToplevel (const std::string& filename);
-	void loadToplevel (GlobProto& proto);
-	void generateType (TypeDecl& tydecl, GlobProto& proto);
-
-
-	inline void loadStdlib ()
-	{
-		loadToplevel(JUP_LIB_PATH("std/stdlib.j"));
-	}
+	void loadBuiltinTypes ();
+private:
+	void generateType (TypeDecl& tydecl);
+	void loadToplevel ();
 };
 
 

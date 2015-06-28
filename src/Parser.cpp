@@ -8,6 +8,7 @@ GlobProto parseToplevel (Lexer& lex)
 {
 	GlobProto res;
 	while (parseToplevel(lex, res)) ;
+	lex.expect(tEOF);
 	return res;
 }
 bool parseToplevel (Lexer& lex, GlobProto& proto)

@@ -76,6 +76,18 @@ SigPtr Subs::operator() (SigPtr sig) const
 
 
 
+static std::string friendlyName (const std::string& original)
+{
+	if (original.find("#lambda") == std::string::npos)
+	{
+		std::ostringstream ss;
+		ss << '\"' << original << '\"';
+		return ss.str();
+	}
+	else
+		return "<lambda function>";
+}
+
 
 
 
@@ -86,8 +98,10 @@ void Infer::unify (TyPtr t1, TyPtr t2, Subs& subs, const Span& span)
 		std::ostringstream ss;
 		if (t1->kind == tyOverloaded)
 		{
-			ss << "function \"" << t1->name
-			   << "\" incompatible with type " << t2->string();
+			ss << "function " << friendlyName(t1->name)
+			   << " incompatible with type " << t2->string();
+			
+			// TODO: list compatible types
 		}
 		else
 		{
@@ -313,7 +327,7 @@ bool Infer::unifyOverload (Subs& out,
 		std::ostringstream ss;
 		std::vector<std::string> extra;
 
-		ss << "ambiguous use of function '" << globfn->name << "'";
+		ss << "ambiguous use of function " << friendlyName(globfn->name);
 
 		extra.push_back("given: " + t2->string());
 		for (auto& v : valid)
@@ -344,7 +358,7 @@ bool Infer::unifyOverload (Subs& out,
 
 	// instanciate overloaded function with
 	//  this signature
-	auto inst = Overload::inst(overload, sig);
+	auto inst = Overload::inst(overload, sig, env.compiler);
 	TyPtr resty;
 
 	if (inst.cunit->finishedInfer)
