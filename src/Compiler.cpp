@@ -41,6 +41,18 @@ static std::string escapeString (const std::string& str)
 	return ss.str();
 }
 
+static std::string joinCommas (int n, const std::string& str)
+{
+	std::ostringstream ss;
+	for (int i = 0; i < n; i++)
+	{
+		if (i > 0)
+			ss << ", ";
+		ss << str;
+	}
+	return ss.str();
+}
+
 
 std::string Compiler::mangle (const std::string& ident)
 {
@@ -91,9 +103,13 @@ void Compiler::addInclude (CompileUnit* cunit)
 	if (_includes.insert(cunit->internalName).second)
 	{
 		auto over = cunit->overload;
-		_addedInclude(cunit->internalName,
-			over->signature->args.size() +
-				(over->hasEnv ? 1 : 0));
+		size_t nargs = over->signature->args.size();
+		if (over->hasEnv) nargs++;
+
+		_addedInclude(cunit->internalName, nargs);
+
+		_ssPrefix << "declare " JUP_CCONV " i8* @" << cunit->internalName
+		          << " (" << joinCommas(nargs, "i8*") << ")" << std::endl;
 	}
 }
 
@@ -276,8 +292,8 @@ void CompileUnit::popLifetime ()
 }
 void CompileUnit::writePrefix (EnvPtr env)
 {
-	ssPrefix << std::endl << std::endl << std::endl
-	         << ";;;   " << funcInst.name << " "
+	ssPrefix << std::endl
+	         << ";   " << funcInst.name << " "
 	         << funcInst.type()->string() << std::endl
 	         << "define " JUP_CCONV " i8* @"
 	         << internalName << " (";

@@ -53,6 +53,7 @@ private:
 	std::vector<Compiler*> _compilers;
 	ModulePtr _entry;
 
+	void _maybeLoadInfodata (ModulePtr mod);
 	Compiler* _getCompiler (ModulePtr mod);
 	void _output (ModulePtr mod, std::ostream& log);
 

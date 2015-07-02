@@ -121,10 +121,6 @@ ModulePtr Build::loadModule (const std::string& name)
 		import(module, src, Module::StrongImport);
 	}
 
-	auto infopath = module->infodataPath(_buildFolder);
-	if (fileExists(infopath))
-		_getCompiler(module)->readInfodata(infopath);
-
 	return module;
 }
 
@@ -214,6 +210,8 @@ void Build::finishModuleLoad ()
 }
 Compiler* Build::_getCompiler (ModulePtr mod)
 {
+	// creates a compiler if needed or uses the
+	//  singleton compiler if building in "Single" mode
 	if (mod->env.compiler != nullptr)
 		return mod->env.compiler;
 	else if (_compileMode == Build::Single)
@@ -232,7 +230,10 @@ void Build::_output (ModulePtr mod, std::ostream& log)
 	auto path = mod->outputPath(_buildFolder);
 	auto infopath = mod->infodataPath(_buildFolder);
 
-	std::ofstream fs(path);
+	// appends to file:
+	//  the infodata file will give the compiler correct information
+	//  so that it only writes necessary code
+	std::ofstream fs(path, std::ofstream::app);
 	if (!fs.good())
 		throw Span().die("cannot write to '" + path + "'");
 	compiler->output(fs);
@@ -240,6 +241,7 @@ void Build::_output (ModulePtr mod, std::ostream& log)
 
 	if (mod != _entry)
 	{
+		// create new infodata file
 		std::ofstream infofs(infopath);
 		if (infofs.good())
 		{
@@ -264,7 +266,11 @@ void Build::compile (std::ostream& out)
 	}
 
 	for (auto& pair : _modules)
+	{
 		_getCompiler(pair.second);
+		if (_compileMode == Build::Project)
+			_maybeLoadInfodata(pair.second);
+	}
 
 	// call entry point code
 	auto entryCompiler = _getCompiler(_entry);
@@ -287,6 +293,12 @@ void Build::compile (std::ostream& out)
 	}
 }
 
+void Build::_maybeLoadInfodata (ModulePtr module)
+{
+	auto infopath = module->infodataPath(_buildFolder);
+	if (fileExists(infopath))
+		_getCompiler(module)->readInfodata(module->env, infopath);
+}
 
 
 

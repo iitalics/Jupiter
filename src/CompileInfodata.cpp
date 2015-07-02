@@ -36,8 +36,6 @@ void Compiler::_addedExternal (const std::string& name)
 void Compiler::_addedInclude (const std::string& internal, size_t nargs)
 {
 	_ssInfodata << "(\"" << internal << "\" " << nargs << ")" << std::endl;
-	_ssPrefix << "declare " JUP_CCONV " i8* @" << internal
-	          << " (" << joinCommas(nargs, "i8*") << ")" << std::endl;
 }
 
 
@@ -56,7 +54,97 @@ void Compiler::_serializeCUnit (CompileUnit* cunit)
 }
 
 
-void Compiler::readInfodata (const std::string& filename)
+void Compiler::readInfodata (GlobEnv& env, const std::string& filename)
 {
-	// TODO: use lexer and parser to read infodata file according to rules at top
+	Lexer lex;
+	lex.openFile(filename);
+
+	while (_parseInfodata(env, lex))
+		;
+
+	lex.expect(tEOF);
+
+	_needsHeader = false;
+}
+
+bool Compiler::_parseInfodata (GlobEnv& env, Lexer& lex)
+{
+	switch (lex.current().tok)
+	{
+	case tLParen:
+		return _parseInclude(env, lex);
+	case tIdent:
+		return _parseInstance(env, lex);
+	case tNumberInt:
+		_nameId = int(lex.advance().valueInt);
+		return true;
+
+	default:
+		return false;
+	}
+}
+bool Compiler::_parseInclude (GlobEnv& env, Lexer& lex)
+{
+	lex.eat(tLParen);
+	auto name = lex.eat(tString).str;
+
+	if (lex.current() == tNumberInt) // <include>
+	{
+		auto nargs = size_t(lex.advance().valueInt);
+		_includes.insert(name);
+		_addedInclude(name, nargs);
+	}
+	else // <external>
+	{
+		_externals.insert(name);
+		_addedExternal(name);
+	}
+
+	lex.eat(tRParen);
+	return true;
+}
+bool Compiler::_parseInstance (GlobEnv& env, Lexer& lex)
+{
+	Span instTypeSpan;
+
+	// read syntax
+	auto name = lex.eat(tIdent).str;
+	auto sig = Parse::parseSigParens(lex);
+	lex.eat(tColon);
+	auto instType = Parse::parseType(lex, instTypeSpan);
+	auto internalName = lex.eat(tString).str;
+
+	// find overload
+	auto globfn = env.addFunc(name);
+	OverloadPtr overload(nullptr);
+	for (auto& over : globfn->overloads)
+		if (over->signature->aEquiv(sig))
+			overload = over;
+	if (overload == nullptr)
+		throw sig->span.die("no such overload with this signature");
+
+	// turn type into signature
+	auto instSig = Sig::make({}, sig->span);
+	instSig->args.reserve(sig->args.size());
+
+	if (instType->kind != tyConcrete ||
+			instType->name != "Fn")
+		throw instTypeSpan.die("expected function type");
+
+	auto tys = instType->subtypes;
+	if (tys.length() != sig->args.size() + 1)
+		throw instTypeSpan.die("mismatched number of arguments");
+
+	for (size_t i = 0, len = sig->args.size(); i < len; i++, ++tys)
+		instSig->args.push_back({
+			sig->args[i].first,
+			tys.head()
+		});
+
+	// create the fake "baked" instance
+	overload->instances.push_back(
+		bake(overload, instSig,
+			tys.head(), internalName));
+
+	return true;
 }

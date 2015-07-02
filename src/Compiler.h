@@ -122,7 +122,7 @@ public:
 	void output (std::ostream& os);
 	void outputInfodata (std::ostream& os);
 
-	void readInfodata (const std::string& filename);
+	void readInfodata (GlobEnv& env, const std::string& filename);
 
 	void addExternal (const std::string& name);
 	void addInclude (CompileUnit* cunit);
@@ -145,8 +145,8 @@ private:
 	void _addedInclude (const std::string& name, size_t nargs);
 	void _addedExternal (const std::string& name);
 	void _serializeCUnit (CompileUnit* cunit);
-/*	void _parseInfodata (Lexer& lex);
-	void _parseInclude (Lexer& lex);
-	void _parseInstance (Lexer& lex); */
+	bool _parseInfodata (GlobEnv& env, Lexer& lex);
+	bool _parseInclude (GlobEnv& env, Lexer& lex);
+	bool _parseInstance (GlobEnv& env, Lexer& lex);
 };
 
