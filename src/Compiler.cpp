@@ -78,19 +78,25 @@ Compiler::~Compiler ()
 		delete cu;
 }
 
-void Compiler::addDeclare (const std::string& name)
+void Compiler::addExternal (const std::string& name)
 {
-	if (_declares.insert(name).second)
-	{
+	if (_externals.insert(name).second)
 		_ssPrefix << "declare i8* @" << name << " (...)" << std::endl;
+}
+void Compiler::addInclude (CompileUnit* cunit)
+{
+	if (_includes.insert(cunit->internalName).second)
+	{
+		auto over = cunit->overload;
+		_addInclude(cunit->internalName,
+			over->signature->args.size() +
+				(over->hasEnv ? 1 : 0));
 	}
 }
-void Compiler::addExternal (CompileUnit* cunit)
+void Compiler::_addInclude (const std::string& internal, size_t nargs)
 {
-	if (_externals.insert(cunit).second)
-	{
-		_ssPrefix << cunit->ssDeclare.str() << std::endl;
-	}
+	_ssPrefix << "declare " JUP_CCONV " i8* @" << internal
+	          << " (" << joinCommas(nargs, "i8*") << ")" << std::endl;
 }
 
 void Compiler::setUniquePrefix (const std::string& prefix)
@@ -296,9 +302,6 @@ void CompileUnit::writePrefix (EnvPtr env)
 
 	ssPrefix << ") unnamed_addr" << std::endl
 	         << "{" << std::endl;
-
-	ssDeclare << "declare " JUP_CCONV << " i8* @" << internalName
-	          << " (" << joinCommas(nargs, "i8*") << ")";
 }
 void CompileUnit::writeEnd ()
 {
@@ -640,7 +643,7 @@ std::string CompileUnit::compileCall (ExpPtr e, EnvPtr env)
 		call << "call ccc i8* bitcast (i8* (...)* @" << fn->getString()
 			 << " to i8* (" << joinCommas(nargs, "i8*") << ")*) (";
 
-		compiler->addDeclare(fn->getString());
+		compiler->addExternal(fn->getString());
 	}
 	else
 	{

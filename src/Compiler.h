@@ -20,7 +20,6 @@ struct CompileUnit
 	std::string internalName;
 	FuncInstance funcInst;
 
-	std::ostringstream ssDeclare;
 	std::ostringstream ssPrefix;
 	std::ostringstream ssBody;
 	std::ostringstream ssEnd;
@@ -122,17 +121,19 @@ public:
 	void entryPoint (CompileUnit* cunit);
 	void output (std::ostream& os);
 
-	void addDeclare (const std::string& name);
-	void addExternal (CompileUnit* cunit);
+	void addExternal (const std::string& name);
+	void addInclude (CompileUnit* cunit);
 private:
 	std::ostringstream _ssPrefix;
-	std::set<std::string> _declares;
-	std::set<CompileUnit*> _externals;
+	std::set<std::string> _externals;
+	std::set<std::string> _includes;
 	std::vector<CompileUnit*> _units;
 	std::string _uniquePrefix;
 	int _nameId;
 
 	CompileUnit* _entry;
+
+	void _addInclude (const std::string& name, size_t nargs);
 
 	void outputRuntimeHeader (std::ostream& os); 
 	void outputEntryPoint (std::ostream& os);

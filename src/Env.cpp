@@ -126,7 +126,7 @@ FuncInstance Overload::inst (OverloadPtr over, SigPtr sig, Compiler* origin)
 	if (origin != over->env.compiler)
 	{
 		auto inst = Overload::inst(over, sig, over->env.compiler);
-		origin->addExternal(inst.cunit);
+		origin->addInclude(inst.cunit);
 		return inst;
 	}
 
