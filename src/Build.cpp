@@ -121,6 +121,10 @@ ModulePtr Build::loadModule (const std::string& name)
 		import(module, src, Module::StrongImport);
 	}
 
+	auto infopath = module->infodataPath(_buildFolder);
+	if (fileExists(infopath))
+		_getCompiler(module)->readInfodata(infopath);
+
 	return module;
 }
 
@@ -157,15 +161,15 @@ void Build::import (ModulePtr dest, ModulePtr src, int str)
 
 	for (auto& imp : src->env.proto.imports)
 	{
-		auto mod = loadModule(imp.name);
+		auto module = loadModule(imp.name);
 
 		if (str == Module::StrongImport)
-			import(dest, mod,
+			import(dest, module,
 				imp.isPublic ?
 					Module::StrongImport :
 					Module::WeakImport);
 		else
-			import(dest, mod, Module::WeakImport);
+			import(dest, module, Module::WeakImport);
 	}
 }
 
@@ -219,18 +223,30 @@ Compiler* Build::_getCompiler (ModulePtr mod)
 		auto comp = new Compiler();
 		comp->setUniquePrefix(Module::mangle(mod->name));
 		_compilers.push_back(comp);
-		return mod->env.compiler = comp;
+		return (mod->env.compiler = comp);
 	}
 }
 void Build::_output (ModulePtr mod, std::ostream& log)
 {
-	auto path = _buildFolder + Module::mangle(mod->name) + ".ll";
+	auto compiler = _getCompiler(mod);
+	auto path = mod->outputPath(_buildFolder);
+	auto infopath = mod->infodataPath(_buildFolder);
+
 	std::ofstream fs(path);
 	if (!fs.good())
 		throw Span().die("cannot write to '" + path + "'");
-
-	_getCompiler(mod)->output(fs);
+	compiler->output(fs);
 	fs.close();
+
+	if (mod != _entry)
+	{
+		std::ofstream infofs(infopath);
+		if (infofs.good())
+		{
+			compiler->outputInfodata(infofs);
+			infofs.close();
+		}
+	}
 
 	// log which output files were written to
 	log << path << std::endl;
@@ -278,6 +294,15 @@ void Build::compile (std::ostream& out)
 Module::Module (const std::string& _name, const GlobProto& proto)
 	: name(_name), env(proto)
 {}
+
+std::string Module::outputPath (const std::string& buildFolder)
+{
+	return buildFolder + mangle(name) + ".ll";
+}
+std::string Module::infodataPath (const std::string& buildFolder)
+{
+	return buildFolder + mangle(name) + ".ll.summary";
+}
 
 void Module::finishImport ()
 {

@@ -19,6 +19,9 @@ struct Module
 	void finishImport ();
 	void desugarAll ();
 
+	std::string outputPath (const std::string& buildFolder);
+	std::string infodataPath (const std::string& buildFolder);
+
 	std::string name;
 	GlobEnv env;
 	std::map<ModulePtr, int> importHistory;

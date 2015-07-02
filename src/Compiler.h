@@ -120,22 +120,33 @@ public:
 
 	void entryPoint (CompileUnit* cunit);
 	void output (std::ostream& os);
+	void outputInfodata (std::ostream& os);
+
+	void readInfodata (const std::string& filename);
 
 	void addExternal (const std::string& name);
 	void addInclude (CompileUnit* cunit);
 private:
 	std::ostringstream _ssPrefix;
+	std::ostringstream _ssInfodata;
 	std::set<std::string> _externals;
 	std::set<std::string> _includes;
 	std::vector<CompileUnit*> _units;
 	std::string _uniquePrefix;
 	int _nameId;
+	bool _needsHeader;
 
 	CompileUnit* _entry;
 
-	void _addInclude (const std::string& name, size_t nargs);
-
 	void outputRuntimeHeader (std::ostream& os); 
 	void outputEntryPoint (std::ostream& os);
+
+	// located in "CompileInfodata.cpp"
+	void _addedInclude (const std::string& name, size_t nargs);
+	void _addedExternal (const std::string& name);
+	void _serializeCUnit (CompileUnit* cunit);
+/*	void _parseInfodata (Lexer& lex);
+	void _parseInclude (Lexer& lex);
+	void _parseInstance (Lexer& lex); */
 };
 

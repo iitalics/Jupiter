@@ -64,7 +64,7 @@ VERSION         GOAL
 0.0.5 dev       checkpoint - fizzbuzz!
                 main - modules!
 TODO
-                main - modules: cached build system
+                main - cached build system
                 main - toolchain (jupc) for modules
                 stdlib - move/break into modules
 0.0.6 dev       checkpoint - fun project

@@ -4,9 +4,7 @@
 #include <ctime>
 #include <cctype>
 #include <fstream>
-
-#define ENV_VAR   "%.env"
-#define JUP_CCONV "fastcc"
+#include "Compiler.cc"
 
 static bool needs_escape (char c)
 {
@@ -30,17 +28,19 @@ static char hex_char (int k)
 		return char('a' + k - 10);
 }
 
-static std::string joinCommas (int n, const std::string& str)
+static std::string escapeString (const std::string& str)
 {
 	std::ostringstream ss;
-	for (int i = 0; i < n; i++)
-	{
-		if (i > 0)
-			ss << ", ";
-		ss << str;
-	}
+	for (size_t i = 0, len = str.size(); i < len; i++)
+		if (needs_escape(str[i]))
+			ss << "\\"
+			   << hex_char(int(str[i]) / 16)
+			   << hex_char(int(str[i]) & 0xf);
+		else
+			ss << str[i];
 	return ss.str();
 }
+
 
 std::string Compiler::mangle (const std::string& ident)
 {
@@ -70,7 +70,7 @@ std::string Compiler::mangle (const std::string& ident)
 
 
 Compiler::Compiler ()
-	: _uniquePrefix(""), _nameId(0), _entry(nullptr) {}
+	: _uniquePrefix(""), _nameId(0), _needsHeader(true), _entry(nullptr) {}
 
 Compiler::~Compiler ()
 {
@@ -81,22 +81,20 @@ Compiler::~Compiler ()
 void Compiler::addExternal (const std::string& name)
 {
 	if (_externals.insert(name).second)
+	{
 		_ssPrefix << "declare i8* @" << name << " (...)" << std::endl;
+		_addedExternal(name);
+	}
 }
 void Compiler::addInclude (CompileUnit* cunit)
 {
 	if (_includes.insert(cunit->internalName).second)
 	{
 		auto over = cunit->overload;
-		_addInclude(cunit->internalName,
+		_addedInclude(cunit->internalName,
 			over->signature->args.size() +
 				(over->hasEnv ? 1 : 0));
 	}
-}
-void Compiler::_addInclude (const std::string& internal, size_t nargs)
-{
-	_ssPrefix << "declare " JUP_CCONV " i8* @" << internal
-	          << " (" << joinCommas(nargs, "i8*") << ")" << std::endl;
 }
 
 void Compiler::setUniquePrefix (const std::string& prefix)
@@ -135,16 +133,10 @@ void Compiler::entryPoint (CompileUnit* cunit)
 }
 void Compiler::output (std::ostream& os)
 {
-    auto now = std::time(nullptr);
+	if (_needsHeader)
+		outputRuntimeHeader(os);
 
-	os << "; compiled: "
-	   << std::asctime(std::localtime(&now))
-	   << std::endl;
-
-	outputRuntimeHeader(os);
-
-	os << _ssPrefix.str() << std::endl
-	   << std::endl << std::endl;
+	os << _ssPrefix.str();
 
 	for (auto cu : _units)
 		cu->output(os);
@@ -521,15 +513,7 @@ std::string CompileUnit::makeGlobalString (const std::string& str, bool nullterm
 
 	ssEnd << "@" << strConst
 	      << " = private unnamed_addr constant "
-	      << strType.str() << " c\"";
-
-	for (size_t i = 0, len = str.size(); i < len; i++)
-		if (needs_escape(str[i]))
-			ssEnd << "\\"
-			      << hex_char(int(str[i]) / 16)
-			      << hex_char(int(str[i]) & 0xf);
-		else
-			ssEnd << str[i];
+	      << strType.str() << " c\"" << escapeString(str);
 
 	if (nullterm)
 		ssEnd << "\\00";
